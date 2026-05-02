@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ai-hiring-os-backend-v2.onrender.com';
 console.log('Connecting to API at:', BASE_URL);
 
 const api = axios.create({
