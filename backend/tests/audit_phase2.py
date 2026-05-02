@@ -11,12 +11,12 @@ import psycopg2
 from supabase import create_client
 import os
 
-# -- Config (Mirrored from run_tests.py) --
-BASE = "http://127.0.0.1:8000"
-SB_URL = "https://sdajiogciztggncebswx.supabase.co"
-SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkYWppb2djaXp0Z2duY2Vic3d4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzM3Mjc3MiwiZXhwIjoyMDkyOTQ4NzcyfQ.KMQPWC4shkbEuFhFEwTjMHfjcMoIc238tDgt8-zKNrk"
-DB = "postgresql://postgres:Pranav%4012102004@db.sdajiogciztggncebswx.supabase.co:5432/postgres"
-PWD = "TestP@ssw0rd123!"
+# -- Config (Loaded from Environment) --
+BASE = os.getenv("TEST_BASE_URL", "http://127.0.0.1:8000")
+SB_URL = os.getenv("SUPABASE_URL")
+SB_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+DB = os.getenv("DATABASE_URL")
+PWD = os.getenv("TEST_USER_PASSWORD", "TestP@ssw0rd123!")
 
 USERS = {
     "hr_a":       {"email": "audit_hr_a@example.com",       "name": "Audit HR A",       "role": "hr"},

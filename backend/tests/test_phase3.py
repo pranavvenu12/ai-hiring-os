@@ -11,9 +11,11 @@ import psycopg2
 import os
 
 # -- Config --
-BASE = "http://127.0.0.1:8000"
-DB = "postgresql://postgres:Pranav%4012102004@db.sdajiogciztggncebswx.supabase.co:5432/postgres"
-PWD = "TestP@ssw0rd123!"
+BASE = os.getenv("TEST_BASE_URL", "http://127.0.0.1:8000")
+DB = os.getenv("DATABASE_URL")
+SB_URL = os.getenv("SUPABASE_URL")
+SB_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+PWD = os.getenv("TEST_USER_PASSWORD", "TestP@ssw0rd123!")
 
 USERS = {
     "hr": {"email": "phase3_hr@example.com", "name": "Phase3 HR", "role": "hr"},
@@ -45,8 +47,6 @@ def setup():
     
     u = USERS["hr"]
     from supabase import create_client
-    SB_URL = "https://sdajiogciztggncebswx.supabase.co"
-    SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkYWppb2djaXp0Z2duY2Vic3d4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzM3Mjc3MiwiZXhwIjoyMDkyOTQ4NzcyfQ.KMQPWC4shkbEuFhFEwTjMHfjcMoIc238tDgt8-zKNrk"
     sb = create_client(SB_URL, SB_KEY)
     sb_uid = None
     try:

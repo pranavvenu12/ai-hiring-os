@@ -1,0 +1,35 @@
+# AI Hiring OS — Root GitIgnore
+# ──────────────────────────────────────────────
+
+# Environment Variables (Secrets)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.example
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
