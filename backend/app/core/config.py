@@ -53,6 +53,19 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         return self.APP_ENV == "production"
 
+    @property
+    def async_database_url(self) -> str:
+        """
+        Ensures the database URL uses the postgresql+asyncpg:// scheme.
+        Handles Render/Supabase 'postgres://' or 'postgresql://' prefixes.
+        """
+        url = self.DATABASE_URL
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return url
+
 
 @lru_cache
 def get_settings() -> Settings:
