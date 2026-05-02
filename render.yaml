@@ -9,6 +9,8 @@ services:
         value: production
       - key: DEBUG
         value: false
+      - key: PYTHON_VERSION
+        value: 3.12.1
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_ANON_KEY
