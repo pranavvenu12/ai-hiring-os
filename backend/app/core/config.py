@@ -68,17 +68,18 @@ class Settings(BaseSettings):
         if not url:
             return ""
 
-        # Remove sslmode if present as asyncpg handles it differently or it causes issues
-        if "sslmode=" in url:
-            import re
-            url = re.sub(r"[?&]sslmode=[^&]*", "", url)
+        # Remove incompatible query parameters that asyncpg doesn't support
+        # but are often included in Supabase/Render connection strings.
+        import re
+        url = re.sub(r"[?&]sslmode=[^&]*", "", url)
+        url = re.sub(r"[?&]pgbouncer=[^&]*", "", url)
 
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql+asyncpg://", 1)
         elif url.startswith("postgresql://"):
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
-        # Add pgbouncer flag if using port 6543 (common for Supabase pooler)
+        # Add pgbouncer-specific flag if using port 6543
         if ":6543" in url and "prepared_statement_cache_size" not in url:
             separator = "&" if "?" in url else "?"
             url = f"{url}{separator}prepared_statement_cache_size=0"
