@@ -58,12 +58,31 @@ class Settings(BaseSettings):
         """
         Ensures the database URL uses the postgresql+asyncpg:// scheme.
         Handles Render/Supabase 'postgres://' or 'postgresql://' prefixes.
+
+        NOTE: If deploying on Render and using Supabase, ensure you use the
+        Connection Pooler URL (usually port 6543) instead of the direct
+        connection URL (port 5432), as the latter is often IPv6-only
+        which Render does not support for outbound connections.
         """
         url = self.DATABASE_URL
+        if not url:
+            return ""
+
+        # Remove sslmode if present as asyncpg handles it differently or it causes issues
+        if "sslmode=" in url:
+            import re
+            url = re.sub(r"[?&]sslmode=[^&]*", "", url)
+
         if url.startswith("postgres://"):
             url = url.replace("postgres://", "postgresql+asyncpg://", 1)
         elif url.startswith("postgresql://"):
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+        # Add pgbouncer flag if using port 6543 (common for Supabase pooler)
+        if ":6543" in url and "prepared_statement_cache_size" not in url:
+            separator = "&" if "?" in url else "?"
+            url = f"{url}{separator}prepared_statement_cache_size=0"
+
         return url
 
 
