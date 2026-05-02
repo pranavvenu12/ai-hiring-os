@@ -11,6 +11,8 @@ services:
         value: false
       - key: PYTHON_VERSION
         value: 3.12.1
+      - key: PYO3_USE_ABI3_FORWARD_COMPATIBILITY
+        value: "1"
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_ANON_KEY
