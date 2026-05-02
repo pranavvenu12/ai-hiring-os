@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm install --legacy-peer-deps && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -14,7 +14,7 @@
     "autoprefixer": "^10.4.17",
     "axios": "^1.6.7",
     "framer-motion": "^11.0.3",
-    "lucide-react": "^0.344.0",
+    "lucide-react": "^0.475.0",
     "postcss": "^8.4.35",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
