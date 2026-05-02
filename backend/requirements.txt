@@ -1,0 +1,14 @@
+fastapi==0.115.12
+uvicorn[standard]==0.34.2
+sqlalchemy==2.0.40
+asyncpg==0.30.0
+psycopg2-binary==2.9.10
+python-dotenv==1.1.0
+pydantic[email]==2.11.1
+pydantic-settings==2.9.1
+python-jose[cryptography]==3.4.0
+httpx==0.28.1
+supabase==2.15.1
+alembic==1.15.2
+pymupdf==1.25.3
+python-multipart==0.0.9

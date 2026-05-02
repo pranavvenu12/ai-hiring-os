@@ -1,0 +1,55 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 font-['Inter',_sans-serif] antialiased;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/80 backdrop-blur-xl border border-white/30 shadow-xl rounded-radius;
+  }
+  
+  .gradient-text {
+    @apply bg-gradient-to-br from-indigo-600 to-violet-600 bg-clip-text text-transparent;
+  }
+
+  .btn {
+    @apply px-5 py-2.5 rounded-lg font-semibold cursor-pointer transition-all duration-200 inline-flex items-center gap-2;
+  }
+
+  .btn-primary {
+    @apply bg-indigo-600 text-white hover:bg-indigo-700 hover:-translate-y-px hover:shadow-lg hover:shadow-indigo-600/30;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-slate-900 border border-slate-200 hover:bg-slate-50;
+  }
+
+  .form-control {
+    @apply w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 transition-all duration-200 focus:outline-none focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-600/10;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade {
+  animation: fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.bg-grid {
+  background-size: 40px 40px;
+  background-image: radial-gradient(circle, #e2e8f0 1px, transparent 1px);
+}
+
+.glass-morphism {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+}
