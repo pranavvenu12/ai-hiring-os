@@ -19,7 +19,10 @@ engine = create_async_engine(
     pool_size=10,
     max_overflow=20,
     # Use SSL in production (required for Supabase)
-    connect_args={"ssl": "require"} if settings.is_production else {},
+    connect_args={
+        "ssl": "require",
+        "statement_cache_size": 0,
+    } if settings.is_production else {},
 )
 
 AsyncSessionLocal = async_sessionmaker(
