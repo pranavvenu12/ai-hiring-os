@@ -14,7 +14,6 @@ const DashboardHR = () => {
         activeJobs: 0
     });
     const [jobs, setJobs] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         document.title = 'AI Hiring OS - HR Dashboard';
@@ -51,8 +50,6 @@ const DashboardHR = () => {
             });
         } catch (error) {
             console.error(error);
-        } finally {
-            setIsLoading(false);
         }
     };
 
@@ -62,12 +59,6 @@ const DashboardHR = () => {
                 staggerChildren: 0.1
             }
         }
-    };
-
-    const itemVariants = {
-        initial: { opacity: 0, y: 20 },
-        animate: { opacity: 1, y: 0 },
-        transition: { duration: 0.5, cubicBezier: [0.16, 1, 0.3, 1] }
     };
 
     return (
@@ -109,7 +100,7 @@ const DashboardHR = () => {
                             {jobs.map(job => (
                                 <Link 
                                     key={job.id} 
-                                    to={`/jobs/${job.id}`}
+                                    to={`/candidates?job_id=${job.id}`}
                                     className="flex items-center justify-between p-5 rounded-3xl border border-slate-100 bg-white/50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 group"
                                 >
                                     <div className="flex items-center gap-4">
@@ -186,7 +177,7 @@ const DashboardHR = () => {
     );
 };
 
-const StatCard = ({ icon: Icon, label, value, color, trend }) => (
+const StatCard = ({ icon: Icon, label, value, trend }) => (
     <motion.div 
         variants={{
             initial: { opacity: 0, y: 20 },

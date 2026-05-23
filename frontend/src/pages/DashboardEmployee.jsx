@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
-import { User, Mail, Building, Users, Shield, Calendar, MapPin, ExternalLink } from 'lucide-react';
+import { Mail, Building, Users, Shield, Calendar, MapPin, ExternalLink } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const DashboardEmployee = () => {

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
-import { Upload, ChevronRight, Brain, Loader2, X, CheckCircle2, FileText, Search, User, SlidersHorizontal, ArrowLeft } from 'lucide-react';
+import { Upload, ChevronRight, Brain, Loader2, CheckCircle2, FileText, Search, User, Users, SlidersHorizontal, ArrowLeft } from 'lucide-react';
 
 const Candidates = () => {
     const [searchParams] = useSearchParams();
@@ -311,21 +311,36 @@ const Candidates = () => {
     );
 };
 
-const ScoreProgress = ({ label, score, color }) => (
+const scoreColorClasses = {
+    indigo: {
+        text: 'text-indigo-600',
+        bar: 'bg-indigo-600',
+    },
+    violet: {
+        text: 'text-violet-600',
+        bar: 'bg-violet-600',
+    },
+};
+
+const ScoreProgress = ({ label, score, color }) => {
+    const colorClasses = scoreColorClasses[color] || scoreColorClasses.indigo;
+
+    return (
     <div className="space-y-3">
         <div className="flex justify-between items-end">
             <span className="text-sm font-black text-slate-700">{label}</span>
-            <span className={`text-lg font-black text-${color}-600`}>{score}%</span>
+            <span className={`text-lg font-black ${colorClasses.text}`}>{score}%</span>
         </div>
         <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
             <motion.div 
                 initial={{ width: 0 }}
                 animate={{ width: `${score}%` }}
                 transition={{ duration: 1.5, ease: "easeOut" }}
-                className={`h-full rounded-full bg-${color}-600`}
+                className={`h-full rounded-full ${colorClasses.bar}`}
             />
         </div>
     </div>
-);
+    );
+};
 
 export default Candidates;
