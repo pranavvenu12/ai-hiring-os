@@ -59,7 +59,13 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins_list(self) -> List[str]:
-        return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
+        origins = [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
+        # Always allow production Vercel frontend URLs in CORS checks
+        vercel_origins = ["https://ai-hiring-os.vercel.app", "https://ai-hiring-os.vercel.app/"]
+        for vo in vercel_origins:
+            if vo not in origins:
+                origins.append(vo)
+        return origins
 
     @property
     def is_production(self) -> bool:
