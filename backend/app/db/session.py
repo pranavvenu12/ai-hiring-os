@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from uuid import uuid4
+
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -22,6 +24,7 @@ engine = create_async_engine(
         **({"ssl": "require"} if settings.is_production else {}),
         "statement_cache_size": 0,
         "prepared_statement_cache_size": 0,
+        "prepared_statement_name_func": lambda: f"__asyncpg_{uuid4().hex}__",
     },
 )
 
