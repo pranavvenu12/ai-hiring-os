@@ -21,6 +21,7 @@ engine = create_async_engine(
     connect_args={
         **({"ssl": "require"} if settings.is_production else {}),
         "statement_cache_size": 0,
+        "prepared_statement_cache_size": 0,
     },
 )
 
