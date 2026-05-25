@@ -24,7 +24,9 @@ export const AuthProvider = ({ children }) => {
 
         const token = localStorage.getItem('token');
         if (token && !user) {
-            fetchUser();
+            fetchUser().catch(err => {
+                console.log('Failed to fetch user on mount:', err.detail || err.message || err);
+            });
         } else {
             setLoading(false);
         }
@@ -35,8 +37,13 @@ export const AuthProvider = ({ children }) => {
             const data = await api.get('/me');
             setUser(data);
             localStorage.setItem('user', JSON.stringify(data));
+            return data;
         } catch (error) {
-            logout();
+            const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/signup';
+            if (!isAuthPage) {
+                logout();
+            }
+            throw error;
         } finally {
             setLoading(false);
         }
@@ -61,7 +68,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, signup, logout, loading }}>
+        <AuthContext.Provider value={{ user, login, signup, logout, loading, fetchUser }}>
             {children}
         </AuthContext.Provider>
     );

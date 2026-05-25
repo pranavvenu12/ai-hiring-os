@@ -10,7 +10,7 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const { login, user } = useAuth();
+    const { login, user, loading } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -23,9 +23,17 @@ const Login = () => {
         }
     }, [user, navigate]);
 
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('oauth') === 'true' && !loading && !user && localStorage.getItem('token')) {
+            // Unregistered Google user: redirect to signup to collect onboarding details
+            navigate('/signup?oauth=true');
+        }
+    }, [user, loading, navigate]);
+
     const handleGoogleLogin = async () => {
         try {
-            const redirectUri = `${window.location.origin}`;
+            const redirectUri = `${window.location.origin}/login?oauth=true`;
             const data = await api.get(`/auth/google?redirect_to=${encodeURIComponent(redirectUri)}`);
             if (data && data.url) {
                 window.location.href = data.url;

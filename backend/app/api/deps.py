@@ -54,38 +54,10 @@ async def get_current_user(
 
     user = await user_service.get_user_by_supabase_uid(db, token_data.sub)
     if user is None and token_data.email:
-        # Fallback 1: Find by email and sync UID
+        # Fallback: Find by email and sync UID
         user = await user_service.get_user_by_email(db, token_data.email)
         if user:
             user = await user_service.sync_supabase_uid(db, user, token_data.sub)
-        else:
-            # Fallback 2: Auto-provision new workspace and user profile on first OAuth sign-in
-            try:
-                from app.services import company_service
-                from app.schemas.company import CompanyCreate
-                from app.schemas.user import UserCreate
-                
-                # 1. Create a default company for them
-                display_name = token_data.email.split('@')[0].capitalize()
-                company = await company_service.create_company(
-                    db, CompanyCreate(name=f"{display_name}'s Workspace")
-                )
-                
-                # 2. Create the user as HR / Admin of their own company
-                user = await user_service.create_user(
-                    db,
-                    UserCreate(
-                        email=token_data.email,
-                        name=display_name,
-                        role=Role.HR, # Default role for new sign-ups
-                        company_id=company.id,
-                    ),
-                    supabase_uid=token_data.sub,
-                )
-                await db.commit()
-            except Exception as e:
-                # If auto-provisioning fails, raise the original 401
-                pass
 
     if user is None:
         raise HTTPException(

@@ -8,12 +8,14 @@ from __future__ import annotations
 
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.supabase_auth import (
     get_google_oauth_url,
     sign_in_with_email,
     sign_up_with_email,
+    verify_jwt,
 )
 from pydantic import BaseModel, EmailStr
 from app.core.security import Role
@@ -22,6 +24,13 @@ from app.schemas.auth import AuthResponse
 from app.services import user_service
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+security = HTTPBearer(auto_error=False)
+
+class GoogleSignupRequest(BaseModel):
+    """Extra onboarding details for Google sign-up."""
+    role: Role
+    company_name: str
+    name: str | None = None
 
 
 class LoginRequest(BaseModel):
@@ -166,3 +175,70 @@ async def google_oauth(redirect_to: str = "http://localhost:3000/auth/callback")
         )
 
     return {"url": url}
+
+
+@router.post("/signup-google", status_code=status.HTTP_201_CREATED)
+async def signup_google(
+    payload: GoogleSignupRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security)],
+):
+    """
+    Onboard a user authenticated via Google OAuth:
+    1. Verify the Supabase JWT.
+    2. Extract email/UID.
+    3. Create Company and local User record.
+    """
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authentication token",
+        )
+
+    try:
+        token_data = verify_jwt(credentials.credentials)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid token: {exc}"
+        )
+
+    # Check if user already exists
+    existing_user = await user_service.get_user_by_email(db, token_data.email)
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User already registered.",
+        )
+
+    # 1. Create Company
+    from app.services import company_service
+    from app.schemas.company import CompanyCreate
+    
+    company = await company_service.create_company(
+        db, CompanyCreate(name=payload.company_name)
+    )
+
+    # 2. Extract Name from token or fallback
+    name = payload.name or token_data.email.split('@')[0].capitalize()
+
+    # 3. Create User
+    from app.schemas.user import UserCreate
+    user = await user_service.create_user(
+        db,
+        UserCreate(
+            email=token_data.email,
+            name=name,
+            role=payload.role,
+            company_id=company.id,
+        ),
+        supabase_uid=token_data.sub,
+    )
+    
+    await db.commit()
+
+    return {
+        "message": "Google signup onboarding successful.",
+        "user_id": str(user.id),
+        "company_id": str(company.id),
+    }

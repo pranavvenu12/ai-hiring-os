@@ -26,9 +26,14 @@ api.interceptors.response.use(response => {
     return response.data;
 }, error => {
     if (error.response && error.response.status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
+        const isMeEndpoint = error.config.url && error.config.url.includes('/me');
+        const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/signup';
+        
+        if (!isMeEndpoint && !isAuthPage) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        }
     }
     return Promise.reject(error.response ? error.response.data : error);
 });
