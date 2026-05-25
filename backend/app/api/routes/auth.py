@@ -33,6 +33,16 @@ class GoogleSignupRequest(BaseModel):
     name: str | None = None
 
 
+class GoogleSignupResponse(BaseModel):
+    """Response returned after Google onboarding completes."""
+
+    message: str
+    user_id: str
+    company_id: str
+    redirect_to: str
+    onboarding_complete: bool = True
+
+
 class LoginRequest(BaseModel):
     """Email + password login payload."""
 
@@ -177,7 +187,7 @@ async def google_oauth(redirect_to: str = "http://localhost:3000/auth/callback")
     return {"url": url}
 
 
-@router.post("/signup-google", status_code=status.HTTP_201_CREATED)
+@router.post("/signup-google", response_model=GoogleSignupResponse, status_code=status.HTTP_201_CREATED)
 async def signup_google(
     payload: GoogleSignupRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -237,8 +247,9 @@ async def signup_google(
     
     await db.commit()
 
-    return {
-        "message": "Google signup onboarding successful.",
-        "user_id": str(user.id),
-        "company_id": str(company.id),
-    }
+    return GoogleSignupResponse(
+        message="Google signup onboarding successful.",
+        user_id=str(user.id),
+        company_id=str(company.id),
+        redirect_to=f"/dashboard/{user.role.lower()}",
+    )

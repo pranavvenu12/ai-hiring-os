@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Rocket, Loader2, BadgeCheck, Briefcase, User, Mail, Lock, Building, UserPlus, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import { clearGoogleOAuthFlow, decodeJwtPayload, getGoogleOAuthFlow, setGoogleOAuthFlow } from '../utils/auth';
 
 const Signup = () => {
     const [role, setRole] = useState('');
@@ -31,23 +32,24 @@ const Signup = () => {
         // Detect if there's an OAuth token in local storage and parse user info
         const handleOAuthToken = () => {
             const token = localStorage.getItem('token');
-            if (token) {
-                try {
-                    const payload = JSON.parse(atob(token.split('.')[1]));
-                    if (payload && payload.email) {
-                        setEmail(payload.email);
-                        if (payload.user_metadata?.full_name) {
-                            setName(payload.user_metadata.full_name);
-                        } else if (payload.user_metadata?.name) {
-                            setName(payload.user_metadata.name);
-                        } else {
-                            setName(payload.email.split('@')[0].replace(/[^a-zA-Z]/g, ' ').trim());
-                        }
-                        setIsGoogleVerified(true);
-                    }
-                } catch (e) {
-                    console.error("Failed to parse Google OAuth token:", e);
+            const flow = getGoogleOAuthFlow();
+
+            if (!token || flow !== 'signup') {
+                setIsGoogleVerified(false);
+                return;
+            }
+
+            const payload = decodeJwtPayload(token);
+            if (payload && payload.email) {
+                setEmail(payload.email);
+                if (payload.user_metadata?.full_name) {
+                    setName(payload.user_metadata.full_name);
+                } else if (payload.user_metadata?.name) {
+                    setName(payload.user_metadata.name);
+                } else {
+                    setName(payload.email.split('@')[0].replace(/[^a-zA-Z]/g, ' ').trim());
                 }
+                setIsGoogleVerified(true);
             }
         };
 
@@ -56,6 +58,7 @@ const Signup = () => {
 
     const handleGoogleLogin = async () => {
         try {
+            setGoogleOAuthFlow('signup');
             const redirectUri = `${window.location.origin}/signup?oauth=true`;
             const data = await api.get(`/auth/google?redirect_to=${encodeURIComponent(redirectUri)}`);
             if (data && data.url) {
@@ -73,7 +76,7 @@ const Signup = () => {
         try {
             if (isGoogleVerified) {
                 const token = localStorage.getItem('token');
-                await api.post('/auth/signup-google', {
+                const result = await api.post('/auth/signup-google', {
                     role,
                     company_name: companyName,
                     name: name
@@ -83,6 +86,11 @@ const Signup = () => {
                     }
                 });
                 await fetchUser();
+                clearGoogleOAuthFlow();
+                if (result?.redirect_to) {
+                    navigate(result.redirect_to);
+                    return;
+                }
             } else {
                 await signup({ name, email, password, role, company_name: companyName });
             }
@@ -261,6 +269,7 @@ const Signup = () => {
                             <button 
                                 onClick={() => {
                                     localStorage.removeItem('token');
+                                    clearGoogleOAuthFlow();
                                     setIsGoogleVerified(false);
                                     setEmail('');
                                     setName('');

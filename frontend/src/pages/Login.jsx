@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Rocket, Loader2, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import { clearGoogleOAuthFlow, getGoogleOAuthFlow, setGoogleOAuthFlow } from '../utils/auth';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -26,13 +27,16 @@ const Login = () => {
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         if (params.get('oauth') === 'true' && !loading && !user && localStorage.getItem('token')) {
-            // Unregistered Google user: redirect to signup to collect onboarding details
-            navigate('/signup?oauth=true');
+            const flow = getGoogleOAuthFlow();
+            if (flow === 'signup') {
+                navigate('/signup?oauth=true', { replace: true });
+            }
         }
     }, [user, loading, navigate]);
 
     const handleGoogleLogin = async () => {
         try {
+            setGoogleOAuthFlow('login');
             const redirectUri = `${window.location.origin}/login?oauth=true`;
             const data = await api.get(`/auth/google?redirect_to=${encodeURIComponent(redirectUri)}`);
             if (data && data.url) {
@@ -48,6 +52,7 @@ const Login = () => {
         setIsLoading(true);
         try {
             await login(email, password);
+            clearGoogleOAuthFlow();
             const user = JSON.parse(localStorage.getItem('user'));
             navigate(`/dashboard/${user.role.toLowerCase()}`);
         } catch (err) {
