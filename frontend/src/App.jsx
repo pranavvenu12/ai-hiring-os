@@ -7,6 +7,8 @@ import Signup from './pages/Signup';
 import DashboardHR from './pages/DashboardHR';
 import DashboardManager from './pages/DashboardManager';
 import DashboardEmployee from './pages/DashboardEmployee';
+import Settings from './pages/Settings';
+import HelpCenter from './pages/HelpCenter';
 import Jobs from './pages/Jobs';
 import Candidates from './pages/Candidates';
 import { Loader2 } from 'lucide-react';
@@ -29,12 +31,30 @@ const ProtectedRoute = ({ children, roles }) => {
     return children;
 };
 
+const LandingRoute = () => {
+    const { user, loading } = useAuth();
+
+    if (loading) {
+        return (
+            <div className="h-screen w-screen flex items-center justify-center bg-slate-50">
+                <Loader2 className="animate-spin text-indigo-600" size={40} />
+            </div>
+        );
+    }
+
+    if (user) {
+        return <Navigate to={`/dashboard/${user.role.toLowerCase()}`} replace />;
+    }
+
+    return <Landing />;
+};
+
 function App() {
     return (
         <AuthProvider>
             <Router>
                 <Routes>
-                    <Route path="/" element={<Landing />} />
+                    <Route path="/" element={<LandingRoute />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/signup" element={<Signup />} />
                     
@@ -57,6 +77,24 @@ function App() {
                     <Route path="/dashboard/employee" element={
                         <ProtectedRoute roles={['employee']}>
                             <DashboardEmployee />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/employees" element={
+                        <ProtectedRoute roles={['admin', 'hr', 'employee']}>
+                            <DashboardEmployee />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/settings" element={
+                        <ProtectedRoute roles={['admin', 'hr', 'manager', 'employee']}>
+                            <Settings />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/help" element={
+                        <ProtectedRoute roles={['admin', 'hr', 'manager', 'employee']}>
+                            <HelpCenter />
                         </ProtectedRoute>
                     } />
 

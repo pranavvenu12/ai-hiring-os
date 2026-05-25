@@ -5,6 +5,7 @@ import Topbar from '../components/Topbar';
 import api from '../services/api';
 import { Plus, Briefcase, ExternalLink, Loader2, Search, Filter, MoreHorizontal, X, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { formatShortDate } from '../utils/date';
 
 const Jobs = () => {
     const [jobs, setJobs] = useState([]);
@@ -106,7 +107,7 @@ const Jobs = () => {
                                                 </div>
                                                 <div>
                                                     <div className="font-black text-slate-900 group-hover:text-indigo-600 transition-colors">{job.title}</div>
-                                                    <div className="text-xs font-bold text-slate-400 mt-0.5">Created on May 1, 2026</div>
+                                                    <div className="text-xs font-bold text-slate-400 mt-0.5">Created {formatShortDate(job.created_at)}</div>
                                                 </div>
                                             </div>
                                         </td>

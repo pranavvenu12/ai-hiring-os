@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
-import { Mail, Building, Users, Shield, Calendar, MapPin, ExternalLink } from 'lucide-react';
+import { Mail, Building, Users, Shield, Calendar, MapPin, ExternalLink, Globe, Layers3, UserCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const DashboardEmployee = () => {
@@ -54,9 +54,12 @@ const DashboardEmployee = () => {
                             
                             <div className="mt-10 pt-10 border-t border-slate-100 space-y-6 text-left">
                                 <InfoRow icon={Mail} label="Professional Email" value={user?.email} />
-                                <InfoRow icon={Building} label="Company Division" value={company?.name} />
-                                <InfoRow icon={MapPin} label="Location" value="Remote / SF Office" />
-                                <InfoRow icon={Calendar} label="Member Since" value="January 2026" />
+                                <InfoRow icon={Building} label="Company" value={company?.name} />
+                                <InfoRow icon={Layers3} label="Industry" value={company?.industry} />
+                                <InfoRow icon={MapPin} label="Location" value={company?.location} />
+                                <InfoRow icon={UserCheck} label="Team Size" value={company?.employee_count_range} />
+                                <InfoRow icon={Globe} label="Website" value={company?.website} />
+                                <InfoRow icon={Calendar} label="Member Since" value={company?.created_at ? new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(new Date(company.created_at)) : '—'} />
                             </div>
 
                             <button className="btn btn-secondary w-full justify-center mt-10 py-3.5 font-bold text-sm bg-white/50">
@@ -101,20 +104,18 @@ const DashboardEmployee = () => {
                             </div>
                         </div>
 
-                        {/* Recent Announcements Placeholder */}
                         <div className="glass-morphism rounded-[2.5rem] p-10 border border-white/50 shadow-2xl shadow-slate-200/50 bg-gradient-to-br from-white to-indigo-50/30">
                             <h3 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-3">
-                                <Shield size={20} className="text-indigo-600" /> Announcements
+                                <Shield size={20} className="text-indigo-600" /> Company Details
                             </h3>
-                            <div className="space-y-4">
-                                <div className="p-5 rounded-3xl bg-white border border-indigo-100 shadow-sm">
-                                    <div className="text-xs font-black text-indigo-500 uppercase tracking-widest mb-1">Company Update</div>
-                                    <p className="text-sm font-bold text-slate-700">The Q2 Hiring roadmap has been published. Review the details in the HR portal.</p>
-                                </div>
-                                <div className="p-5 rounded-3xl bg-white/50 border border-slate-100">
-                                    <div className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Policy Change</div>
-                                    <p className="text-sm font-medium text-slate-500">Updated remote work guidelines are now available in the employee handbook.</p>
-                                </div>
+                            <p className="text-sm text-slate-500 leading-relaxed mb-6">
+                                {company?.description || 'Add company details in Settings so the team can see the correct company profile here.'}
+                            </p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <DetailCard label="Contact Email" value={company?.contact_email || 'Not provided'} />
+                                <DetailCard label="Website" value={company?.website || 'Not provided'} />
+                                <DetailCard label="Location" value={company?.location || 'Not provided'} />
+                                <DetailCard label="Industry" value={company?.industry || 'Not provided'} />
                             </div>
                         </div>
                     </div>
@@ -133,6 +134,13 @@ const InfoRow = ({ icon: Icon, label, value }) => (
             <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5">{label}</div>
             <div className="text-sm font-black text-slate-700 truncate max-w-[200px]">{value || 'Loading...'}</div>
         </div>
+    </div>
+);
+
+const DetailCard = ({ label, value }) => (
+    <div className="rounded-2xl border border-slate-100 bg-white p-4">
+        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">{label}</div>
+        <div className="text-sm font-bold text-slate-700">{value}</div>
     </div>
 );
 

@@ -28,7 +28,7 @@ const Sidebar = () => {
     const SidebarContent = () => (
         <div className="flex flex-col h-full">
             <div className="flex items-center justify-between mb-10 px-4">
-                <Link to="/" className="flex items-center gap-3 group">
+                <Link to={`/dashboard/${user.role.toLowerCase()}`} className="flex items-center gap-3 group">
                     <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-600/30 group-hover:scale-110 transition-transform duration-300">
                         <Rocket className="text-white" size={22} />
                     </div>

@@ -5,6 +5,7 @@ import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
 import { Upload, ChevronRight, Brain, Loader2, CheckCircle2, FileText, Search, User, Users, SlidersHorizontal, ArrowLeft } from 'lucide-react';
+import { formatRelativeTime } from '../utils/date';
 
 const Candidates = () => {
     const [searchParams] = useSearchParams();
@@ -139,7 +140,7 @@ const Candidates = () => {
                                                 </div>
                                                 <div>
                                                     <div className="font-black text-slate-900 group-hover:text-indigo-600 transition-colors">{c.candidate_name}</div>
-                                                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Applied 2d ago</div>
+                                                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Applied {formatRelativeTime(c.created_at)}</div>
                                                 </div>
                                             </div>
                                         </td>
@@ -286,7 +287,6 @@ const Candidates = () => {
                                     </div>
                                 </div>
 
-                                {/* Experience Placeholder */}
                                 <div className="space-y-6 pt-6 border-t border-slate-100">
                                     <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest">Experience Summary</h4>
                                     <div className="p-6 rounded-[2rem] bg-slate-50 border border-slate-100">
@@ -294,10 +294,13 @@ const Candidates = () => {
                                             <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400">
                                                 <FileText size={20} />
                                             </div>
-                                            <div className="space-y-4 flex-1">
-                                                <div className="w-full h-3 bg-slate-200 rounded-full" />
-                                                <div className="w-5/6 h-3 bg-slate-200 rounded-full" />
-                                                <div className="w-4/6 h-3 bg-slate-100 rounded-full" />
+                                            <div className="space-y-2 flex-1">
+                                                <div className="text-sm font-bold text-slate-700 leading-relaxed">
+                                                    {selectedCandidate.summary || selectedCandidate.explanation || 'No summary available for this candidate yet.'}
+                                                </div>
+                                                <div className="text-xs font-medium text-slate-400">
+                                                    Resume uploaded {formatRelativeTime(selectedCandidate.created_at)}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

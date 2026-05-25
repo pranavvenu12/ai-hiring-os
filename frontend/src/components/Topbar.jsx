@@ -7,7 +7,7 @@ const Topbar = ({ title }) => {
     if (!user) return null;
 
     return (
-        <div className="h-20 flex items-center justify-between mb-8 sticky top-0 z-40">
+        <div className="h-20 flex items-center justify-between mb-8 relative z-20">
             <div>
                 <h1 className="text-3xl font-black text-slate-900 tracking-tight">{title}</h1>
                 <p className="text-sm font-medium text-slate-400">Welcome back, {user.name.split(' ')[0]}!</p>

@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import CurrentUser, require_roles
 from app.core.security import Role
 from app.db.session import get_db
-from app.schemas.company import CompanyCreate, CompanyOut
+from app.schemas.company import CompanyCreate, CompanyOut, CompanyUpdate
 from app.services import company_service
 
 router = APIRouter(prefix="/companies", tags=["Companies"])
@@ -41,11 +41,12 @@ async def list_companies(
     Other roles see only their own company.
     """
     if Role(current_user.role) == Role.ADMIN:
-        return await company_service.list_companies(db, skip=skip, limit=limit)
+        companies = await company_service.list_companies(db, skip=skip, limit=limit)
+        return [company_service.serialize_company(company) for company in companies]
 
     # Non-admin: return only their own company
     company = await company_service.get_company_by_id(db, current_user.company_id)
-    return [company] if company else []
+    return [company_service.serialize_company(company)] if company else []
 
 
 # ── POST /companies ──────────────────────────────────────────────
@@ -67,7 +68,7 @@ async def create_company(
     Only **Admin** users may create companies.
     """
     company = await company_service.create_company(db, payload)
-    return company
+    return company_service.serialize_company(company)
 
 
 # ── GET /companies/{company_id} ──────────────────────────────────
@@ -96,4 +97,37 @@ async def get_company(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Company not found.",
         )
-    return company
+    return company_service.serialize_company(company)
+
+
+# ── PUT /companies/{company_id} ─────────────────────────────────
+
+
+@router.put("/{company_id}", response_model=CompanyOut)
+async def update_company(
+    company_id: uuid.UUID,
+    payload: CompanyUpdate,
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Update editable company details for the current tenant."""
+    if Role(current_user.role) not in (Role.ADMIN, Role.HR):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only HR and Admin users can edit company details.",
+        )
+
+    if Role(current_user.role) != Role.ADMIN and company_id != current_user.company_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only edit your own company.",
+        )
+
+    updated = await company_service.update_company_details(db, company_id, payload)
+    if not updated:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Company not found.",
+        )
+
+    return company_service.serialize_company(updated)

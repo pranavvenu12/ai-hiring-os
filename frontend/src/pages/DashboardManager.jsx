@@ -50,7 +50,7 @@ const DashboardManager = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         <StatCard icon={Star} label="High Potential" value={candidates.length} color="indigo" />
                         <StatCard icon={Brain} label="AI Recommended" value={candidates.filter(c => c.score >= 85).length} color="violet" />
-                        <StatCard icon={Clock} label="Avg. Review Time" value="4.2h" color="emerald" />
+                        <StatCard icon={Clock} label="Candidates Reviewed" value={candidates.length} color="emerald" />
                     </div>
 
                     {/* Main Content */}

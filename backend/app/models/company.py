@@ -37,6 +37,12 @@ class Company(Base):
     # Relationships
     users = relationship("User", back_populates="company", lazy="selectin")
     jobs = relationship("Job", back_populates="company", cascade="all, delete-orphan")
+    profile = relationship(
+        "CompanyProfile",
+        back_populates="company",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
 
     def __repr__(self) -> str:
         return f"<Company id={self.id} name={self.name!r}>"
