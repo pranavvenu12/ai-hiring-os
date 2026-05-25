@@ -91,8 +91,8 @@ class Settings(BaseSettings):
         elif url.startswith("postgresql://"):
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
-        # Add pgbouncer-specific flag if using port 6543
-        if ":6543" in url and "prepared_statement_cache_size" not in url:
+        # Add pgbouncer-specific flag to disable statement caching
+        if "prepared_statement_cache_size" not in url:
             separator = "&" if "?" in url else "?"
             url = f"{url}{separator}prepared_statement_cache_size=0"
 
