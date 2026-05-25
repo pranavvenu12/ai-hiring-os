@@ -2,8 +2,9 @@ services:
   - type: web
     name: ai-hiring-os-backend
     env: python
+    plan: free
     buildCommand: "export PYTHON_VERSION=3.12.1 && export PYO3_USE_ABI3_FORWARD_COMPATIBILITY=1 && pip install -r backend/requirements.txt"
-    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port 10000
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: APP_ENV
         value: production
@@ -24,4 +25,8 @@ services:
       - key: DATABASE_URL
         sync: false
       - key: CORS_ORIGINS
+        sync: false
+      - key: AI_GEMINI_KEY
+        sync: false
+      - key: AI_HF_KEY
         sync: false

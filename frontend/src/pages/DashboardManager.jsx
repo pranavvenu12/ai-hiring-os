@@ -3,12 +3,11 @@ import { motion } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
-import { Users, CheckCircle2, XCircle, Star, Brain, ArrowUpRight, TrendingUp, Clock } from 'lucide-react';
+import { CheckCircle2, XCircle, Star, Brain, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const DashboardManager = () => {
     const [candidates, setCandidates] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         document.title = 'AI Hiring OS - Manager Dashboard';
@@ -25,7 +24,6 @@ const DashboardManager = () => {
             }
             setCandidates(allCands);
         } catch (error) { console.error(error); }
-        finally { setIsLoading(false); }
     };
 
     const containerVariants = {
@@ -122,15 +120,33 @@ const DashboardManager = () => {
     );
 };
 
-const StatCard = ({ icon: Icon, label, value, color }) => (
+const statColorClasses = {
+    indigo: {
+        accent: 'bg-indigo-500/5',
+        icon: 'group-hover:text-indigo-600',
+    },
+    violet: {
+        accent: 'bg-violet-500/5',
+        icon: 'group-hover:text-violet-600',
+    },
+    emerald: {
+        accent: 'bg-emerald-500/5',
+        icon: 'group-hover:text-emerald-600',
+    },
+};
+
+const StatCard = ({ icon: Icon, label, value, color }) => {
+    const colorClasses = statColorClasses[color] || statColorClasses.indigo;
+
+    return (
     <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="glass-morphism p-8 rounded-[2.5rem] border border-white/50 relative overflow-hidden group"
     >
-        <div className={`absolute top-0 right-0 w-32 h-32 bg-${color}-500/5 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-700`} />
+        <div className={`absolute top-0 right-0 w-32 h-32 ${colorClasses.accent} rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-700`} />
         <div className="flex items-start justify-between mb-8">
-            <div className={`w-12 h-12 bg-white rounded-2xl shadow-sm border border-slate-50 flex items-center justify-center text-slate-400 group-hover:text-${color}-600 group-hover:scale-110 transition-all duration-300`}>
+            <div className={`w-12 h-12 bg-white rounded-2xl shadow-sm border border-slate-50 flex items-center justify-center text-slate-400 ${colorClasses.icon} group-hover:scale-110 transition-all duration-300`}>
                 <Icon size={24} />
             </div>
             <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-widest">
@@ -142,6 +158,7 @@ const StatCard = ({ icon: Icon, label, value, color }) => (
             <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">{label}</p>
         </div>
     </motion.div>
-);
+    );
+};
 
 export default DashboardManager;
