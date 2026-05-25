@@ -60,6 +60,12 @@ class SignupRequest(BaseModel):
     company_name: str | None = "My Company"
 
 
+def _get_supabase_user_by_email(client, email: str):
+    """Return the Supabase auth user for an email if it exists."""
+    sb_users = client.auth.admin.list_users()
+    return next((u for u in sb_users if u.email == email), None)
+
+
 @router.post("/login", response_model=AuthResponse)
 async def login(
     payload: LoginRequest,
@@ -105,32 +111,25 @@ async def signup(
     """
     # 0. Check if user already exists in local DB
     existing_user = await user_service.get_user_by_email(db, payload.email)
-    if existing_user and existing_user.supabase_uid:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User already registered.",
-        )
 
-    # 1. Supabase Register
+    # 1. Supabase Register or re-link existing account
     try:
         sb_result = sign_up_with_email(payload.email, payload.password)
         supabase_uid = str(sb_result["user"].id)
     except Exception as exc:
-        # If user exists in Supabase but we didn't find them in DB with UID, 
-        # it might be a partial registration. We try to continue.
         if "already" in str(exc).lower():
-            # Try to get the user from Supabase to get the UID
             from app.auth.supabase_auth import get_supabase_client
             client = get_supabase_client()
-            # This is a bit hacky but works for demo: list users and find by email
-            # In production, you'd use a more direct method if available
-            sb_users = client.auth.admin.list_users()
-            matching_user = next((u for u in sb_users if u.email == payload.email), None)
+            matching_user = _get_supabase_user_by_email(client, payload.email)
             if matching_user:
                 supabase_uid = str(matching_user.id)
-                # Confirm email if not already confirmed
-                if not matching_user.email_confirmed_at:
-                    client.auth.admin.update_user_by_id(supabase_uid, attributes={"email_confirm": True})
+                client.auth.admin.update_user_by_id(
+                    supabase_uid,
+                    attributes={
+                        "password": payload.password,
+                        "email_confirm": True,
+                    },
+                )
             else:
                 raise HTTPException(status_code=400, detail=f"Supabase error: {exc}")
         else:
@@ -139,26 +138,49 @@ async def signup(
                 detail=f"Supabase registration failed: {exc}",
             )
 
-    # 2. Create Company
+    # 2. Create or reuse company
     from app.services import company_service
     from app.schemas.company import CompanyCreate
-    
-    company = await company_service.create_company(
-        db, CompanyCreate(name=payload.company_name or f"{payload.name}'s Org")
-    )
 
-    # 3. Create User
+    if existing_user:
+        company = await company_service.get_company_by_id(db, existing_user.company_id)
+        if company and payload.company_name and company.name != payload.company_name:
+            company.name = payload.company_name
+            await db.flush()
+    else:
+        company = await company_service.create_company(
+            db, CompanyCreate(name=payload.company_name or f"{payload.name}'s Org")
+        )
+
+    if company is None and existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Associated company not found for existing account.",
+        )
+
+    # 3. Create or update user
     from app.schemas.user import UserCreate
-    user = await user_service.create_user(
-        db,
-        UserCreate(
-            email=payload.email,
-            name=payload.name,
-            role=payload.role,
-            company_id=company.id,
-        ),
-        supabase_uid=supabase_uid,
-    )
+
+    if existing_user:
+        existing_user.name = payload.name
+        existing_user.role = payload.role.value
+        if company:
+            existing_user.company_id = company.id
+        existing_user.supabase_uid = supabase_uid
+        existing_user.is_active = True
+        user = existing_user
+        await db.flush()
+    else:
+        user = await user_service.create_user(
+            db,
+            UserCreate(
+                email=payload.email,
+                name=payload.name,
+                role=payload.role,
+                company_id=company.id,
+            ),
+            supabase_uid=supabase_uid,
+        )
     
     await db.commit()
 
@@ -216,34 +238,63 @@ async def signup_google(
     # Check if user already exists
     existing_user = await user_service.get_user_by_email(db, token_data.email)
     if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User already registered.",
-        )
+        if existing_user.supabase_uid and existing_user.supabase_uid != token_data.sub:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User already registered.",
+            )
+
+        if not existing_user.supabase_uid:
+            existing_user.supabase_uid = token_data.sub
+            existing_user.is_active = True
+            await db.flush()
 
     # 1. Create Company
     from app.services import company_service
     from app.schemas.company import CompanyCreate
-    
-    company = await company_service.create_company(
-        db, CompanyCreate(name=payload.company_name)
-    )
+
+    if existing_user:
+        company = await company_service.get_company_by_id(db, existing_user.company_id)
+        if company and payload.company_name and company.name != payload.company_name:
+            company.name = payload.company_name
+            await db.flush()
+    else:
+        company = await company_service.create_company(
+            db, CompanyCreate(name=payload.company_name)
+        )
+
+    if company is None and existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Associated company not found for existing account.",
+        )
 
     # 2. Extract Name from token or fallback
     name = payload.name or token_data.email.split('@')[0].capitalize()
 
     # 3. Create User
     from app.schemas.user import UserCreate
-    user = await user_service.create_user(
-        db,
-        UserCreate(
-            email=token_data.email,
-            name=name,
-            role=payload.role,
-            company_id=company.id,
-        ),
-        supabase_uid=token_data.sub,
-    )
+
+    if existing_user:
+        existing_user.name = name
+        existing_user.role = payload.role.value
+        if company:
+            existing_user.company_id = company.id
+        existing_user.supabase_uid = token_data.sub
+        existing_user.is_active = True
+        user = existing_user
+        await db.flush()
+    else:
+        user = await user_service.create_user(
+            db,
+            UserCreate(
+                email=token_data.email,
+                name=name,
+                role=payload.role,
+                company_id=company.id,
+            ),
+            supabase_uid=token_data.sub,
+        )
     
     await db.commit()
 
