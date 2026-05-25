@@ -11,6 +11,17 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        // Detect Supabase OAuth tokens in the hash fragment
+        const hash = window.location.hash;
+        if (hash && hash.includes('access_token=')) {
+            const tokenMatch = hash.match(/access_token=([^&]*)/);
+            if (tokenMatch && tokenMatch[1]) {
+                localStorage.setItem('token', tokenMatch[1]);
+                // Clear the hash from address bar to keep it clean
+                window.history.replaceState(null, null, window.location.pathname + window.location.search);
+            }
+        }
+
         const token = localStorage.getItem('token');
         if (token && !user) {
             fetchUser();
