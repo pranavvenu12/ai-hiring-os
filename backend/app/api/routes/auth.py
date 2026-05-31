@@ -133,9 +133,15 @@ async def signup(
             company.name = payload.company_name
             await db.flush()
     else:
-        company = await company_service.create_company(
-            db, CompanyCreate(name=payload.company_name or f"{payload.name}'s Org")
-        )
+        # Check if company already exists by name case-insensitively
+        company = None
+        if payload.company_name:
+            company = await company_service.get_company_by_name(db, payload.company_name)
+        
+        if not company:
+            company = await company_service.create_company(
+                db, CompanyCreate(name=payload.company_name or f"{payload.name}'s Org")
+            )
 
     if company is None and existing_user:
         raise HTTPException(
@@ -166,6 +172,39 @@ async def signup(
             ),
             supabase_uid=supabase_uid,
         )
+
+    # 4. Check or create employee profile for Managers/Employees
+    if payload.role.value in ["manager", "employee"]:
+        from sqlalchemy import select, func
+        from app.models.employee import Employee
+        # Check if HR already pre-created an employee record with this email
+        result = await db.execute(
+            select(Employee).where(
+                Employee.email == payload.email,
+                Employee.company_id == company.id
+            )
+        )
+        employee = result.scalar_one_or_none()
+        if employee:
+            # Link pre-created employee record to this new user account
+            employee.user_id = user.id
+        else:
+            # Auto-create employee record so the user profile exists immediately
+            from app.services.employee_service import _generate_employee_code
+            employee_code = await _generate_employee_code(db, company.id)
+            new_emp = Employee(
+                company_id=company.id,
+                user_id=user.id,
+                employee_code=employee_code,
+                full_name=payload.name,
+                email=payload.email,
+                department="Management" if payload.role.value == "manager" else "General",
+                designation="Manager" if payload.role.value == "manager" else "Employee",
+                joining_date=func.now(),
+                employment_type="full_time"
+            )
+            db.add(new_emp)
+        await db.flush()
     
     await db.commit()
 

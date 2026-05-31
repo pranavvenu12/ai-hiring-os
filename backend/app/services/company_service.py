@@ -46,6 +46,17 @@ async def get_company_by_id(db: AsyncSession, company_id: uuid.UUID) -> Company 
     return result.scalar_one_or_none()
 
 
+async def get_company_by_name(db: AsyncSession, name: str) -> Company | None:
+    """Fetch a company by name (case-insensitive)."""
+    from sqlalchemy import func
+    result = await db.execute(
+        select(Company)
+        .options(selectinload(Company.profile))
+        .where(func.lower(Company.name) == func.lower(name))
+    )
+    return result.scalar_one_or_none()
+
+
 async def list_companies(
     db: AsyncSession,
     *,
