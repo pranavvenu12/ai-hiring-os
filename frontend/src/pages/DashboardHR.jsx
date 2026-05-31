@@ -4,10 +4,12 @@ import { motion } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { Users, Briefcase, Star, ClipboardList, ArrowRight, Building2, MapPin, Globe, Mail, Layers3, UserCheck, Clock, TrendingUp, Brain, Mic } from 'lucide-react';
 import { formatRelativeTime, formatShortDate } from '../utils/date';
 
 const DashboardHR = () => {
+    const { user } = useAuth();
     const [stats, setStats] = useState({
         totalCandidates: 0,
         shortlisted: 0,
@@ -16,7 +18,23 @@ const DashboardHR = () => {
     });
     const [jobs, setJobs] = useState([]);
     const [recentCandidates, setRecentCandidates] = useState([]);
-    const [company, setCompany] = useState(null);
+    const [company, setCompany] = useState(() => {
+        try {
+            const savedUser = localStorage.getItem('user');
+            if (savedUser) {
+                const parsedUser = JSON.parse(savedUser);
+                if (parsedUser && parsedUser.company_id) {
+                    const cachedCompany = localStorage.getItem(`company_${parsedUser.company_id}`);
+                    if (cachedCompany) {
+                        return JSON.parse(cachedCompany);
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('Failed to parse user/company cache in HR dashboard:', e);
+        }
+        return null;
+    });
     const [loading, setLoading] = useState(true);
     const [hrmsStats, setHrmsStats] = useState({ totalEmployees: 0, attendanceToday: 0, avgPerformance: 0, interviewCompletion: 0 });
 
@@ -24,6 +42,15 @@ const DashboardHR = () => {
         document.title = 'AI Hiring OS - HR Dashboard';
         fetchData();
     }, []);
+
+    useEffect(() => {
+        if (user?.company_id) {
+            const cachedCompany = localStorage.getItem(`company_${user.company_id}`);
+            if (cachedCompany) {
+                setCompany(JSON.parse(cachedCompany));
+            }
+        }
+    }, [user]);
 
     const fetchData = async () => {
         try {
@@ -35,6 +62,9 @@ const DashboardHR = () => {
 
             setJobs(jobsData.slice(0, 5));
             setCompany(companyData);
+            if (currentUser?.company_id) {
+                localStorage.setItem(`company_${currentUser.company_id}`, JSON.stringify(companyData));
+            }
             
             let totalCands = 0;
             let highScorers = 0;

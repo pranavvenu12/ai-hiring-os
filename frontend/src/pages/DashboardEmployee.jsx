@@ -11,7 +11,23 @@ const DashboardEmployee = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     
-    const [company, setCompany] = useState(null);
+    const [company, setCompany] = useState(() => {
+        try {
+            const savedUser = localStorage.getItem('user');
+            if (savedUser) {
+                const parsedUser = JSON.parse(savedUser);
+                if (parsedUser && parsedUser.company_id) {
+                    const cachedCompany = localStorage.getItem(`company_${parsedUser.company_id}`);
+                    if (cachedCompany) {
+                        return JSON.parse(cachedCompany);
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('Failed to parse user/company cache in Employee dashboard:', e);
+        }
+        return null;
+    });
     const [employeeProfile, setEmployeeProfile] = useState(null);
     const [attendanceData, setAttendanceData] = useState({ today: {}, records: [] });
     const [performanceData, setPerformanceData] = useState({ reviews: [], avg_rating: 0 });
@@ -25,6 +41,15 @@ const DashboardEmployee = () => {
         }
     }, [user]);
 
+    useEffect(() => {
+        if (user?.company_id) {
+            const cachedCompany = localStorage.getItem(`company_${user.company_id}`);
+            if (cachedCompany) {
+                setCompany(JSON.parse(cachedCompany));
+            }
+        }
+    }, [user]);
+
     const fetchData = async () => {
         setLoading(true);
         setError(null);
@@ -32,6 +57,7 @@ const DashboardEmployee = () => {
             // Fetch company details
             const co = await api.get(`/companies/${user.company_id}`);
             setCompany(co);
+            localStorage.setItem(`company_${user.company_id}`, JSON.stringify(co));
 
             // Fetch employee profile details
             const empList = await api.get('/employees');
