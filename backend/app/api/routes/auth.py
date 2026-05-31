@@ -26,8 +26,6 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 security = HTTPBearer(auto_error=False)
 
 
-
-
 class LoginRequest(BaseModel):
     """Email + password login payload."""
 
@@ -42,7 +40,7 @@ class SignupRequest(BaseModel):
     email: EmailStr
     password: str
     role: Role
-    company_name: str | None = "My Company"
+    company_name: str | None = None
 
 
 def _get_supabase_user_by_email(client, email: str):
@@ -139,6 +137,11 @@ async def signup(
             company = await company_service.get_company_by_name(db, payload.company_name)
         
         if not company:
+            if payload.role.value not in ["hr", "admin"]:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Company '{payload.company_name}' is not registered. Only HR/Admins can register new company profiles. Please verify the spelling or ask your administrator to register your company first."
+                )
             company = await company_service.create_company(
                 db, CompanyCreate(name=payload.company_name or f"{payload.name}'s Org")
             )
