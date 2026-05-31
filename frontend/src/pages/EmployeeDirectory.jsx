@@ -4,6 +4,7 @@ import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { Search, Plus, User, Mail, Phone, Building, Calendar, ChevronRight, ArrowLeft, X, Briefcase, Filter } from 'lucide-react';
 
 const EmployeeDirectory = () => {
@@ -17,6 +18,7 @@ const EmployeeDirectory = () => {
     const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [showAddModal, setShowAddModal] = useState(false);
     const [page, setPage] = useState(0);
+    const { toast } = useToast();
     const limit = 20;
 
     const [newEmployee, setNewEmployee] = useState({
@@ -61,7 +63,8 @@ const EmployeeDirectory = () => {
             setNewEmployee({ full_name: '', email: '', phone: '', department: '', designation: '', employment_type: 'full_time', joining_date: '' });
             fetchEmployees();
             fetchDepartments();
-        } catch (err) { alert(err.detail || 'Failed to add employee'); }
+            toast.success('Employee added successfully!');
+        } catch (err) { toast.error(err.detail || 'Failed to add employee'); }
     };
 
     const isHROrAdmin = user && ['admin', 'hr'].includes(user.role.toLowerCase());

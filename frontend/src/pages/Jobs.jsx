@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
+import { useToast } from '../context/ToastContext';
 import { Plus, Briefcase, ExternalLink, Loader2, Search, Filter, MoreHorizontal, X, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatShortDate } from '../utils/date';
@@ -13,6 +14,7 @@ const Jobs = () => {
     const [newJob, setNewJob] = useState({ title: '', description: '' });
     const [isLoading, setIsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const { toast } = useToast();
 
     useEffect(() => {
         document.title = 'AI Hiring OS - Jobs';
@@ -34,7 +36,8 @@ const Jobs = () => {
             setIsModalOpen(false);
             setNewJob({ title: '', description: '' });
             fetchJobs();
-        } catch (err) { alert(err.detail || 'Failed to create job'); }
+            toast.success('Job posting published successfully!');
+        } catch (err) { toast.error(err.detail || 'Failed to create job'); }
         finally { setIsLoading(false); }
     };
 

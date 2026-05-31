@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
+import { useToast } from '../context/ToastContext';
 import { Upload, ChevronRight, Brain, Loader2, CheckCircle2, FileText, Search, User, Users, SlidersHorizontal, ArrowLeft, Mic, Award, AwardIcon, Star } from 'lucide-react';
 import { formatRelativeTime } from '../utils/date';
 
@@ -18,6 +19,7 @@ const Candidates = () => {
     const [isUploading, setIsUploading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const fileInputRef = useRef(null);
+    const { toast } = useToast();
     
     // Drawer tabs
     const [activeTab, setActiveTab] = useState('resume'); // 'resume' or 'interview'
@@ -83,7 +85,7 @@ const Candidates = () => {
     const handleUpload = async (e) => {
         const files = e.target.files;
         if (!files.length) return;
-        if (!jobId) { alert('Please select a job first'); return; }
+        if (!jobId) { toast.warning('Please select a job first'); return; }
 
         setIsUploading(true);
         const formData = new FormData();
@@ -94,7 +96,8 @@ const Candidates = () => {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             fetchCandidates();
-        } catch (err) { alert(err.detail || 'Upload failed'); }
+            toast.success('Resume(s) uploaded successfully! Parsing and scoring candidates...');
+        } catch (err) { toast.error(err.detail || 'Upload failed'); }
         finally { setIsUploading(false); }
     };
 

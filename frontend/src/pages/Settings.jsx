@@ -5,6 +5,7 @@ import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const emptyForm = {
     name: '',
@@ -18,6 +19,7 @@ const emptyForm = {
 
 const Settings = () => {
     const { user } = useAuth();
+    const { toast } = useToast();
     const [form, setForm] = useState(emptyForm);
     const [company, setCompany] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -64,9 +66,9 @@ const Settings = () => {
         try {
             const updated = await api.put(`/companies/${user.company_id}`, form);
             setCompany(updated);
-            window.alert('Company details saved.');
+            toast.success('Company details saved.');
         } catch (error) {
-            window.alert(error.detail || 'Failed to save company details');
+            toast.error(error.detail || 'Failed to save company details');
         } finally {
             setIsSaving(false);
         }

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Rocket, Loader2, BadgeCheck, Briefcase, User, Mail, Lock, Building, UserPlus, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const Signup = () => {
     const [role, setRole] = useState('');
@@ -13,6 +14,7 @@ const Signup = () => {
     const [companyName, setCompanyName] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const { signup, user } = useAuth();
+    const { toast } = useToast();
     const navigate = useNavigate();
 
     React.useEffect(() => {
@@ -27,14 +29,15 @@ const Signup = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!role) { alert('Please select a role'); return; }
+        if (!role) { toast.warning('Please select a role'); return; }
         setIsLoading(true);
         try {
             await signup({ name, email, password, role, company_name: companyName });
             const user = JSON.parse(localStorage.getItem('user'));
             navigate(`/dashboard/${user.role.toLowerCase()}`);
+            toast.success('Account created successfully!');
         } catch (err) {
-            alert(err.detail || 'Signup failed');
+            toast.error(err.detail || 'Signup failed');
         } finally {
             setIsLoading(false);
         }

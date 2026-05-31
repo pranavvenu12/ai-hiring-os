@@ -4,6 +4,7 @@ import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { Mic, MicOff, Send, Brain, Play, CheckCircle2, ArrowRight, Loader2, MessageSquare, BarChart3, Award, ChevronRight, Volume2 } from 'lucide-react';
 
 const InterviewAssistant = () => {
@@ -22,6 +23,7 @@ const InterviewAssistant = () => {
     const [starting, setStarting] = useState(false);
     const [completedSession, setCompletedSession] = useState(null);
     const [companyStats, setCompanyStats] = useState(null);
+    const { toast } = useToast();
     const recognitionRef = useRef(null);
 
     useEffect(() => {
@@ -68,7 +70,8 @@ const InterviewAssistant = () => {
             setSession(data);
             setCurrentQuestionIndex(0);
             setAnswerText('');
-        } catch (err) { alert(err.detail || 'Failed to start interview'); }
+            toast.success('AI Interview started! Speak or type your answers.');
+        } catch (err) { toast.error(err.detail || 'Failed to start interview'); }
         finally { setStarting(false); }
     };
 
@@ -85,7 +88,7 @@ const InterviewAssistant = () => {
                 setCurrentQuestionIndex(prev => prev + 1);
                 setAnswerText('');
             }
-        } catch (err) { alert(err.detail || 'Failed to submit answer'); }
+        } catch (err) { toast.error(err.detail || 'Failed to submit answer'); }
         finally { setSubmittingAnswer(false); }
     };
 
@@ -96,7 +99,8 @@ const InterviewAssistant = () => {
             setCompletedSession(data);
             setSession(null);
             fetchCompanyStats();
-        } catch (err) { alert(err.detail || 'Failed to complete interview'); }
+            toast.success('Interview complete! AI evaluation scorecards generated successfully.');
+        } catch (err) { toast.error(err.detail || 'Failed to complete interview'); }
         finally { setCompleting(false); }
     };
 
@@ -112,7 +116,7 @@ const InterviewAssistant = () => {
     const startRecording = () => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
-            alert('Speech recognition is not supported in this browser. Please use Chrome or Edge.');
+            toast.warning('Speech recognition is not supported in this browser. Please use Chrome or Edge.');
             return;
         }
 

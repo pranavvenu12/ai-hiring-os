@@ -4,10 +4,12 @@ import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { Star, TrendingUp, Users, BarChart3, Send, Award, ArrowUpRight } from 'lucide-react';
 
 const Performance = () => {
     const { user } = useAuth();
+    const { toast } = useToast();
     const [myPerformance, setMyPerformance] = useState({ reviews: [], avg_rating: 0 });
     const [teamReviews, setTeamReviews] = useState({ reviews: [] });
     const [companyPerformance, setCompanyPerformance] = useState(null);
@@ -58,7 +60,8 @@ const Performance = () => {
             setShowReviewForm(false);
             setReviewForm({ employee_id: '', rating: 3, strengths: '', improvements: '', comments: '' });
             fetchData();
-        } catch (err) { alert(err.detail || 'Failed to submit review'); }
+            toast.success('Performance review submitted successfully!');
+        } catch (err) { toast.error(err.detail || 'Failed to submit review'); }
         finally { setSubmitting(false); }
     };
 

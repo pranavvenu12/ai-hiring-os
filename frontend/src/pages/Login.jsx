@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Rocket, Loader2, Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -10,6 +11,7 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const { login, user } = useAuth();
+    const { toast } = useToast();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -29,8 +31,9 @@ const Login = () => {
             await login(email, password);
             const user = JSON.parse(localStorage.getItem('user'));
             navigate(`/dashboard/${user.role.toLowerCase()}`);
+            toast.success('Welcome back!');
         } catch (err) {
-            alert(err.detail || 'Login failed');
+            toast.error(err.detail || 'Login failed');
         } finally {
             setIsLoading(false);
         }

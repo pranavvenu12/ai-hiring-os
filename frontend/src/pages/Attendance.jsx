@@ -4,10 +4,12 @@ import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { Clock, LogIn, LogOut, CheckCircle2, XCircle, MinusCircle, Users, BarChart3, Calendar } from 'lucide-react';
 
 const Attendance = () => {
     const { user } = useAuth();
+    const { toast } = useToast();
     const [myAttendance, setMyAttendance] = useState({ today: {}, records: [] });
     const [teamAttendance, setTeamAttendance] = useState({ records: [] });
     const [companyAttendance, setCompanyAttendance] = useState(null);
@@ -47,7 +49,8 @@ const Attendance = () => {
         try {
             await api.post('/attendance/clock-in');
             fetchData();
-        } catch (err) { alert(err.detail || 'Failed to clock in'); }
+            toast.success('Successfully clocked in!');
+        } catch (err) { toast.error(err.detail || 'Failed to clock in'); }
         finally { setClockingIn(false); }
     };
 
@@ -56,7 +59,8 @@ const Attendance = () => {
         try {
             await api.post('/attendance/clock-out');
             fetchData();
-        } catch (err) { alert(err.detail || 'Failed to clock out'); }
+            toast.success('Successfully clocked out!');
+        } catch (err) { toast.error(err.detail || 'Failed to clock out'); }
         finally { setClockingOut(false); }
     };
 
