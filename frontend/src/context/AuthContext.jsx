@@ -1,6 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import api from '../services/api';
-import { clearGoogleOAuthFlow } from '../utils/auth';
 
 const AuthContext = createContext(null);
 
@@ -64,7 +63,6 @@ export const AuthProvider = ({ children }) => {
     const logout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        clearGoogleOAuthFlow();
         setUser(null);
         window.location.href = '/login';
     };

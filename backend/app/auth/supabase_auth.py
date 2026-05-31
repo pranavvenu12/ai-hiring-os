@@ -4,7 +4,6 @@ AI Hiring OS — Supabase Auth Integration
 Handles:
   • JWT token verification against Supabase JWT secret
   • Email/password sign-in / sign-up via Supabase REST API
-  • Google OAuth URL generation
 """
 
 from __future__ import annotations
@@ -85,14 +84,3 @@ def sign_in_with_email(email: str, password: str) -> dict:
         "user": response.user,
     }
 
-
-def get_google_oauth_url(redirect_to: str = "http://localhost:3000/auth/callback") -> str:
-    """Generate the Google OAuth redirect URL via Supabase."""
-    client = get_supabase_client()
-    response = client.auth.sign_in_with_oauth(
-        {
-            "provider": "google",
-            "options": {"redirect_to": redirect_to},
-        }
-    )
-    return response.url

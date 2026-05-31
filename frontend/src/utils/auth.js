@@ -1,5 +1,3 @@
-const GOOGLE_OAUTH_FLOW_KEY = 'google_oauth_flow';
-
 const decodeBase64Url = (value) => {
     const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
     const padding = normalized.length % 4;
@@ -17,12 +15,3 @@ export const decodeJwtPayload = (token) => {
     }
 };
 
-export const getGoogleOAuthFlow = () => localStorage.getItem(GOOGLE_OAUTH_FLOW_KEY);
-
-export const setGoogleOAuthFlow = (flow) => {
-    localStorage.setItem(GOOGLE_OAUTH_FLOW_KEY, flow);
-};
-
-export const clearGoogleOAuthFlow = () => {
-    localStorage.removeItem(GOOGLE_OAUTH_FLOW_KEY);
-};

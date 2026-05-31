@@ -12,7 +12,6 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.supabase_auth import (
-    get_google_oauth_url,
     sign_in_with_email,
     sign_up_with_email,
     verify_jwt,
@@ -26,21 +25,7 @@ from app.services import user_service
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 security = HTTPBearer(auto_error=False)
 
-class GoogleSignupRequest(BaseModel):
-    """Extra onboarding details for Google sign-up."""
-    role: Role
-    company_name: str
-    name: str | None = None
 
-
-class GoogleSignupResponse(BaseModel):
-    """Response returned after Google onboarding completes."""
-
-    message: str
-    user_id: str
-    company_id: str
-    redirect_to: str
-    onboarding_complete: bool = True
 
 
 class LoginRequest(BaseModel):
@@ -189,118 +174,3 @@ async def signup(
         "user_id": str(user.id),
         "company_id": str(company.id),
     }
-
-
-@router.get("/google")
-async def google_oauth(redirect_to: str = "http://localhost:3000/auth/callback"):
-    """
-    Return the Google OAuth redirect URL.
-
-    The frontend should navigate the user to this URL.
-    """
-    try:
-        url = get_google_oauth_url(redirect_to)
-    except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate OAuth URL: {exc}",
-        )
-
-    return {"url": url}
-
-
-@router.post("/signup-google", response_model=GoogleSignupResponse, status_code=status.HTTP_201_CREATED)
-async def signup_google(
-    payload: GoogleSignupRequest,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security)],
-):
-    """
-    Onboard a user authenticated via Google OAuth:
-    1. Verify the Supabase JWT.
-    2. Extract email/UID.
-    3. Create Company and local User record.
-    """
-    if not credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing authentication token",
-        )
-
-    try:
-        token_data = verify_jwt(credentials.credentials)
-    except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid token: {exc}"
-        )
-
-    # Check if user already exists
-    existing_user = await user_service.get_user_by_email(db, token_data.email)
-    if existing_user:
-        if existing_user.supabase_uid and existing_user.supabase_uid != token_data.sub:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User already registered.",
-            )
-
-        if not existing_user.supabase_uid:
-            existing_user.supabase_uid = token_data.sub
-            existing_user.is_active = True
-            await db.flush()
-
-    # 1. Create Company
-    from app.services import company_service
-    from app.schemas.company import CompanyCreate
-
-    if existing_user:
-        company = await company_service.get_company_by_id(db, existing_user.company_id)
-        if company and payload.company_name and company.name != payload.company_name:
-            company.name = payload.company_name
-            await db.flush()
-    else:
-        company = await company_service.create_company(
-            db, CompanyCreate(name=payload.company_name)
-        )
-
-    if company is None and existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Associated company not found for existing account.",
-        )
-
-    # 2. Extract Name from token or fallback
-    name = payload.name or token_data.email.split('@')[0].capitalize()
-
-    # 3. Create User
-    from app.schemas.user import UserCreate
-
-    if existing_user:
-        existing_user.name = name
-        existing_user.role = payload.role.value
-        if company:
-            existing_user.company_id = company.id
-        existing_user.supabase_uid = token_data.sub
-        existing_user.is_active = True
-        user = existing_user
-        await db.flush()
-    else:
-        user = await user_service.create_user(
-            db,
-            UserCreate(
-                email=token_data.email,
-                name=name,
-                role=payload.role,
-                company_id=company.id,
-            ),
-            supabase_uid=token_data.sub,
-        )
-    
-    await db.commit()
-
-    return GoogleSignupResponse(
-        message="Google signup onboarding successful.",
-        user_id=str(user.id),
-        company_id=str(company.id),
-        redirect_to=f"/dashboard/{user.role.lower()}",
-    )
