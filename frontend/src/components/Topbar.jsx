@@ -2,15 +2,55 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { Bell, Search, ChevronRight, Briefcase, Users, UserPlus, X } from 'lucide-react';
+import { Bell, Search, ChevronRight, Briefcase, Users, UserPlus, X, Settings, LogOut } from 'lucide-react';
 import { formatRelativeTime } from '../utils/date';
 
 const Topbar = ({ title }) => {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const panelRef = useRef(null);
+    const profileRef = useRef(null);
     const [isOpen, setIsOpen] = useState(false);
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+
+    const searchItems = useMemo(() => {
+        if (!user) return [];
+        const items = [
+            { name: 'Dashboard', path: `/dashboard/${user.role.toLowerCase()}`, category: 'Navigation' },
+            { name: 'Attendance Management', path: '/attendance', category: 'HRMS Module' },
+            { name: 'Performance Hub', path: '/performance', category: 'HRMS Module' },
+            { name: 'Account Settings', path: '/settings', category: 'System' },
+            { name: 'Help Center', path: '/help', category: 'System' },
+        ];
+
+        if (['admin', 'hr', 'manager'].includes(user.role)) {
+            items.push(
+                { name: 'Jobs Board', path: '/jobs', category: 'Hiring' },
+                { name: 'Candidate Database', path: '/candidates', category: 'Hiring' }
+            );
+        }
+
+        if (['admin', 'hr'].includes(user.role)) {
+            items.push(
+                { name: 'Employees Directory', path: '/employees', category: 'HRMS' },
+                { name: 'AI Interview Assistant', path: '/interviews', category: 'Hiring' }
+            );
+        }
+
+        return items;
+    }, [user]);
+
+    const filteredSearchItems = useMemo(() => {
+        if (!searchQuery.trim()) return [];
+        const query = searchQuery.toLowerCase();
+        return searchItems.filter(item => 
+            item.name.toLowerCase().includes(query) || 
+            item.category.toLowerCase().includes(query)
+        );
+    }, [searchQuery, searchItems]);
 
     const unreadCount = useMemo(
         () => notifications.filter((notification) => !notification.read).length,
@@ -27,11 +67,15 @@ const Topbar = ({ title }) => {
             if (panelRef.current && !panelRef.current.contains(event.target)) {
                 setIsOpen(false);
             }
+            if (profileRef.current && !profileRef.current.contains(event.target)) {
+                setIsProfileOpen(false);
+            }
         };
 
         const handleEscape = (event) => {
             if (event.key === 'Escape') {
                 setIsOpen(false);
+                setIsProfileOpen(false);
             }
         };
 
@@ -132,9 +176,50 @@ const Topbar = ({ title }) => {
             </div>
             
             <div className="flex items-center gap-6">
-                <div className="hidden md:flex items-center gap-3 bg-white/50 border border-slate-200 rounded-2xl px-4 py-2.5 w-[300px] focus-within:border-indigo-600 focus-within:ring-4 focus-within:ring-indigo-600/5 transition-all">
-                    <Search size={18} className="text-slate-400" />
-                    <input type="text" placeholder="Search anything..." className="bg-transparent outline-none w-full text-sm font-medium" />
+                <div className="hidden md:block relative w-[300px]">
+                    <div className="flex items-center gap-3 bg-white/50 border border-slate-200 rounded-2xl px-4 py-2.5 w-full focus-within:border-indigo-600 focus-within:ring-4 focus-within:ring-indigo-600/5 transition-all">
+                        <Search size={18} className="text-slate-400" />
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onFocus={() => setIsSearchFocused(true)}
+                            onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                            placeholder="Search anything..."
+                            className="bg-transparent outline-none w-full text-sm font-medium"
+                        />
+                        {searchQuery && (
+                            <button onClick={() => setSearchQuery('')} className="text-slate-400 hover:text-slate-600">
+                                <X size={14} />
+                            </button>
+                        )}
+                    </div>
+
+                    {isSearchFocused && searchQuery.trim() && (
+                        <div className="absolute left-0 right-0 mt-2 rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-200/60 overflow-hidden py-2 z-50">
+                            <div className="px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-50 mb-1">
+                                Quick Navigation
+                            </div>
+                            {filteredSearchItems.length > 0 ? (
+                                filteredSearchItems.map((item, index) => (
+                                    <Link
+                                        key={index}
+                                        to={item.path}
+                                        className="flex items-center justify-between px-4 py-2 hover:bg-slate-50 text-slate-700 hover:text-indigo-600 transition-colors"
+                                    >
+                                        <span className="text-sm font-bold">{item.name}</span>
+                                        <span className="text-[10px] font-bold px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100 uppercase tracking-wider">
+                                            {item.category}
+                                        </span>
+                                    </Link>
+                                ))
+                            ) : (
+                                <div className="px-4 py-3 text-xs font-medium text-slate-400">
+                                    No sections found matching "{searchQuery}"
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 <div ref={panelRef} className="relative">
@@ -201,10 +286,44 @@ const Topbar = ({ title }) => {
                     )}
                 </div>
 
-                <div className="flex items-center gap-3 pl-6 border-l border-slate-200">
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-indigo-600 text-white font-black shadow-lg shadow-indigo-600/20">
+                <div ref={profileRef} className="relative flex items-center gap-3 pl-6 border-l border-slate-200">
+                    <button
+                        type="button"
+                        onClick={() => setIsProfileOpen((v) => !v)}
+                        className="w-12 h-12 rounded-2xl flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-lg shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all duration-200"
+                        aria-label="User profile menu"
+                    >
                         {user.name.charAt(0)}
-                    </div>
+                    </button>
+
+                    {isProfileOpen && (
+                        <div className="absolute right-0 top-14 mt-2 w-56 rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-200/60 overflow-hidden py-1.5 z-50">
+                            <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+                                <div className="text-xs font-black text-slate-400 uppercase tracking-widest">Signed In As</div>
+                                <div className="text-sm font-black text-slate-800 truncate mt-1">{user.name}</div>
+                                <div className="text-[10px] font-bold text-slate-500 truncate mt-0.5">{user.email}</div>
+                            </div>
+                            <Link
+                                to="/settings"
+                                onClick={() => setIsProfileOpen(false)}
+                                className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
+                            >
+                                <Settings size={16} />
+                                Account Settings
+                            </Link>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsProfileOpen(false);
+                                    logout();
+                                }}
+                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-bold text-rose-600 hover:bg-rose-50 transition-colors text-left"
+                            >
+                                <LogOut size={16} />
+                                Sign Out
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
