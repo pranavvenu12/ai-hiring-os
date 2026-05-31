@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, companies, health, users, jobs
+from app.api.routes import auth, companies, health, users, jobs, employees, attendance, performance, interviews
 from app.core.config import get_settings
 from app.db.base import Base
 from app.db.session import engine
@@ -40,7 +40,8 @@ app = FastAPI(
     title=settings.APP_NAME,
     description=(
         "Multi-tenant AI-powered HR platform.\n\n"
-        "**Phase 1** — Authentication, RBAC, and tenant management."
+        "**Phase 5** — Intelligent HRMS Expansion: Employee Management, "
+        "Attendance, Performance Reviews, and AI Interview Assistant."
     ),
     version="1.0.0",
     docs_url="/docs",
@@ -65,6 +66,10 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(companies.router)
 app.include_router(jobs.router)
+app.include_router(employees.router)
+app.include_router(attendance.router)
+app.include_router(performance.router)
+app.include_router(interviews.router)
 
 
 # ── Root redirect ───────────────────────────────────────────────

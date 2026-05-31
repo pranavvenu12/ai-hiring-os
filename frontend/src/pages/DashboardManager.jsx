@@ -3,11 +3,13 @@ import { motion } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
-import { CheckCircle2, XCircle, Star, Brain, Clock } from 'lucide-react';
+import { CheckCircle2, XCircle, Star, Brain, Clock, Users, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const DashboardManager = () => {
     const [candidates, setCandidates] = useState([]);
+    const [teamAttendance, setTeamAttendance] = useState([]);
+    const [teamAvgRating, setTeamAvgRating] = useState(0);
 
     useEffect(() => {
         document.title = 'AI Hiring OS - Manager Dashboard';
@@ -23,6 +25,19 @@ const DashboardManager = () => {
                 allCands = allCands.concat(cands.filter(c => c.score > 70).map(c => ({...c, jobTitle: job.title})));
             }
             setCandidates(allCands);
+
+            // Fetch team HRMS data
+            try {
+                const attData = await api.get('/attendance/team');
+                setTeamAttendance(attData.records || []);
+            } catch (e) { console.error(e); }
+            try {
+                const perfData = await api.get('/performance/team');
+                const reviews = perfData.reviews || [];
+                if (reviews.length > 0) {
+                    setTeamAvgRating(+(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1));
+                }
+            } catch (e) { console.error(e); }
         } catch (error) { console.error(error); }
     };
 
@@ -47,11 +62,37 @@ const DashboardManager = () => {
                     className="space-y-10"
                 >
                     {/* Stats */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
                         <StatCard icon={Star} label="High Potential" value={candidates.length} color="indigo" />
                         <StatCard icon={Brain} label="AI Recommended" value={candidates.filter(c => c.score >= 85).length} color="violet" />
                         <StatCard icon={Clock} label="Candidates Reviewed" value={candidates.length} color="emerald" />
+                        <StatCard icon={Users} label="Team Present" value={teamAttendance.filter(r => r.status === 'present').length} color="indigo" />
+                        <StatCard icon={TrendingUp} label="Team Avg Rating" value={`${teamAvgRating}/5`} color="violet" />
                     </div>
+
+                    {/* Team Attendance Today */}
+                    {teamAttendance.length > 0 && (
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-morphism rounded-[2.5rem] p-8 border border-white/50">
+                            <h3 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-3">
+                                <Clock size={20} className="text-indigo-600" /> Team Attendance Today
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                {teamAttendance.map((r, i) => (
+                                    <div key={i} className="flex items-center gap-3 p-4 rounded-2xl bg-white/50 border border-slate-100">
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm ${
+                                            r.status === 'present' ? 'bg-emerald-50 text-emerald-600' :
+                                            r.status === 'half_day' ? 'bg-amber-50 text-amber-600' :
+                                            r.status === 'not_clocked_in' ? 'bg-slate-50 text-slate-400' : 'bg-rose-50 text-rose-600'
+                                        }`}>{r.employee_name?.charAt(0) || '?'}</div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-bold text-slate-900 text-sm truncate">{r.employee_name}</div>
+                                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{(r.status || 'not clocked in').replace('_', ' ')}</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
 
                     {/* Main Content */}
                     <div className="grid grid-cols-1 gap-8">

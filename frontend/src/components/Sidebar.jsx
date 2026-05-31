@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, Briefcase, Users, BadgeCheck, LogOut, Rocket, Settings, HelpCircle, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Users, BadgeCheck, LogOut, Rocket, Settings, HelpCircle, Menu, X, Clock, TrendingUp, Mic } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Sidebar = () => {
@@ -23,6 +23,15 @@ const Sidebar = () => {
 
     if (['admin', 'hr'].includes(user.role)) {
         navItems.push({ name: 'Employees', path: '/employees', icon: BadgeCheck });
+    }
+
+    navItems.push(
+        { name: 'Attendance', path: '/attendance', icon: Clock },
+        { name: 'Performance', path: '/performance', icon: TrendingUp },
+    );
+
+    if (['admin', 'hr'].includes(user.role)) {
+        navItems.push({ name: 'AI Interview', path: '/interviews', icon: Mic });
     }
 
     const SidebarContent = () => (

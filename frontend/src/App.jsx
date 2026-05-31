@@ -11,6 +11,10 @@ import Settings from './pages/Settings';
 import HelpCenter from './pages/HelpCenter';
 import Jobs from './pages/Jobs';
 import Candidates from './pages/Candidates';
+import EmployeeDirectory from './pages/EmployeeDirectory';
+import Attendance from './pages/Attendance';
+import Performance from './pages/Performance';
+import InterviewAssistant from './pages/InterviewAssistant';
 import { Loader2 } from 'lucide-react';
 
 const ProtectedRoute = ({ children, roles }) => {
@@ -81,8 +85,26 @@ function App() {
                     } />
 
                     <Route path="/employees" element={
-                        <ProtectedRoute roles={['admin', 'hr', 'employee']}>
-                            <DashboardEmployee />
+                        <ProtectedRoute roles={['admin', 'hr', 'manager']}>
+                            <EmployeeDirectory />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/attendance" element={
+                        <ProtectedRoute roles={['admin', 'hr', 'manager', 'employee']}>
+                            <Attendance />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/performance" element={
+                        <ProtectedRoute roles={['admin', 'hr', 'manager', 'employee']}>
+                            <Performance />
+                        </ProtectedRoute>
+                    } />
+
+                    <Route path="/interviews" element={
+                        <ProtectedRoute roles={['admin', 'hr']}>
+                            <InterviewAssistant />
                         </ProtectedRoute>
                     } />
 

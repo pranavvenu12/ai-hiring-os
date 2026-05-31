@@ -1,177 +1,177 @@
-# 🚀 AI Hiring OS | Smart Talent Acquisition Platform
+# AI Hiring OS
 
-![AI Hiring OS Banner](https://img.shields.io/badge/AI-Hiring--OS-indigo?style=for-the-badge&logo=rocket)
-![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
-
-AI Hiring OS is a production-grade SaaS platform designed to revolutionize the recruitment process. By leveraging advanced LLM-based evaluation and deterministic semantic matching, the system automates resume screening, scoring, and shortlisting, allowing HR teams to focus on people, not paperwork.
+AI Hiring OS is a production-grade, multi-tenant Software-as-a-Service (SaaS) platform built for modern enterprise recruitment and Human Resource Management (HRMS). By integrating state-of-the-art Artificial Intelligence (AI) scoring, automated resume parsing, interactive voice/text-based AI interviewers, and granular tenant-isolated employee, attendance, and performance modules, AI Hiring OS unites recruitment pipelines and internal workforce analytics under a single, highly performant architecture.
 
 ---
 
-## 📺 Project Demo
-*(Placeholder for Demo Video)*
+## 📖 Table of Contents
+*   [Overview](#overview)
+*   [Key Features](#key-features)
+*   [Screenshots & UI Showcase](#screenshots-section)
+*   [Architecture Overview](#architecture-overview)
+*   [Detailed Documentation Links](#documentation-links)
+*   [Installation & Setup](#installation)
+*   [Multi-role Access & RBAC](#multi-role-access)
+*   [AI & LLM Architecture](#ai-architecture)
+*   [Future Roadmap](#future-roadmap)
 
 ---
 
-## ❓ Problem Statement
-In modern recruitment, HR teams are overwhelmed by thousands of resumes for a single position. **Traditional screening is:**
-- **Time-Consuming**: Manually reviewing resumes takes weeks.
-- **Biased**: Human evaluation can be inconsistent and subjective.
-- **Inaccurate**: Key skills are often missed in non-standard resume formats.
-- **Scale-Limited**: Impossible to maintain quality as candidate volume grows.
+## 🔍 Overview
 
-## 💡 The Solution
-**AI Hiring OS** solves these challenges by providing an intelligent, automated pipeline:
-1. **Instant Parsing**: Multi-format PDF text extraction using high-fidelity pipelines.
-2. **Dual-Layer Evaluation**: Combines deterministic skill matching with deep semantic LLM analysis.
-3. **Role-Based Workflows**: Tailored dashboards for HR, Hiring Managers, and Employees to collaborate seamlessly.
-4. **Data-Driven Shortlisting**: Automatically identifies top-tier talent based on a "Human-in-the-loop" AI scoring model.
+Modern talent acquisition is fractured, relying on separate tools for job listings, applicant screening, interview coordinating, and employee tracking. AI Hiring OS bridges this gap by offering a singular workspace where candidates transition seamlessly from prospects to employees. 
+
+Backed by a secure, tenant-isolated architecture where all companies, applicants, and employees reside in fully segregated database contexts, the platform enables:
+1.  **AI-Powered Sourcing & Screener**: Multi-format resume extraction coupled with semantic matching against target job descriptions.
+2.  **Voice-Activated AI Interviewing**: Automatic interview setups where a browser-native voice screen collects candidate responses, generating full transcripts and multi-dimensional reports.
+3.  **Comprehensive HRMS Tools**: Attendance check-ins, performance scorecards, department trackers, and manager reviews.
 
 ---
 
-## 📊 Performance Metrics & Accuracy
-The system has been benchmarked against a diverse dataset of 5,000+ resumes across various industries (Tech, Finance, Healthcare).
+## ⚡ Key Features
 
-| Metric | Accuracy / Rate | Description |
-| :--- | :---: | :--- |
-| **Resume Parsing Accuracy** | 98.4% | Precision in extracting name, contact, and structural data. |
-| **Skill Match Precision** | 94.2% | Accuracy in identifying technical and soft skills from context. |
-| **Semantic Relevance Recall** | 92.8% | Ability to find relevant experience even with different phrasing. |
-| **Shortlisting Consistency** | 96.1% | Variance in scoring compared to human expert benchmarks. |
-| **Avg. Processing Time** | < 2.5s | Time taken to parse and score a single resume. |
-| **Overall System Accuracy** | **95.4%** | Weighted average across all evaluation modules. |
-
-### 📈 Metrics Visualization
-![AI Hiring OS Metrics](./docs/metrics_dashboard.png)
-*(Note: System performance improves over time as the LLM model fine-tunes to your company's specific hiring nuances.)*
+*   **Multi-Tenant Isolation**: Complete row-level database protection using structured tenant keys (`company_id`) that keep all files, listings, and employee profiles segregated.
+*   **Role-Based Access Control (RBAC)**: Fine-grained security profiles protecting APIs and user interfaces for **Admin**, **HR**, **Manager**, and **Employee** accounts.
+*   **Advanced AI Screening**: Parsing resumes, compiling skills profiles, assessing gap analyses, and scoring semantic alignment with targeted job postings.
+*   **AI Interview Assistant**: Live browser voice interface with speech-to-text integration, sequential dynamic question queues, and multi-dimensional (Technical, Communication, Confidence) rating reports.
+*   **Intelligent Attendance tracking**: Single click clock-in/out records with smart status determination (Present, Half-Day, Absent) based on logged active hours.
+*   **Star-Rating Appraisals**: Performance appraisal workflows with manager scorecards and team analytics.
+*   **Modern Premium Glassmorphism UI**: Beautifully designed dashboard workspaces built with React, Vite, TailwindCSS, and Framer Motion for premium user interactions.
 
 ---
 
-## 🌟 Key Advantages
-- **85% Time Savings**: Reduce screening time from days to minutes.
-- **Unbiased Selection**: Evaluation based purely on data and semantic fit.
-- **Glassmorphic UI**: High-end, modern interface designed for premium user experience.
-- **Fully Responsive**: Access the talent pool from your desktop or mobile phone.
-- **Scalable Infrastructure**: Built on FastAPI and Supabase for high-concurrency performance.
+## 📸 Screenshots Section
+
+Below are mockup representations of the core workspaces within AI Hiring OS:
+
+| Dashboard View | Employee Management | AI Interview Interface |
+| :--- | :--- | :--- |
+| ![HR Dashboard](https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80) | ![Employee Grid](https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=600&q=80) | ![AI Interview Session](https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80) |
 
 ---
 
-## 🏗️ System Architecture & Workflow
+## 🏗️ Architecture Overview
 
-AI Hiring OS is built on a modern, distributed architecture designed for speed, security, and intelligence.
-
-### High-Level Architecture
 ```mermaid
 graph TD
-    subgraph Client ["Frontend (The Beauty)"]
-        A[React + Vite] --> B[Framer Motion UI]
-        B --> C[Glassmorphic Dashboards]
-    end
-
-    subgraph Server ["Backend (The Brain)"]
-        D[FastAPI REST API] --> E[Supabase Auth/DB]
-        D --> F[AI Processing Pipeline]
-    end
-
-    subgraph AI_Engine ["AI Screening Pipeline"]
-        F --> G[PyMuPDF Extraction]
-        G --> H[Semantic Analysis]
-        H --> I[Deterministic Scoring]
-        I --> J[AI Insight Generation]
-    end
-
-    C <--> D
+    Client[React SPA - Vite + Tailwind] -->|HTTPS Requests + Bearer Token| Gateway[FastAPI API Gateway]
+    Gateway -->|JWT Auth & RBAC Checks| SupabaseAuth[Supabase Auth Service]
+    Gateway -->|Async SQL Session| DB[(Supabase PostgreSQL Database)]
+    Gateway -->|Semantic Analysis & Q&A| AI[LLM Service - Gemini / OpenAI]
+    DB -->|Isolated Queries by company_id| DB
 ```
 
-### The Evaluation Flow
-1. **Extraction**: Raw text is pulled from PDF resumes using high-fidelity parsing.
-2. **Deterministic Filter**: The system checks for "hard" skill requirements (e.g., Python, SQL).
-3. **Semantic Analysis**: Using LLM embeddings, the system understands context (e.g., recognizing that "Cloud Infrastructure" matches "AWS/Azure").
-4. **Scoring Engine**: A weighted score is generated based on both hard skills and semantic relevance.
+### Tech Stack Detail
+*   **Frontend**: React (18+), Vite, TailwindCSS, React Router, Lucide Icons, Framer Motion
+*   **Backend**: FastAPI, SQLAlchemy (Async), Pydantic (v2), Uvicorn
+*   **Database**: Supabase PostgreSQL, row-isolated architecture
+*   **Auth**: Supabase JWT Auth Verification
+*   **AI Integration**: Google Gemini API & OpenAI API integrations with robust schema-fallback structures
 
 ---
 
-## 🧩 Feature Deep-Dive
+## 📂 Documentation Links
 
-### 🔍 Deterministic vs. Semantic Matching
-Unlike standard ATS systems that rely on keyword stuffing, our engine uses a dual-layer approach:
-- **Deterministic**: Ensures the candidate has the mandatory certifications and tools.
-- **Semantic**: Evaluates the *depth* and *relevance* of experience, identifying high-quality candidates who might use different terminology.
+To explore the detailed design, engineering, and UX blueprints of the system, click on the links below:
 
-### 🔐 Role-Based Access Control (RBAC)
-- **HR/Admin**: Full control over jobs, candidates, and company-wide settings.
-- **Hiring Manager**: Focused view for reviewing and approving/rejecting shortlisted candidates.
-- **Employee**: Collaborative workspace for team-level interaction.
-
----
-
-## 🛠️ Tech Stack Detail
-
-| Component | Technology | Role |
-| :--- | :--- | :--- |
-| **Frontend Core** | React 18, Vite | High-performance SPA framework |
-| **Styling** | Tailwind CSS v4 | Utility-first styling with custom glassmorphism |
-| **Animations** | Framer Motion | Fluid, premium transitions and interactions |
-| **Backend API** | FastAPI | High-concurrency Python web framework |
-| **Database/Auth** | Supabase (PostgreSQL) | Scalable database and secure identity management |
-| **PDF Parsing** | PyMuPDF | Fast and accurate document text extraction |
-| **Icons** | Lucide React | Clean, consistent vector iconography |
+*   📄 [**Product Requirements Document (PRD)**](docs/PRD.md): Outlines user personas, stories, requirements, and key performance indicators (KPIs).
+*   📄 [**Technical Requirements Document (TRD)**](docs/TRD.md): Contains system designs, security setups, database patterns, and LLM retry fallback flows.
+*   📄 [**UI/UX Design Specification**](docs/UI_UX_DESIGN.md): Details colors, responsive structures, typography systems, and interaction tokens.
+*   📄 [**Application Flow Architecture**](docs/APP_FLOW.md): Includes visual user journeys and comprehensive system-level flowcharts.
+*   📄 [**Backend Database Schema**](docs/BACKEND_SCHEMA.md): Complete data definitions, constraints, indexes, ER diagrams, and endpoint configurations.
+*   📄 [**Implementation Plan**](docs/IMPLEMENTATION_PLAN.md): Outlines phased engineering stages, risk mitigations, validation checks, and milestones.
 
 ---
 
-## 📖 API Quick Reference
-
-For developers looking to integrate with the OS or build custom extensions:
-
-| Endpoint | Method | Description |
-| :--- | :--- | :--- |
-| `/jobs` | `GET` | List all open positions |
-| `/jobs/{id}/upload-resumes` | `POST` | Bulk upload resumes (Multipart Form) |
-| `/jobs/{id}/candidates` | `GET` | Retrieve candidates for a specific job |
-| `/candidates/{id}` | `GET` | Get detailed AI insights for a candidate |
-
----
-
-## 🛠️ Setup Guide
+## 🛠️ Installation
 
 ### Prerequisites
-- Python 3.9+
-- Node.js 18+
-- Supabase Account (for DB and Auth)
+*   Node.js (v18+)
+*   Python (v3.10+)
+*   PostgreSQL or a Supabase Database account
 
-### Backend Installation
-1. `cd backend`
-2. `pip install -r requirements.txt`
-3. Create a `.env` file with your `SUPABASE_URL` and `SUPABASE_KEY`.
-4. `python -m uvicorn app.main:app --reload`
+### Backend Setup
+1.  Navigate to the backend directory:
+    ```bash
+    cd backend
+    ```
+2.  Create and activate a virtual environment:
+    ```bash
+    python -m venv venv
+    # On Windows:
+    .\venv\Scripts\activate
+    # On Unix/macOS:
+    source venv/bin/activate
+    ```
+3.  Install dependencies:
+    ```bash
+    pip install -r requirements.txt
+    ```
+4.  Configure the environment file (`.env`):
+    ```env
+    APP_NAME="AI Hiring OS"
+    DATABASE_URL="postgresql+asyncpg://postgres:[password]@db.[supabase-project].supabase.co:5432/postgres"
+    SUPABASE_URL="https://[project-id].supabase.co"
+    SUPABASE_SERVICE_ROLE_KEY="eyJhbG..."
+    GEMINI_API_KEY="AIzaSy..."
+    OPENAI_API_KEY="sk-..."
+    ```
+5.  Launch the FastAPI server:
+    ```bash
+    uvicorn app.main:app --reload
+    ```
 
-### Frontend Installation
-1. `cd frontend`
-2. `npm install`
-3. `npm run dev`
+### Frontend Setup
+1.  Navigate to the frontend directory:
+    ```bash
+    cd frontend
+    ```
+2.  Install packages:
+    ```bash
+    npm install
+    ```
+3.  Configure the environment file (`.env`):
+    ```env
+    VITE_API_BASE_URL="http://127.0.0.1:8000"
+    ```
+4.  Run the Vite development server:
+    ```bash
+    npm run dev
+    ```
 
 ---
 
-## 🚀 Future Roadmap & Improvements
-- [ ] **AI Video Interviews**: Integrated screening via automated video assessment.
-- [ ] **Custom Scoring Logic**: Allow HR to weight specific skills dynamically per job.
-- [ ] **ATS Integrations**: One-click sync with Lever, Greenhouse, and Workday.
-- [ ] **Predictive Retention**: AI model to predict long-term candidate retention based on history.
+## 🔐 Multi-role Access
+
+AI Hiring OS enforces role-based endpoint validation dynamically. Roles align as follows:
+
+| Role | Navigation & Screens | Permission Scope |
+| :--- | :--- | :--- |
+| **Admin** / **HR** | Full HR Dashboard, Jobs, Candidates Pool, Employee Directory, Settings | Full administrative read/write, start AI interviews, add new jobs, add new employee profiles. |
+| **Manager** | Manager Dashboard, Candidates, Employees, Team Reviews, Attendance | Reads candidates, manages team attendance, logs appraisal scorecards for direct reports. |
+| **Employee** | Employee Portal, Clock In/Out, Performance Scorecard, Settings | Clock-in, profile update, personal attendance logs, view personal reviews. |
 
 ---
 
-## 🤝 Open for Collaboration
-We are actively looking for contributors to help build the future of AI recruitment! Whether you are an AI researcher, full-stack developer, or UI/UX designer, we welcome your input.
-- **Bug Reports**: Open an issue if you find a bug.
-- **Feature Requests**: Have a great idea? Let us know!
-- **Pull Requests**: Feel free to submit PRs for any improvements.
+## 🧠 AI Architecture
+
+1.  **Semantic Match Engine**: Evaluates applicant CV structures against targeted job listings utilizing custom prompt templates to return consistent JSON matching tables.
+2.  **Adaptive AI Interviewer**: Generates customized Q&A tracks derived from applicant resumes and the target JD. The system feeds questions dynamically, registers transcription responses, and evaluates answers to compute structured scorecard records.
+3.  **Graceful Fallback**: If LLM API limits are reached, the system falls back onto pre-compiled parsing templates, ensuring recruitment pipelines remain accessible.
 
 ---
 
-## 📜 License
-Distributed under the **MIT License**. See the `LICENSE` file for the full legal text.
+## 🗺️ Future Roadmap
+
+- [ ] **Automated PDF parsing with OCR** to bypass formatting limits of scans.
+- [ ] **AI-driven career advice chatbot** for candidates.
+- [ ] **Slack & Teams calendar integration** for interview coordination.
+- [ ] **Interactive candidate comparative analytics tool** for managers.
+- [ ] **Advanced HR payroll integrations**.
 
 ---
 
-**Built with ❤️ for the future of recruitment.**
+## 👥 Contributors
+
+*   **Pranav** - Lead Full Stack Architect & Project Owner
+*   **Antigravity** - Intelligent Coding Assistant (Google DeepMind Team)

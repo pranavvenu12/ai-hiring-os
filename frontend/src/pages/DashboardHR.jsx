@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
-import { Users, Briefcase, Star, ClipboardList, ArrowRight, Building2, MapPin, Globe, Mail, Layers3, UserCheck } from 'lucide-react';
+import { Users, Briefcase, Star, ClipboardList, ArrowRight, Building2, MapPin, Globe, Mail, Layers3, UserCheck, Clock, TrendingUp, Brain, Mic } from 'lucide-react';
 import { formatRelativeTime, formatShortDate } from '../utils/date';
 
 const DashboardHR = () => {
@@ -18,6 +18,7 @@ const DashboardHR = () => {
     const [recentCandidates, setRecentCandidates] = useState([]);
     const [company, setCompany] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [hrmsStats, setHrmsStats] = useState({ totalEmployees: 0, attendanceToday: 0, avgPerformance: 0, interviewCompletion: 0 });
 
     useEffect(() => {
         document.title = 'AI Hiring OS - HR Dashboard';
@@ -63,6 +64,22 @@ const DashboardHR = () => {
                 avgScore: scoredCount > 0 ? Math.round(totalScore / scoredCount) : 0,
                 activeJobs: jobsData.length
             });
+
+            // Fetch Phase 5 HRMS stats
+            try {
+                const [empData, attData, perfData, intData] = await Promise.all([
+                    api.get('/employees?limit=1').catch(() => ({ total: 0 })),
+                    api.get('/attendance/company').catch(() => ({ present_count: 0 })),
+                    api.get('/performance/company').catch(() => ({ avg_rating: 0 })),
+                    api.get('/interviews/company/analytics').catch(() => ({ completion_rate: 0 })),
+                ]);
+                setHrmsStats({
+                    totalEmployees: empData.total || 0,
+                    attendanceToday: attData.present_count || 0,
+                    avgPerformance: perfData.avg_rating || 0,
+                    interviewCompletion: intData.completion_rate || 0,
+                });
+            } catch (e) { console.error('HRMS stats fetch failed:', e); }
         } catch (error) {
             console.error(error);
         } finally {
@@ -95,6 +112,19 @@ const DashboardHR = () => {
                     <StatCard icon={Star} label="Shortlisted" value={stats.shortlisted} />
                     <StatCard icon={ClipboardList} label="Avg AI Score" value={`${stats.avgScore}%`} />
                     <StatCard icon={Briefcase} label="Active Jobs" value={stats.activeJobs} />
+                </motion.div>
+
+                {/* HRMS Stats */}
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10"
+                >
+                    <StatCard icon={UserCheck} label="Total Employees" value={hrmsStats.totalEmployees} />
+                    <StatCard icon={Clock} label="Present Today" value={hrmsStats.attendanceToday} />
+                    <StatCard icon={TrendingUp} label="Avg Performance" value={`${hrmsStats.avgPerformance}/5`} />
+                    <StatCard icon={Mic} label="Interview Rate" value={`${hrmsStats.interviewCompletion}%`} />
                 </motion.div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
