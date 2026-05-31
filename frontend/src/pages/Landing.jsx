@@ -405,7 +405,7 @@ const Landing = () => {
                         <ul className="space-y-4 text-sm font-semibold text-slate-600">
                             <li><button onClick={() => scrollToSection('faq')} className="hover:text-indigo-600 transition-colors">Help Center</button></li>
                             <li><button onClick={() => scrollToSection('api')} className="hover:text-indigo-600 transition-colors">API Docs</button></li>
-                            <li><a href="mailto:support@aihiringos.com" className="flex items-center gap-2 hover:text-indigo-600 transition-colors"><Mail size={16} /> Contact Support</a></li>
+                            <li><button onClick={() => scrollToSection('faq')} className="flex items-center gap-2 hover:text-indigo-600 transition-colors"><Mail size={16} /> Get Support</button></li>
                         </ul>
                     </div>
                 </div>

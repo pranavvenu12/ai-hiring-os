@@ -27,30 +27,22 @@ const HelpCenter = () => {
                             <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Common tasks</h2>
                             <p className="text-sm text-slate-400 mb-8">Jump to the main product areas without leaving the app.</p>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <QuickLink icon={Briefcase} title="Jobs" to="/jobs" description="Create and manage job postings." />
                                 <QuickLink icon={Users} title="Candidates" to="/candidates" description="Review uploaded resumes and AI scores." />
                                 <QuickLink icon={Settings} title="Company Settings" to="/settings" description="Edit company details and tenant profile." />
-                                <QuickLink icon={BookOpen} title="Documentation" to="/help" description="This screen keeps support content in-app." />
                             </div>
                         </div>
 
                         <div className="glass-morphism rounded-[2.5rem] p-8 md:p-10 border border-white/50 shadow-2xl shadow-slate-200/50">
                             <h3 className="text-xl font-black text-slate-900 mb-4">Need direct help?</h3>
                             <p className="text-sm text-slate-500 leading-relaxed mb-6">
-                                Reach the team at <a className="text-indigo-600 font-black hover:underline" href="mailto:support@aihiringos.com">support@aihiringos.com</a>.
-                                Include your company name and the page you were on when the issue happened.
+                                Need assistance with your organization settings or matching algorithms? Use the button below to update your company profile or configure security parameters.
                             </p>
                             <div className="flex flex-wrap gap-4">
                                 <Link to="/settings" className="btn btn-primary px-6 py-3 font-black">
                                     Update Company Info
                                 </Link>
-                                <a href="mailto:support@aihiringos.com" className="btn btn-secondary px-6 py-3 font-black bg-white">
-                                    <Mail size={18} /> Contact Support
-                                </a>
-                                <button className="btn btn-secondary px-6 py-3 font-black bg-white">
-                                    <MessageCircle size={18} /> Request a Review
-                                </button>
                             </div>
                         </div>
                     </div>
