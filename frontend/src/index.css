@@ -2,16 +2,16 @@
 @config "../tailwind.config.js";
 
 @theme {
-  --color-indigo-50: #f3f7fb;
-  --color-indigo-100: #e6edf5;
-  --color-indigo-200: #cbd9e8;
-  --color-indigo-300: #a8bfd5;
-  --color-indigo-400: #7f9dbb;
-  --color-indigo-500: #5d7fa3;
-  --color-indigo-600: #2f5f8f;
-  --color-indigo-700: #244a73;
-  --color-indigo-800: #1d3b5d;
-  --color-indigo-900: #172f4a;
+  --color-indigo-50: #f5f8fb;
+  --color-indigo-100: #e8eef5;
+  --color-indigo-200: #d4e0ec;
+  --color-indigo-300: #b5c9dd;
+  --color-indigo-400: #8daeca;
+  --color-indigo-500: #668fb4;
+  --color-indigo-600: #3f6f99;
+  --color-indigo-700: #355d80;
+  --color-indigo-800: #2d4f6d;
+  --color-indigo-900: #263f58;
 
   --color-violet-50: #edf8f8;
   --color-violet-100: #d6eeee;
