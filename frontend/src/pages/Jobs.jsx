@@ -57,9 +57,9 @@ const Jobs = () => {
                     className="space-y-8"
                 >
                     {/* Header Actions */}
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                        <div className="flex items-center gap-6 flex-1 w-full md:w-auto">
-                            <div className="relative flex-1 max-w-md group">
+                    <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 md:gap-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 md:gap-6 flex-1 w-full md:w-auto">
+                            <div className="relative flex-1 max-w-full md:max-w-md group">
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
                                 <input 
                                     type="text" 
@@ -69,7 +69,7 @@ const Jobs = () => {
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
-                            <button className="btn btn-secondary px-4 py-3 bg-white">
+                            <button className="btn btn-secondary px-4 py-3 bg-white justify-center sm:justify-start">
                                 <Filter size={18} />
                                 Filters
                             </button>
@@ -83,8 +83,57 @@ const Jobs = () => {
                         </button>
                     </div>
 
-                    {/* Table / Grid */}
-                    <div className="bg-white rounded-[1.5rem] border border-slate-200 overflow-hidden shadow-sm">
+                    {/* Mobile Cards */}
+                    <div className="md:hidden space-y-3">
+                        {filteredJobs.map((job, i) => (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: i * 0.05 }}
+                                key={job.id}
+                                className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm"
+                            >
+                                <div className="flex items-start gap-3">
+                                    <div className="w-11 h-11 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shrink-0">
+                                        <Briefcase size={19} />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <h3 className="font-semibold text-slate-950 leading-snug break-words">{job.title}</h3>
+                                        <p className="text-xs font-medium text-slate-400 mt-1">Created {formatShortDate(job.created_at)}</p>
+                                    </div>
+                                </div>
+                                <div className="mt-4 flex flex-wrap items-center gap-2">
+                                    <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-semibold uppercase tracking-widest">
+                                        {job.department || 'General'}
+                                    </span>
+                                    <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-semibold uppercase tracking-widest">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                        Active
+                                    </span>
+                                </div>
+                                <Link
+                                    to={`/candidates?job_id=${job.id}`}
+                                    className="mt-4 btn btn-secondary w-full justify-center py-3 text-xs font-semibold bg-white"
+                                >
+                                    View Candidates <ExternalLink size={14} />
+                                </Link>
+                            </motion.div>
+                        ))}
+                        {filteredJobs.length === 0 && (
+                            <div className="rounded-[1.25rem] border border-slate-200 bg-white p-8 text-center shadow-sm">
+                                <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                    <FileText size={28} className="text-slate-300" />
+                                </div>
+                                <h4 className="text-base font-semibold text-slate-900 mb-2">No jobs found</h4>
+                                <p className="text-sm font-medium text-slate-400 leading-relaxed">
+                                    Try adjusting your search or create a new job posting.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Desktop Table */}
+                    <div className="hidden md:block bg-white rounded-[1.5rem] border border-slate-200 overflow-hidden shadow-sm">
                         <div className="overflow-x-auto">
                         <table className="min-w-[780px] w-full text-left border-collapse">
                             <thead>

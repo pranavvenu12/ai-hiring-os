@@ -116,12 +116,12 @@ const Candidates = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className="space-y-8"
                 >
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                        <div>
+                    <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 md:gap-6">
+                        <div className="min-w-0">
                             <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">{jobTitle}</h2>
                             <p className="text-sm font-medium text-slate-400">Evaluate and shortlist top talent with AI precision.</p>
                         </div>
-                        <div className="flex gap-4 w-full md:w-auto">
+                        <div className="flex flex-col sm:flex-row gap-3 md:gap-4 w-full md:w-auto">
                             <div className="relative group flex-1 md:flex-none md:w-64">
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={18} />
                                 <input 
@@ -135,7 +135,7 @@ const Candidates = () => {
                             <button 
                                 onClick={() => fileInputRef.current.click()} 
                                 disabled={isUploading || !jobId}
-                                className="btn btn-primary px-6 py-3 shadow-sm whitespace-nowrap"
+                                className="btn btn-primary px-6 py-3 shadow-sm whitespace-nowrap justify-center"
                             >
                                 {isUploading ? <Loader2 className="animate-spin" /> : <Upload size={20} />} 
                                 Upload Resumes
@@ -144,7 +144,70 @@ const Candidates = () => {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-[1.5rem] border border-slate-200 overflow-hidden shadow-sm">
+                    {/* Mobile Cards */}
+                    <div className="md:hidden space-y-3">
+                        {filteredCandidates.map((c, i) => (
+                            <motion.button
+                                type="button"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: i * 0.05 }}
+                                key={c.id}
+                                onClick={() => setSelectedCandidate(c)}
+                                className={`w-full text-left rounded-[1.25rem] border bg-white p-4 shadow-sm transition ${
+                                    selectedCandidate?.id === c.id ? 'border-indigo-200' : 'border-slate-200'
+                                }`}
+                            >
+                                <div className="flex items-start gap-3">
+                                    <div className="w-11 h-11 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shrink-0">
+                                        <User size={19} />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <h3 className="font-semibold text-slate-950 leading-snug break-words">{c.candidate_name}</h3>
+                                        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mt-1">
+                                            Applied {formatRelativeTime(c.created_at)}
+                                        </p>
+                                    </div>
+                                    <ChevronRight size={18} className="text-slate-300 shrink-0 mt-2" />
+                                </div>
+
+                                <div className="mt-4 grid grid-cols-2 gap-3">
+                                    <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                                        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">AI Score</p>
+                                        <p className="text-lg font-semibold text-indigo-600 mt-1">{c.score}%</p>
+                                    </div>
+                                    <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                                        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Status</p>
+                                        <p className={`text-xs font-semibold uppercase tracking-wider mt-2 ${
+                                            c.status === 'completed' ? 'text-emerald-600' :
+                                            c.status === 'failed' ? 'text-rose-600' : 'text-amber-600'
+                                        }`}>
+                                            {c.status}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="mt-3 rounded-xl bg-white border border-slate-100 px-3 py-2">
+                                    <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Position</p>
+                                    <p className="text-sm font-medium text-slate-600 mt-1 break-words">{c.jobTitle || 'Unassigned'}</p>
+                                </div>
+                            </motion.button>
+                        ))}
+                        {filteredCandidates.length === 0 && (
+                            <div className="rounded-[1.25rem] border border-slate-200 bg-white p-8 text-center shadow-sm">
+                                <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-300">
+                                    <Users size={28} />
+                                </div>
+                                <h4 className="text-base font-semibold text-slate-900 mb-2">Pool is empty</h4>
+                                <p className="text-sm font-medium text-slate-400">
+                                    {jobId ? 'Upload resumes to start AI evaluation.' : 'Select a job posting to view candidates.'}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Desktop Table */}
+                    <div className="hidden md:block bg-white rounded-[1.5rem] border border-slate-200 overflow-hidden shadow-sm">
                         <div className="overflow-x-auto">
                         <table className="min-w-[920px] w-full text-left border-collapse">
                             <thead>
@@ -251,8 +314,8 @@ const Candidates = () => {
                             className="fixed top-0 right-0 w-full max-w-[580px] h-screen bg-white shadow-[-20px_0_60px_-15px_rgba(0,0,0,0.1)] z-[101] overflow-y-auto flex flex-col font-inter"
                         >
                             {/* Drawer Header */}
-                            <div className="p-8 border-b border-slate-100 sticky top-0 bg-white/80 backdrop-blur-md z-10">
-                                <div className="flex justify-between items-center mb-6">
+                            <div className="p-4 sm:p-8 border-b border-slate-100 sticky top-0 bg-white/80 backdrop-blur-md z-10">
+                                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
                                     <div className="flex items-center gap-4">
                                         <button 
                                             onClick={() => setSelectedCandidate(null)}
@@ -265,9 +328,9 @@ const Candidates = () => {
                                             <p className="text-xs font-bold text-indigo-600 uppercase tracking-widest">{selectedCandidate.jobTitle || 'Candidate Profile'}</p>
                                         </div>
                                     </div>
-                                    <div className="flex gap-2">
-                                        <button className="btn btn-secondary px-4 py-2 text-xs font-bold">Download PDF</button>
-                                        <button className="btn btn-primary px-4 py-2 text-xs font-bold">Shortlist</button>
+                                    <div className="flex gap-2 w-full sm:w-auto">
+                                        <button className="btn btn-secondary flex-1 sm:flex-none justify-center px-4 py-2 text-xs font-bold">Download PDF</button>
+                                        <button className="btn btn-primary flex-1 sm:flex-none justify-center px-4 py-2 text-xs font-bold">Shortlist</button>
                                     </div>
                                 </div>
 
@@ -289,7 +352,7 @@ const Candidates = () => {
                             </div>
                             
                             {/* Drawer Content */}
-                            <div className="p-8 space-y-8 flex-1">
+                            <div className="p-4 sm:p-8 space-y-8 flex-1">
                                 {activeTab === 'resume' ? (
                                     <div className="space-y-8">
                                         {/* AI Score Hero */}
