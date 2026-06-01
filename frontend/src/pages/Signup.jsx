@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Rocket, Loader2, BadgeCheck, Briefcase, User, Mail, Lock, Building, UserPlus, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Rocket, Loader2, BadgeCheck, Briefcase, User, Mail, Lock, Building, UserPlus, ArrowRight, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
@@ -62,6 +62,14 @@ const Signup = () => {
                 transition={{ duration: 0.6, cubicBezier: [0.16, 1, 0.3, 1] }}
                 className="w-full max-w-[560px] p-7 md:p-9 relative z-10 rounded-[2rem] bg-white border border-slate-200 shadow-2xl shadow-slate-200/70"
             >
+                <Link
+                    to="/login"
+                    className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-slate-400 hover:text-indigo-600 transition-colors mb-6"
+                >
+                    <ArrowLeft size={15} />
+                    Back to sign in
+                </Link>
+
                 <div className="text-center mb-10">
                     <Link to="/" className="inline-flex justify-center items-center gap-3 mb-6 group">
                         <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
