@@ -203,7 +203,8 @@ async def signup(
 
     # 4. Check or create employee profile for Managers/Employees
     if payload.role.value in ["manager", "employee"]:
-        from sqlalchemy import select, func
+        from datetime import date
+        from sqlalchemy import select
         from app.models.employee import Employee
         # Check if HR already pre-created an employee record with this email
         result = await db.execute(
@@ -228,7 +229,7 @@ async def signup(
                 email=payload.email,
                 department="Management" if payload.role.value == "manager" else "General",
                 designation="Manager" if payload.role.value == "manager" else "Employee",
-                joining_date=func.now(),
+                joining_date=date.today(),
                 employment_type="full_time"
             )
             db.add(new_emp)

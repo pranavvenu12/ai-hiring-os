@@ -37,7 +37,13 @@ const Signup = () => {
             navigate(`/dashboard/${user.role.toLowerCase()}`);
             toast.success('Account created successfully!');
         } catch (err) {
-            toast.error(err.detail || 'Signup failed');
+            const detail = err?.detail;
+            const msg = typeof detail === 'string'
+                ? detail
+                : Array.isArray(detail)
+                    ? detail.map(d => d.msg || d).join('; ')
+                    : err?.message || 'Signup failed';
+            toast.error(msg);
         } finally {
             setIsLoading(false);
         }
