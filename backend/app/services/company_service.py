@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -47,12 +47,22 @@ async def get_company_by_id(db: AsyncSession, company_id: uuid.UUID) -> Company 
 
 
 async def get_company_by_name(db: AsyncSession, name: str) -> Company | None:
-    """Fetch a company by name (case-insensitive)."""
-    from sqlalchemy import func
+    """Fetch a company by name (case-insensitive).
+
+    Older signup flows could create duplicate tenant rows with the same visible
+    company name. Prefer a populated company profile and return one stable match
+    instead of crashing employee/manager signup with MultipleResultsFound.
+    """
     result = await db.execute(
         select(Company)
         .options(selectinload(Company.profile))
+        .outerjoin(CompanyProfile, CompanyProfile.company_id == Company.id)
         .where(func.lower(Company.name) == func.lower(name))
+        .order_by(
+            CompanyProfile.company_id.isnot(None).desc(),
+            Company.created_at.asc(),
+        )
+        .limit(1)
     )
     return result.scalar_one_or_none()
 
