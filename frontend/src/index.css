@@ -1,6 +1,41 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
+@theme {
+  --color-indigo-50: #f3f7fb;
+  --color-indigo-100: #e6edf5;
+  --color-indigo-200: #cbd9e8;
+  --color-indigo-300: #a8bfd5;
+  --color-indigo-400: #7f9dbb;
+  --color-indigo-500: #5d7fa3;
+  --color-indigo-600: #2f5f8f;
+  --color-indigo-700: #244a73;
+  --color-indigo-800: #1d3b5d;
+  --color-indigo-900: #172f4a;
+
+  --color-violet-50: #edf8f8;
+  --color-violet-100: #d6eeee;
+  --color-violet-200: #b2dddd;
+  --color-violet-300: #84c6c6;
+  --color-violet-400: #58abab;
+  --color-violet-500: #3f9292;
+  --color-violet-600: #2f7a7a;
+  --color-violet-700: #286464;
+  --color-violet-800: #235151;
+  --color-violet-900: #1f4444;
+
+  --color-cyan-50: #edf8f8;
+  --color-cyan-100: #d6eeee;
+  --color-cyan-200: #b2dddd;
+  --color-cyan-300: #84c6c6;
+  --color-cyan-400: #58abab;
+  --color-cyan-500: #3f9292;
+  --color-cyan-600: #2f7a7a;
+  --color-cyan-700: #286464;
+  --color-cyan-800: #235151;
+  --color-cyan-900: #1f4444;
+}
+
 @layer base {
   body {
     @apply bg-slate-50 text-slate-900 font-['Inter',_sans-serif] antialiased;
@@ -17,19 +52,19 @@
   }
 
   .btn {
-    @apply px-5 py-2.5 rounded-lg font-semibold cursor-pointer transition-all duration-200 inline-flex items-center gap-2;
+    @apply px-4 py-2.5 rounded-full font-semibold cursor-pointer transition-all duration-200 inline-flex items-center gap-2;
   }
 
   .btn-primary {
-    @apply bg-indigo-600 text-white hover:bg-indigo-700 hover:-translate-y-px hover:shadow-lg hover:shadow-indigo-600/30;
+    @apply bg-slate-950 text-white hover:bg-indigo-700 hover:-translate-y-px shadow-sm hover:shadow-md;
   }
 
   .btn-secondary {
-    @apply bg-white text-slate-900 border border-slate-200 hover:bg-slate-50;
+    @apply bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 shadow-sm;
   }
 
   .form-control {
-    @apply w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 transition-all duration-200 focus:outline-none focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-600/10;
+    @apply w-full px-4 py-3 rounded-xl border border-slate-200 bg-white transition-all duration-200 focus:outline-none focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-600/10;
   }
 }
 
@@ -48,8 +83,8 @@
 }
 
 .glass-morphism {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
 }

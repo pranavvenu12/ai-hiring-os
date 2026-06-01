@@ -44,34 +44,32 @@ const Signup = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 relative overflow-hidden font-inter py-12 px-6">
+        <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] relative overflow-hidden font-inter py-12 px-5">
             {/* Background Decorations */}
             <div className="fixed inset-0 pointer-events-none z-0">
-                <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-100/50 blur-[120px] rounded-full" />
-                <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-violet-100/50 blur-[120px] rounded-full" />
-                <div className="absolute inset-0 bg-grid opacity-20" />
+                <div className="absolute inset-x-0 top-0 mx-auto h-[480px] max-w-5xl bg-[radial-gradient(circle_at_50%_0%,rgba(47,95,143,0.14),transparent_60%)]" />
             </div>
 
             <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, cubicBezier: [0.16, 1, 0.3, 1] }}
-                className="glass-morphism w-full max-w-[560px] p-8 md:p-12 relative z-10 rounded-[2.5rem] shadow-2xl shadow-indigo-600/10"
+                className="w-full max-w-[560px] p-7 md:p-9 relative z-10 rounded-[2rem] bg-white border border-slate-200 shadow-2xl shadow-slate-200/70"
             >
                 <div className="text-center mb-10">
                     <Link to="/" className="inline-flex justify-center items-center gap-3 mb-6 group">
-                        <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-600/30 group-hover:scale-110 transition-transform duration-300">
-                            <Rocket size={28} className="text-white" />
+                        <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
+                            <Rocket size={21} className="text-white" />
                         </div>
-                        <span className="font-black text-2xl tracking-tighter gradient-text">AI Hiring OS</span>
+                        <span className="font-semibold text-xl tracking-tight text-slate-950">AI Hiring OS</span>
                     </Link>
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Create your account</h2>
-                    <p className="text-slate-500 mt-2 font-medium">Join the intelligent recruitment revolution</p>
+                    <h2 className="text-3xl font-semibold text-slate-950 tracking-tight">Create your account</h2>
+                    <p className="text-slate-500 mt-2 font-medium">Join your company workspace</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="space-y-3">
-                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Select Your Role</label>
+                        <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Select Your Role</label>
                         <div className="grid grid-cols-3 gap-4">
                             {[
                                 { id: 'hr', name: 'HR / Admin', icon: BadgeCheck },
@@ -81,14 +79,14 @@ const Signup = () => {
                                 <div 
                                     key={item.id}
                                     onClick={() => setRole(item.id)}
-                                    className={`p-4 rounded-2xl border-2 cursor-pointer transition-all duration-300 text-center flex flex-col items-center gap-2 group ${
+                                    className={`p-4 rounded-xl border cursor-pointer transition-all duration-300 text-center flex flex-col items-center gap-2 group ${
                                         role === item.id 
-                                        ? 'border-indigo-600 bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' 
-                                        : 'border-slate-100 bg-white/50 text-slate-400 hover:border-indigo-200 hover:bg-white'
+                                        ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm' 
+                                        : 'border-slate-200 bg-white text-slate-400 hover:border-indigo-200 hover:bg-slate-50'
                                     }`}
                                 >
                                     <item.icon className={`${role === item.id ? 'text-white' : 'text-slate-400 group-hover:text-indigo-600'} transition-colors`} size={24} />
-                                    <div className={`text-[10px] font-black uppercase tracking-widest ${role === item.id ? 'text-white' : 'text-slate-500'}`}>{item.name}</div>
+                                    <div className={`text-[10px] font-semibold uppercase tracking-widest ${role === item.id ? 'text-white' : 'text-slate-500'}`}>{item.name}</div>
                                 </div>
                             ))}
                         </div>
@@ -96,34 +94,34 @@ const Signup = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Full Name</label>
+                            <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Full Name</label>
                             <div className="relative group">
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
                                     <UserPlus size={18} />
                                 </div>
-                                <input type="text" className="w-full bg-white/50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 transition-all font-medium" placeholder="John Doe" value={name} onChange={e => setName(e.target.value)} required />
+                                <input type="text" className="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-12 pr-4 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 transition-all font-medium" placeholder="John Doe" value={name} onChange={e => setName(e.target.value)} required />
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Company</label>
+                            <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Company</label>
                             <div className="relative group">
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
                                     <Building size={18} />
                                 </div>
-                                <input type="text" className="w-full bg-white/50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 transition-all font-medium" placeholder="Acme Inc." value={companyName} onChange={e => setCompanyName(e.target.value)} required />
+                                <input type="text" className="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-12 pr-4 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 transition-all font-medium" placeholder="Acme Inc." value={companyName} onChange={e => setCompanyName(e.target.value)} required />
                             </div>
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Email Address</label>
+                        <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Email Address</label>
                         <div className="relative group">
                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
                                 <Mail size={18} />
                             </div>
                             <input 
                                 type="email" 
-                                className="w-full bg-white/50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 transition-all font-medium border-slate-200" 
+                                className="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-12 pr-4 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 transition-all font-medium" 
                                 placeholder="john@acme.com" 
                                 value={email} 
                                 onChange={e => setEmail(e.target.value)} 
@@ -133,14 +131,14 @@ const Signup = () => {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Password</label>
+                        <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Password</label>
                         <div className="relative group">
                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
                                 <Lock size={18} />
                             </div>
                             <input 
                                 type={showPassword ? "text" : "password"} 
-                                className="w-full bg-white/50 border border-slate-200 rounded-2xl py-4 pl-12 pr-12 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 transition-all font-medium" 
+                                className="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-12 pr-12 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 transition-all font-medium" 
                                 placeholder="••••••••" 
                                 value={password} 
                                 onChange={e => setPassword(e.target.value)} 
@@ -159,7 +157,7 @@ const Signup = () => {
                     <button 
                         type="submit" 
                         disabled={isLoading}
-                        className="btn btn-primary w-full justify-center py-4 text-lg font-black shadow-xl shadow-indigo-600/20 group mt-4"
+                        className="btn btn-primary w-full justify-center py-3.5 text-sm font-semibold group mt-4"
                     >
                         {isLoading ? (
                             <Loader2 className="animate-spin" />
@@ -174,7 +172,7 @@ const Signup = () => {
 
                 <div className="mt-8 pt-6 border-t border-slate-200/50">
                     <p className="text-center text-sm font-medium text-slate-500">
-                        Already have an account? <Link to="/login" className="text-indigo-600 font-black hover:underline">Sign In</Link>
+                        Already have an account? <Link to="/login" className="text-indigo-600 font-semibold hover:underline">Sign In</Link>
                     </p>
                 </div>
             </motion.div>
@@ -183,3 +181,4 @@ const Signup = () => {
 };
 
 export default Signup;
+

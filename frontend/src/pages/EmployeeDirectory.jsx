@@ -71,16 +71,16 @@ const EmployeeDirectory = () => {
     const totalPages = Math.ceil(total / limit);
 
     return (
-        <div className="flex bg-slate-50 min-h-screen font-inter">
+        <div className="flex bg-[#f8fafc] min-h-screen font-inter">
             <Sidebar />
-            <main className="flex-1 ml-0 lg:ml-[280px] p-6 md:p-10">
+            <main className="flex-1 ml-0 lg:ml-[280px] px-4 py-6 md:p-10">
                 <Topbar title="Employee Directory" />
 
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
                     {/* Header */}
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                         <div>
-                            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Employee Directory</h2>
+                            <h2 className="text-2xl font-semibold text-slate-900 tracking-tight">Employee Directory</h2>
                             <p className="text-sm font-medium text-slate-400">{total} employees in your organization</p>
                         </div>
                         <div className="flex gap-4 w-full md:w-auto flex-wrap">
@@ -103,7 +103,7 @@ const EmployeeDirectory = () => {
                                 </select>
                             </div>
                             {isHROrAdmin && (
-                                <button onClick={() => setShowAddModal(true)} className="btn btn-primary px-6 py-3 shadow-xl shadow-indigo-600/20 whitespace-nowrap">
+                                <button onClick={() => setShowAddModal(true)} className="btn btn-primary px-6 py-3 shadow-sm whitespace-nowrap">
                                     <Plus size={20} /> Add Employee
                                 </button>
                             )}
@@ -117,17 +117,17 @@ const EmployeeDirectory = () => {
                                 key={emp.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: i * 0.05 }}
                                 onClick={() => setSelectedEmployee(emp)}
-                                className="glass-morphism rounded-[2rem] p-6 border border-white/50 hover:shadow-2xl hover:shadow-indigo-600/10 transition-all duration-300 cursor-pointer group"
+                                className="bg-white rounded-[1.5rem] p-5 border border-slate-200 shadow-sm hover:shadow-2xl hover:shadow-indigo-600/10 transition-all duration-300 cursor-pointer group"
                             >
                                 <div className="flex items-center gap-4 mb-5">
-                                    <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black text-xl group-hover:scale-110 transition-transform duration-300 shadow-sm">
+                                    <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-semibold text-xl group-hover:scale-110 transition-transform duration-300 shadow-sm">
                                         {emp.full_name.charAt(0)}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <div className="font-black text-slate-900 group-hover:text-indigo-600 transition-colors truncate">{emp.full_name}</div>
+                                        <div className="font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors truncate">{emp.full_name}</div>
                                         <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">{emp.designation || emp.employee_code}</div>
                                     </div>
-                                    <div className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${emp.status === 'active' ? 'bg-emerald-50 text-emerald-600' : emp.status === 'inactive' ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-600'}`}>
+                                    <div className={`px-3 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-widest ${emp.status === 'active' ? 'bg-emerald-50 text-emerald-600' : emp.status === 'inactive' ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-600'}`}>
                                         {emp.status}
                                     </div>
                                 </div>
@@ -152,11 +152,11 @@ const EmployeeDirectory = () => {
                     </div>
 
                     {employees.length === 0 && !loading && (
-                        <div className="text-center py-24 glass-morphism rounded-[2.5rem] border border-white/50">
+                        <div className="text-center py-24 bg-white rounded-[1.5rem] border border-slate-200 shadow-sm">
                             <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-slate-200">
                                 <User size={32} />
                             </div>
-                            <h4 className="text-lg font-black text-slate-900 mb-2">No employees found</h4>
+                            <h4 className="text-lg font-semibold text-slate-900 mb-2">No employees found</h4>
                             <p className="text-sm font-medium text-slate-400">
                                 {searchQuery || departmentFilter ? 'Try adjusting your search or filters.' : 'Add your first employee to get started.'}
                             </p>
@@ -185,17 +185,17 @@ const EmployeeDirectory = () => {
                                     <button onClick={() => setSelectedEmployee(null)} className="w-10 h-10 rounded-xl hover:bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-900 transition-all">
                                         <ArrowLeft size={20} />
                                     </button>
-                                    <h3 className="text-xl font-black text-slate-900">Employee Profile</h3>
+                                    <h3 className="text-xl font-semibold text-slate-900">Employee Profile</h3>
                                 </div>
                             </div>
                             <div className="p-10 space-y-8">
                                 <div className="text-center">
-                                    <div className="w-24 h-24 rounded-[2rem] bg-indigo-600 text-white flex items-center justify-center text-3xl font-black mx-auto mb-4 shadow-xl shadow-indigo-600/30 rotate-3">
+                                    <div className="w-24 h-24 rounded-[2rem] bg-indigo-600 text-white flex items-center justify-center text-3xl font-semibold mx-auto mb-4 shadow-md shadow-slate-300/50 rotate-3">
                                         {selectedEmployee.full_name.charAt(0)}
                                     </div>
-                                    <h4 className="text-2xl font-black text-slate-900">{selectedEmployee.full_name}</h4>
+                                    <h4 className="text-2xl font-semibold text-slate-900">{selectedEmployee.full_name}</h4>
                                     <div className="text-sm font-bold text-indigo-600 mt-1">{selectedEmployee.designation || 'No designation'}</div>
-                                    <div className="inline-block px-3 py-1 bg-slate-50 text-slate-500 rounded-full text-[10px] font-black uppercase tracking-widest mt-2">{selectedEmployee.employee_code}</div>
+                                    <div className="inline-block px-3 py-1 bg-slate-50 text-slate-500 rounded-full text-[10px] font-semibold uppercase tracking-widest mt-2">{selectedEmployee.employee_code}</div>
                                 </div>
                                 <div className="space-y-4">
                                     <ProfileField icon={Mail} label="Email" value={selectedEmployee.email} />
@@ -219,7 +219,7 @@ const EmployeeDirectory = () => {
                         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="fixed inset-0 flex items-center justify-center z-[101] p-4">
                             <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg p-8 max-h-[90vh] overflow-y-auto">
                                 <div className="flex justify-between items-center mb-8">
-                                    <h3 className="text-xl font-black text-slate-900">Add New Employee</h3>
+                                    <h3 className="text-xl font-semibold text-slate-900">Add New Employee</h3>
                                     <button onClick={() => setShowAddModal(false)} className="w-10 h-10 rounded-xl hover:bg-slate-50 flex items-center justify-center text-slate-400"><X size={20} /></button>
                                 </div>
                                 <form onSubmit={handleAddEmployee} className="space-y-4">
@@ -229,7 +229,7 @@ const EmployeeDirectory = () => {
                                     <FormField label="Department" value={newEmployee.department} onChange={v => setNewEmployee({...newEmployee, department: v})} />
                                     <FormField label="Designation" value={newEmployee.designation} onChange={v => setNewEmployee({...newEmployee, designation: v})} />
                                     <div>
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">Employment Type</label>
+                                        <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 block">Employment Type</label>
                                         <select value={newEmployee.employment_type} onChange={e => setNewEmployee({...newEmployee, employment_type: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-4 text-sm font-medium outline-none focus:border-indigo-600">
                                             <option value="full_time">Full Time</option>
                                             <option value="part_time">Part Time</option>
@@ -238,7 +238,7 @@ const EmployeeDirectory = () => {
                                         </select>
                                     </div>
                                     <FormField label="Joining Date" type="date" value={newEmployee.joining_date} onChange={v => setNewEmployee({...newEmployee, joining_date: v})} />
-                                    <button type="submit" className="btn btn-primary w-full justify-center py-3 mt-4 font-bold shadow-lg shadow-indigo-600/20">Add Employee</button>
+                                    <button type="submit" className="btn btn-primary w-full justify-center py-3 mt-4 font-bold shadow-sm">Add Employee</button>
                                 </form>
                             </div>
                         </motion.div>
@@ -255,7 +255,7 @@ const ProfileField = ({ icon: Icon, label, value }) => (
             <Icon size={18} />
         </div>
         <div>
-            <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5">{label}</div>
+            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-0.5">{label}</div>
             <div className="text-sm font-bold text-slate-700 capitalize">{value}</div>
         </div>
     </div>
@@ -263,7 +263,7 @@ const ProfileField = ({ icon: Icon, label, value }) => (
 
 const FormField = ({ label, value, onChange, type = 'text', required = false }) => (
     <div>
-        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 block">{label}</label>
+        <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 block">{label}</label>
         <input type={type} value={value} onChange={e => onChange(e.target.value)} required={required}
             className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-4 text-sm font-medium outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 transition-all"
         />
@@ -271,3 +271,5 @@ const FormField = ({ label, value, onChange, type = 'text', required = false }) 
 );
 
 export default EmployeeDirectory;
+
+

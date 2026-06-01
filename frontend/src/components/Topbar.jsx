@@ -169,15 +169,15 @@ const Topbar = ({ title }) => {
     if (!user) return null;
 
     return (
-        <div className="h-20 flex items-center justify-between mb-8 relative z-30">
+        <div className="min-h-16 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8 pl-14 lg:pl-0 relative z-30">
             <div>
-                <h1 className="text-3xl font-black text-slate-900 tracking-tight">{title}</h1>
-                <p className="text-sm font-medium text-slate-400">Welcome back, {user.name.split(' ')[0]}!</p>
+                <h1 className="text-2xl sm:text-3xl font-semibold text-slate-950 tracking-tight">{title}</h1>
+                <p className="text-sm font-medium text-slate-500 mt-1">Welcome back, {user.name.split(' ')[0]}.</p>
             </div>
             
-            <div className="flex items-center gap-6">
+            <div className="flex items-center justify-end gap-3 sm:gap-5 self-stretch sm:self-auto">
                 <div className="hidden md:block relative w-[300px]">
-                    <div className="flex items-center gap-3 bg-white/50 border border-slate-200 rounded-2xl px-4 py-2.5 w-full focus-within:border-indigo-600 focus-within:ring-4 focus-within:ring-indigo-600/5 transition-all">
+                    <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-full px-4 py-2.5 w-full focus-within:border-indigo-600 focus-within:ring-4 focus-within:ring-indigo-600/10 transition-all shadow-sm">
                         <Search size={18} className="text-slate-400" />
                         <input
                             type="text"
@@ -196,8 +196,8 @@ const Topbar = ({ title }) => {
                     </div>
 
                     {isSearchFocused && searchQuery.trim() && (
-                        <div className="absolute left-0 right-0 mt-2 rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-200/60 overflow-hidden py-2 z-50">
-                            <div className="px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-50 mb-1">
+                        <div className="absolute left-0 right-0 mt-2 rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/70 overflow-hidden py-2 z-50">
+                            <div className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 border-b border-slate-50 mb-1">
                                 Quick Navigation
                             </div>
                             {filteredSearchItems.length > 0 ? (
@@ -207,8 +207,8 @@ const Topbar = ({ title }) => {
                                         to={item.path}
                                         className="flex items-center justify-between px-4 py-2 hover:bg-slate-50 text-slate-700 hover:text-indigo-600 transition-colors"
                                     >
-                                        <span className="text-sm font-bold">{item.name}</span>
-                                        <span className="text-[10px] font-bold px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100 uppercase tracking-wider">
+                                        <span className="text-sm font-semibold">{item.name}</span>
+                                        <span className="text-[10px] font-semibold px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-100 uppercase tracking-wider">
                                             {item.category}
                                         </span>
                                     </Link>
@@ -226,7 +226,7 @@ const Topbar = ({ title }) => {
                     <button
                         type="button"
                         onClick={() => setIsOpen((value) => !value)}
-                        className="relative w-12 h-12 flex items-center justify-center bg-white border border-slate-200 rounded-2xl text-slate-500 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm"
+                        className="relative w-11 h-11 flex items-center justify-center bg-white border border-slate-200 rounded-full text-slate-500 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm"
                         aria-label="Open notifications"
                         aria-expanded={isOpen}
                     >
@@ -237,13 +237,13 @@ const Topbar = ({ title }) => {
                     </button>
 
                     {isOpen && (
-                        <div className="absolute right-0 mt-3 w-[360px] max-w-[90vw] rounded-[1.75rem] border border-slate-200 bg-white shadow-2xl shadow-slate-200/60 overflow-hidden">
+                        <div className="absolute right-0 mt-3 w-[360px] max-w-[90vw] rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/70 overflow-hidden">
                             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/80">
                                 <div>
-                                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-slate-500">Notifications</h3>
+                                    <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Notifications</h3>
                                     <p className="text-xs font-medium text-slate-400">Live tenant activity</p>
                                 </div>
-                                <button type="button" onClick={() => setIsOpen(false)} className="w-9 h-9 rounded-xl hover:bg-white flex items-center justify-center text-slate-400 hover:text-slate-900 transition-colors">
+                                <button type="button" onClick={() => setIsOpen(false)} className="w-9 h-9 rounded-full hover:bg-white flex items-center justify-center text-slate-400 hover:text-slate-900 transition-colors">
                                     <X size={18} />
                                 </button>
                             </div>
@@ -261,18 +261,18 @@ const Topbar = ({ title }) => {
                                                 onClick={() => setIsOpen(false)}
                                                 className="flex items-start gap-4 px-5 py-4 border-b border-slate-50 hover:bg-slate-50 transition-colors"
                                             >
-                                                <div className="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                                                <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0">
                                                     <Icon size={18} />
                                                 </div>
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex items-start justify-between gap-3">
                                                         <div>
-                                                            <div className="text-sm font-black text-slate-900">{notification.title}</div>
+                                                            <div className="text-sm font-semibold text-slate-900">{notification.title}</div>
                                                             <div className="text-xs font-medium text-slate-500 mt-1 leading-relaxed">{notification.message}</div>
                                                         </div>
                                                         {!notification.read && <span className="mt-1 w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0" />}
                                                     </div>
-                                                    <div className="flex items-center gap-2 mt-2 text-[10px] font-black uppercase tracking-widest text-indigo-600">
+                                                    <div className="flex items-center gap-2 mt-2 text-[10px] font-semibold uppercase tracking-widest text-indigo-700">
                                                         <span>{notification.time}</span>
                                                         <ChevronRight size={12} />
                                                     </div>
@@ -286,27 +286,27 @@ const Topbar = ({ title }) => {
                     )}
                 </div>
 
-                <div ref={profileRef} className="relative flex items-center gap-3 pl-6 border-l border-slate-200">
+                <div ref={profileRef} className="relative flex items-center gap-3 pl-5 border-l border-slate-200">
                     <button
                         type="button"
                         onClick={() => setIsProfileOpen((v) => !v)}
-                        className="w-12 h-12 rounded-2xl flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-lg shadow-indigo-600/20 hover:scale-105 active:scale-95 transition-all duration-200"
+                        className="w-11 h-11 rounded-full flex items-center justify-center bg-slate-950 hover:bg-indigo-700 text-white font-semibold shadow-sm active:scale-95 transition-all duration-200"
                         aria-label="User profile menu"
                     >
                         {user.name.charAt(0)}
                     </button>
 
                     {isProfileOpen && (
-                        <div className="absolute right-0 top-14 mt-2 w-56 rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-200/60 overflow-hidden py-1.5 z-50">
+                        <div className="absolute right-0 top-14 mt-2 w-56 rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/70 overflow-hidden py-1.5 z-50">
                             <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
-                                <div className="text-xs font-black text-slate-400 uppercase tracking-widest">Signed In As</div>
-                                <div className="text-sm font-black text-slate-800 truncate mt-1">{user.name}</div>
-                                <div className="text-[10px] font-bold text-slate-500 truncate mt-0.5">{user.email}</div>
+                                <div className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Signed In As</div>
+                                <div className="text-sm font-semibold text-slate-800 truncate mt-1">{user.name}</div>
+                                <div className="text-[10px] font-semibold text-slate-500 truncate mt-0.5">{user.email}</div>
                             </div>
                             <Link
                                 to="/settings"
                                 onClick={() => setIsProfileOpen(false)}
-                                className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
+                                className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition-colors"
                             >
                                 <Settings size={16} />
                                 Account Settings
@@ -317,7 +317,7 @@ const Topbar = ({ title }) => {
                                     setIsProfileOpen(false);
                                     logout();
                                 }}
-                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-bold text-rose-600 hover:bg-rose-50 transition-colors text-left"
+                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-50 transition-colors text-left"
                             >
                                 <LogOut size={16} />
                                 Sign Out

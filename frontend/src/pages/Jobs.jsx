@@ -46,9 +46,9 @@ const Jobs = () => {
     );
 
     return (
-        <div className="flex bg-slate-50 min-h-screen font-inter">
+        <div className="flex bg-[#f8fafc] min-h-screen font-inter">
             <Sidebar />
-            <main className="flex-1 ml-0 lg:ml-[280px] p-6 md:p-10">
+            <main className="flex-1 ml-0 lg:ml-[280px] px-4 py-6 md:p-10">
                 <Topbar title="Manage Positions" />
                 
                 <motion.div 
@@ -76,7 +76,7 @@ const Jobs = () => {
                         </div>
                         <button 
                             onClick={() => setIsModalOpen(true)} 
-                            className="btn btn-primary px-6 py-3 shadow-xl shadow-indigo-600/20 w-full md:w-auto"
+                            className="btn btn-primary px-6 py-3 shadow-sm w-full md:w-auto"
                         >
                             <Plus size={20} /> 
                             Create Job Posting
@@ -84,14 +84,15 @@ const Jobs = () => {
                     </div>
 
                     {/* Table / Grid */}
-                    <div className="glass-morphism rounded-[2.5rem] border border-white/50 overflow-hidden shadow-2xl shadow-slate-200/50">
-                        <table className="w-full text-left border-collapse">
+                    <div className="bg-white rounded-[1.5rem] border border-slate-200 overflow-hidden shadow-sm">
+                        <div className="overflow-x-auto">
+                        <table className="min-w-[780px] w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-slate-50/50">
-                                    <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Job Information</th>
-                                    <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Department</th>
-                                    <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
-                                    <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-[0.2em] text-right">Actions</th>
+                                    <th className="px-8 py-5 text-xs font-semibold text-slate-400 uppercase tracking-[0.2em]">Job Information</th>
+                                    <th className="px-8 py-5 text-xs font-semibold text-slate-400 uppercase tracking-[0.2em]">Department</th>
+                                    <th className="px-8 py-5 text-xs font-semibold text-slate-400 uppercase tracking-[0.2em]">Status</th>
+                                    <th className="px-8 py-5 text-xs font-semibold text-slate-400 uppercase tracking-[0.2em] text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 bg-white/30">
@@ -109,13 +110,13 @@ const Jobs = () => {
                                                     <Briefcase size={20} />
                                                 </div>
                                                 <div>
-                                                    <div className="font-black text-slate-900 group-hover:text-indigo-600 transition-colors">{job.title}</div>
+                                                    <div className="font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">{job.title}</div>
                                                     <div className="text-xs font-bold text-slate-400 mt-0.5">Created {formatShortDate(job.created_at)}</div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-8 py-6">
-                                            <div className="px-3 py-1 rounded-lg bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-widest inline-block">
+                                            <div className="px-3 py-1 rounded-lg bg-slate-100 text-slate-600 text-[10px] font-semibold uppercase tracking-widest inline-block">
                                                 {job.department || 'General'}
                                             </div>
                                         </td>
@@ -147,7 +148,7 @@ const Jobs = () => {
                                                 <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
                                                     <FileText size={32} className="text-slate-200" />
                                                 </div>
-                                                <h4 className="text-lg font-black text-slate-900 mb-2">No jobs found</h4>
+                                                <h4 className="text-lg font-semibold text-slate-900 mb-2">No jobs found</h4>
                                                 <p className="text-sm font-medium text-slate-400 leading-relaxed">
                                                     Try adjusting your search or create a new job posting to start hiring.
                                                 </p>
@@ -157,6 +158,7 @@ const Jobs = () => {
                                 )}
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </motion.div>
 
@@ -175,15 +177,15 @@ const Jobs = () => {
                                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                                className="relative glass-morphism max-w-xl w-full p-10 rounded-[3rem] shadow-2xl border border-white/50 bg-white"
+                                className="relative bg-white max-w-xl w-full p-8 rounded-[1.5rem] shadow-xl shadow-slate-200/70 border border-slate-200"
                             >
                                 <div className="flex justify-between items-start mb-10">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-600/20">
+                                        <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-sm">
                                             <Plus size={24} />
                                         </div>
                                         <div>
-                                            <h3 className="text-2xl font-black text-slate-900 tracking-tight">Post a Job</h3>
+                                            <h3 className="text-2xl font-semibold text-slate-900 tracking-tight">Post a Job</h3>
                                             <p className="text-sm font-medium text-slate-400">Define your ideal candidate requirements</p>
                                         </div>
                                     </div>
@@ -197,7 +199,7 @@ const Jobs = () => {
 
                                 <form onSubmit={handleCreateJob} className="space-y-8">
                                     <div className="space-y-3">
-                                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Position Title</label>
+                                        <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Position Title</label>
                                         <input 
                                             type="text" 
                                             className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-6 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 transition-all font-bold" 
@@ -208,7 +210,7 @@ const Jobs = () => {
                                         />
                                     </div>
                                     <div className="space-y-3">
-                                        <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Job Description & Requirements</label>
+                                        <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Job Description & Requirements</label>
                                         <textarea 
                                             className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-6 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 transition-all font-medium min-h-[200px]" 
                                             placeholder="Describe the role, key responsibilities, and must-have skills..." 
@@ -221,14 +223,14 @@ const Jobs = () => {
                                         <button 
                                             type="button" 
                                             onClick={() => setIsModalOpen(false)} 
-                                            className="btn btn-secondary flex-1 justify-center py-4 font-black"
+                                            className="btn btn-secondary flex-1 justify-center py-4 font-semibold"
                                         >
                                             Discard
                                         </button>
                                         <button 
                                             type="submit" 
                                             disabled={isLoading} 
-                                            className="btn btn-primary flex-[2] justify-center py-4 font-black shadow-xl shadow-indigo-600/20"
+                                            className="btn btn-primary flex-[2] justify-center py-4 font-semibold shadow-sm"
                                         >
                                             {isLoading ? <Loader2 className="animate-spin" /> : 'Publish Job Posting'}
                                         </button>
@@ -244,3 +246,5 @@ const Jobs = () => {
 };
 
 export default Jobs;
+
+

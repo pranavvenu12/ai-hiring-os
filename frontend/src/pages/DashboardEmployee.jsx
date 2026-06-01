@@ -106,9 +106,9 @@ const DashboardEmployee = () => {
         : null;
 
     return (
-        <div className="flex bg-slate-50 min-h-screen font-inter">
+        <div className="flex bg-[#f8fafc] min-h-screen font-inter">
             <Sidebar />
-            <main className="flex-1 ml-0 lg:ml-[280px] p-6 md:p-10">
+            <main className="flex-1 ml-0 lg:ml-[280px] px-4 py-6 md:p-10">
                 <Topbar title="Employee Portal" />
                 
                 <motion.div 
@@ -118,23 +118,23 @@ const DashboardEmployee = () => {
                 >
                     {/* Left Column: Profile Card */}
                     <div className="lg:col-span-1 space-y-8">
-                        <div className="glass-morphism rounded-[2.5rem] p-8 border border-white/50 text-center relative overflow-hidden shadow-2xl shadow-indigo-600/5">
+                        <div className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm text-center relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-indigo-600 to-violet-600 opacity-10" />
                             <div className="relative z-10">
                                 {employeeProfile?.profile_photo ? (
                                     <img 
                                         src={employeeProfile.profile_photo} 
                                         alt={user?.name} 
-                                        className="w-28 h-28 rounded-[2rem] object-cover mx-auto mb-6 shadow-xl shadow-indigo-600/30 rotate-3 border-4 border-white"
+                                        className="w-28 h-28 rounded-[2rem] object-cover mx-auto mb-6 shadow-md shadow-slate-300/50 rotate-3 border-4 border-white"
                                     />
                                 ) : (
-                                    <div className="w-28 h-28 rounded-[2rem] bg-indigo-600 text-white flex items-center justify-center text-4xl font-black mx-auto mb-6 shadow-xl shadow-indigo-600/30 rotate-3">
+                                    <div className="w-28 h-28 rounded-[2rem] bg-indigo-600 text-white flex items-center justify-center text-4xl font-semibold mx-auto mb-6 shadow-md shadow-slate-300/50 rotate-3">
                                         {user?.name.charAt(0)}
                                     </div>
                                 )}
-                                <h3 className="text-2xl font-black text-slate-900 tracking-tight">{user?.name}</h3>
+                                <h3 className="text-2xl font-semibold text-slate-900 tracking-tight">{user?.name}</h3>
                                 <div className="inline-flex flex-col items-center mt-2">
-                                    <span className="px-4 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-100">
+                                    <span className="px-4 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-semibold uppercase tracking-widest border border-indigo-100">
                                         {employeeProfile?.designation || user?.role}
                                     </span>
                                     {employeeProfile?.department && (
@@ -170,17 +170,17 @@ const DashboardEmployee = () => {
                     {/* Right Columns: Core Modules (Attendance & Performance) */}
                     <div className="lg:col-span-2 space-y-8">
                         {/* Attendance Summary Widget */}
-                        <div className="glass-morphism rounded-[2.5rem] p-8 border border-white/50 shadow-2xl shadow-slate-200/50">
+                        <div className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm">
                             <div className="flex justify-between items-center mb-6">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
                                         <Clock size={20} />
                                     </div>
-                                    <h3 className="text-xl font-black text-slate-900 tracking-tight">Attendance Summary</h3>
+                                    <h3 className="text-xl font-semibold text-slate-900 tracking-tight">Attendance Summary</h3>
                                 </div>
                                 <button 
                                     onClick={() => navigate('/attendance')}
-                                    className="text-xs font-black text-indigo-600 uppercase tracking-widest flex items-center gap-1 hover:underline"
+                                    className="text-xs font-semibold text-indigo-600 uppercase tracking-widest flex items-center gap-1 hover:underline"
                                 >
                                     Clock In / History <ChevronRight size={14} />
                                 </button>
@@ -196,7 +196,7 @@ const DashboardEmployee = () => {
                             {/* Today's Clock-in status */}
                             <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                 <div>
-                                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">Today's Status</div>
+                                    <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400 mb-1">Today's Status</div>
                                     <div className="text-sm font-bold text-slate-700">
                                         {attendanceData.today?.clocked_in ? (
                                             attendanceData.today?.clocked_out ? (
@@ -219,17 +219,17 @@ const DashboardEmployee = () => {
                         </div>
 
                         {/* Performance Widget */}
-                        <div className="glass-morphism rounded-[2.5rem] p-8 border border-white/50 shadow-2xl shadow-slate-200/50">
+                        <div className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm">
                             <div className="flex justify-between items-center mb-6">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
                                         <Star size={20} />
                                     </div>
-                                    <h3 className="text-xl font-black text-slate-900 tracking-tight">Performance Summary</h3>
+                                    <h3 className="text-xl font-semibold text-slate-900 tracking-tight">Performance Summary</h3>
                                 </div>
                                 <button 
                                     onClick={() => navigate('/performance')}
-                                    className="text-xs font-black text-indigo-600 uppercase tracking-widest flex items-center gap-1 hover:underline"
+                                    className="text-xs font-semibold text-indigo-600 uppercase tracking-widest flex items-center gap-1 hover:underline"
                                 >
                                     All Reviews <ChevronRight size={14} />
                                 </button>
@@ -237,8 +237,8 @@ const DashboardEmployee = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                                 <div className="md:col-span-1 bg-gradient-to-br from-indigo-50 to-indigo-100/30 rounded-2xl p-6 flex flex-col justify-center items-center text-center border border-indigo-100">
-                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2">Average Rating</span>
-                                    <span className="text-4xl font-black text-indigo-600 mb-2">{performanceData.avg_rating || '—'}</span>
+                                    <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400 mb-2">Average Rating</span>
+                                    <span className="text-4xl font-semibold text-indigo-600 mb-2">{performanceData.avg_rating || '—'}</span>
                                     <div className="flex gap-1">
                                         {[1, 2, 3, 4, 5].map((star) => (
                                             <Star 
@@ -255,10 +255,10 @@ const DashboardEmployee = () => {
                                         <div className="space-y-3">
                                             <div className="flex justify-between items-start">
                                                 <div>
-                                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Latest Review</span>
+                                                    <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Latest Review</span>
                                                     <h4 className="text-sm font-bold text-slate-800 mt-0.5">Reviewed by {latestReview.reviewer_name}</h4>
                                                 </div>
-                                                <span className="text-xs font-black text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-lg flex items-center gap-1">
+                                                <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-lg flex items-center gap-1">
                                                     <Star size={12} className="fill-indigo-600" /> {latestReview.rating}
                                                 </span>
                                             </div>
@@ -277,8 +277,8 @@ const DashboardEmployee = () => {
                         </div>
 
                         {/* Company Details Section */}
-                        <div className="glass-morphism rounded-[2.5rem] p-8 border border-white/50 shadow-2xl shadow-slate-200/50 bg-gradient-to-br from-white to-indigo-50/30">
-                            <h3 className="text-lg font-black text-slate-900 mb-4 flex items-center gap-3">
+                        <div className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm bg-gradient-to-br from-white to-indigo-50/30">
+                            <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-3">
                                 <Shield size={18} className="text-indigo-600" /> Company Profile
                             </h3>
                             <p className="text-sm text-slate-500 leading-relaxed mb-6">
@@ -304,15 +304,15 @@ const InfoRow = ({ icon: Icon, label, value }) => (
             <Icon size={16} />
         </div>
         <div>
-            <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-0.5">{label}</div>
-            <div className="text-xs font-black text-slate-700 truncate max-w-[200px]">{value || 'Loading...'}</div>
+            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-0.5">{label}</div>
+            <div className="text-xs font-semibold text-slate-700 truncate max-w-[200px]">{value || 'Loading...'}</div>
         </div>
     </div>
 );
 
 const DetailCard = ({ label, value }) => (
     <div className="rounded-2xl border border-slate-100 bg-white p-4">
-        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">{label}</div>
+        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400 mb-1">{label}</div>
         <div className="text-xs font-bold text-slate-700 truncate">{value}</div>
     </div>
 );
@@ -327,10 +327,12 @@ const StatMiniCard = ({ label, value, color }) => {
 
     return (
         <div className={`rounded-2xl border p-4 text-center ${colors[color] || colors.indigo}`}>
-            <div className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 mb-1">{label}</div>
-            <div className="text-2xl font-black">{value}</div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400 mb-1">{label}</div>
+            <div className="text-2xl font-semibold">{value}</div>
         </div>
     );
 };
 
 export default DashboardEmployee;
+
+

@@ -36,12 +36,12 @@ const Sidebar = () => {
 
     const SidebarContent = () => (
         <div className="flex flex-col h-full">
-            <div className="flex items-center justify-between mb-10 px-4">
+            <div className="flex items-center justify-between mb-9 px-3">
                 <Link to={`/dashboard/${user.role.toLowerCase()}`} className="flex items-center gap-3 group">
-                    <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-600/30 group-hover:scale-110 transition-transform duration-300">
-                        <Rocket className="text-white" size={22} />
+                    <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-sm">
+                        <Rocket className="text-white" size={19} />
                     </div>
-                    <span className="font-black text-xl tracking-tighter gradient-text">AI Hiring OS</span>
+                    <span className="font-semibold text-lg tracking-tight text-slate-950">AI Hiring OS</span>
                 </Link>
                 <button onClick={() => setIsOpen(false)} className="lg:hidden p-2 text-slate-400 hover:text-slate-900 transition-colors">
                     <X size={20} />
@@ -50,7 +50,7 @@ const Sidebar = () => {
             
             <div className="flex-1 space-y-8">
                 <div>
-                    <p className="px-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Main Menu</p>
+                    <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 mb-3">Main Menu</p>
                     <nav className="flex flex-col gap-1.5">
                         {navItems.map((item) => (
                             <NavLink
@@ -58,10 +58,10 @@ const Sidebar = () => {
                                 to={item.path}
                                 onClick={() => setIsOpen(false)}
                                 className={({ isActive }) => 
-                                    `flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold transition-all duration-300 ${
+                                    `flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 ${
                                         isActive 
-                                        ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/30' 
-                                        : 'text-slate-500 hover:bg-white hover:text-indigo-600 hover:shadow-sm'
+                                        ? 'bg-slate-950 text-white shadow-sm' 
+                                        : 'text-slate-500 hover:bg-white hover:text-slate-950'
                                     }`
                                 }
                             >
@@ -73,13 +73,13 @@ const Sidebar = () => {
                 </div>
 
                 <div>
-                    <p className="px-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">System</p>
+                    <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 mb-3">System</p>
                     <nav className="flex flex-col gap-1.5">
-                        <NavLink to="/settings" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-slate-500 hover:bg-white hover:text-indigo-600 hover:shadow-sm transition-all duration-300">
+                        <NavLink to="/settings" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm text-slate-500 hover:bg-white hover:text-slate-950 transition-all duration-200">
                             <Settings size={20} />
                             Settings
                         </NavLink>
-                        <NavLink to="/help" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3.5 rounded-2xl font-bold text-slate-500 hover:bg-white hover:text-indigo-600 hover:shadow-sm transition-all duration-300">
+                        <NavLink to="/help" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm text-slate-500 hover:bg-white hover:text-slate-950 transition-all duration-200">
                             <HelpCircle size={20} />
                             Help Center
                         </NavLink>
@@ -88,18 +88,18 @@ const Sidebar = () => {
             </div>
 
             <div className="pt-6 mt-6 border-t border-slate-100">
-                <div className="flex items-center gap-3 px-4 py-4 mb-4 bg-slate-50/50 rounded-2xl border border-white">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 font-black">
+                <div className="flex items-center gap-3 px-3 py-3 mb-3 bg-white rounded-xl border border-slate-200">
+                    <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-700 font-semibold">
                         {user.name.charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-black text-slate-900 truncate">{user.name}</p>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{user.role}</p>
+                        <p className="text-sm font-semibold text-slate-900 truncate">{user.name}</p>
+                        <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest truncate">{user.role}</p>
                     </div>
                 </div>
                 <button 
                     onClick={logout}
-                    className="w-full flex items-center gap-3 px-4 py-4 rounded-2xl font-bold text-rose-500 hover:bg-rose-50 transition-all duration-300"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm text-rose-600 hover:bg-rose-50 transition-all duration-200"
                 >
                     <LogOut size={20} />
                     Sign Out
@@ -113,13 +113,13 @@ const Sidebar = () => {
             {/* Mobile Menu Button */}
             <button 
                 onClick={() => setIsOpen(true)}
-                className="lg:hidden fixed top-5 left-5 z-[60] w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-slate-600 border border-slate-100"
+                className="lg:hidden fixed top-5 left-5 z-[60] w-11 h-11 bg-white rounded-xl shadow-lg flex items-center justify-center text-slate-600 border border-slate-200"
             >
                 <Menu size={24} />
             </button>
 
             {/* Desktop Sidebar */}
-            <aside className="hidden lg:flex w-[280px] h-screen fixed left-0 top-0 p-6 flex-col z-50 border-r border-slate-200/50 glass-morphism">
+            <aside className="hidden lg:flex w-[280px] h-screen fixed left-0 top-0 p-5 flex-col z-50 border-r border-slate-200 bg-slate-50/80 backdrop-blur-xl">
                 <SidebarContent />
             </aside>
 
@@ -139,7 +139,7 @@ const Sidebar = () => {
                             animate={{ x: 0 }}
                             exit={{ x: '-100%' }}
                             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                            className="fixed left-0 top-0 w-[280px] h-screen p-6 flex flex-col z-[80] border-r border-slate-200/50 glass-morphism bg-white lg:hidden"
+                            className="fixed left-0 top-0 w-[280px] h-screen p-5 flex flex-col z-[80] border-r border-slate-200 bg-slate-50 lg:hidden"
                         >
                             <SidebarContent />
                         </motion.aside>

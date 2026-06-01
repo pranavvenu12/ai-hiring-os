@@ -110,15 +110,15 @@ const Settings = () => {
     };
 
     return (
-        <div className="flex bg-slate-50 min-h-screen font-inter">
+        <div className="flex bg-[#f8fafc] min-h-screen font-inter">
             <Sidebar />
-            <main className="flex-1 ml-0 lg:ml-[280px] p-6 md:p-10">
+            <main className="flex-1 ml-0 lg:ml-[280px] px-4 py-6 md:p-10">
                 <Topbar title="Company Settings" />
 
                 {isLoading && !company ? (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-pulse mt-8">
                         <div className="lg:col-span-1 space-y-6">
-                            <div className="glass-morphism rounded-[2.5rem] p-8 border border-white/50 shadow-2xl shadow-slate-200/50 space-y-6">
+                            <div className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm space-y-6">
                                 <div className="flex items-center gap-3">
                                     <div className="w-12 h-12 rounded-2xl bg-slate-200" />
                                     <div className="space-y-2 flex-1">
@@ -134,7 +134,7 @@ const Settings = () => {
                             </div>
                         </div>
                         <div className="lg:col-span-2">
-                            <div className="glass-morphism rounded-[2.5rem] p-8 md:p-10 border border-white/50 shadow-2xl shadow-slate-200/50 space-y-8">
+                            <div className="bg-white rounded-[1.5rem] p-6 md:p-8 border border-slate-200 shadow-sm space-y-8">
                                 <div className="space-y-2">
                                     <div className="h-6 bg-slate-200 rounded-full w-1/4" />
                                     <div className="h-4 bg-slate-100 rounded-full w-1/3" />
@@ -157,13 +157,13 @@ const Settings = () => {
                         className="grid grid-cols-1 lg:grid-cols-3 gap-8"
                     >
                         <div className="lg:col-span-1 space-y-6">
-                            <div className="glass-morphism rounded-[2.5rem] p-8 border border-white/50 shadow-2xl shadow-slate-200/50">
+                            <div className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm">
                                 <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-600/20">
+                                    <div className="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-sm">
                                         <Building2 size={22} />
                                     </div>
                                     <div>
-                                        <h2 className="text-2xl font-black text-slate-900">{company?.name || 'Your Company'}</h2>
+                                        <h2 className="text-2xl font-semibold text-slate-900">{company?.name || 'Your Company'}</h2>
                                         <p className="text-sm text-slate-400 font-medium">Managed by {user?.role?.toUpperCase?.() || 'USER'}</p>
                                     </div>
                                 </div>
@@ -177,29 +177,29 @@ const Settings = () => {
                                 </div>
                             </div>
 
-                            <div className="glass-morphism rounded-[2.5rem] p-8 border border-white/50 shadow-2xl shadow-slate-200/50">
+                            <div className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm">
                                 <div className="flex items-center gap-3 mb-4">
                                     <ShieldCheck className="text-indigo-600" size={20} />
-                                    <h3 className="text-lg font-black text-slate-900">Account Security</h3>
+                                    <h3 className="text-lg font-semibold text-slate-900">Account Security</h3>
                                 </div>
                                 <p className="text-sm text-slate-500 leading-relaxed mb-6">
                                     Auth is handled by Supabase, and company edits are restricted to HR/Admin roles within the authenticated tenant.
                                 </p>
-                                <div className="mt-6 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400">
+                                <div className="mt-6 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-slate-400">
                                     <Lock size={14} /> Read-only for non-admin roles
                                 </div>
                             </div>
                         </div>
 
                         <div className="lg:col-span-2">
-                            <form onSubmit={handleSubmit} className="glass-morphism rounded-[2.5rem] p-8 md:p-10 border border-white/50 shadow-2xl shadow-slate-200/50 space-y-8">
+                            <form onSubmit={handleSubmit} className="bg-white rounded-[1.5rem] p-6 md:p-8 border border-slate-200 shadow-sm space-y-8">
                                 <div className="flex items-start justify-between gap-6 flex-wrap">
                                     <div>
-                                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">Edit Company Details</h3>
+                                        <h3 className="text-2xl font-semibold text-slate-900 tracking-tight">Edit Company Details</h3>
                                         <p className="text-sm font-medium text-slate-400">Keep the company profile accurate for your team.</p>
                                     </div>
                                     {!canEdit && (
-                                        <div className="px-4 py-2 rounded-full bg-amber-50 text-amber-700 text-xs font-black uppercase tracking-widest border border-amber-100">
+                                        <div className="px-4 py-2 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold uppercase tracking-widest border border-amber-100">
                                             View Only
                                         </div>
                                     )}
@@ -215,7 +215,7 @@ const Settings = () => {
                                 </div>
 
                                 <div className="space-y-3">
-                                    <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Company Description</label>
+                                    <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Company Description</label>
                                     <textarea
                                         className="w-full min-h-[180px] bg-white/60 border border-slate-200 rounded-2xl py-4 px-5 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 transition-all font-medium"
                                         value={form.description}
@@ -229,7 +229,7 @@ const Settings = () => {
                                     <button
                                         type="submit"
                                         disabled={!canEdit || isSaving || isLoading}
-                                        className="btn btn-primary px-8 py-3 shadow-xl shadow-indigo-600/20 disabled:opacity-60"
+                                        className="btn btn-primary px-8 py-3 shadow-sm disabled:opacity-60"
                                     >
                                         {isSaving ? 'Saving...' : (
                                             <>
@@ -254,15 +254,15 @@ const SettingSummary = ({ icon: Icon, label, value }) => (
             <Icon size={18} />
         </div>
         <div>
-            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{label}</div>
-            <div className="text-sm font-black text-slate-700">{value || 'Not set'}</div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">{label}</div>
+            <div className="text-sm font-semibold text-slate-700">{value || 'Not set'}</div>
         </div>
     </div>
 );
 
 const Field = ({ label, icon: Icon, value, onChange, disabled, required = false, placeholder }) => (
     <div className="space-y-3">
-        <label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">{label}</label>
+        <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">{label}</label>
         <div className="relative group">
             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
                 <Icon size={18} />
@@ -281,3 +281,5 @@ const Field = ({ label, icon: Icon, value, onChange, disabled, required = false,
 );
 
 export default Settings;
+
+

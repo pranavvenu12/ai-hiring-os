@@ -11,9 +11,9 @@ const HelpCenter = () => {
     }, []);
 
     return (
-        <div className="flex bg-slate-50 min-h-screen font-inter">
+        <div className="flex bg-[#f8fafc] min-h-screen font-inter">
             <Sidebar />
-            <main className="flex-1 ml-0 lg:ml-[280px] p-6 md:p-10">
+            <main className="flex-1 ml-0 lg:ml-[280px] px-4 py-6 md:p-10">
                 <Topbar title="Help Center" />
 
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -23,8 +23,8 @@ const HelpCenter = () => {
                     </div>
 
                     <div className="lg:col-span-2 space-y-8">
-                        <div className="glass-morphism rounded-[2.5rem] p-8 md:p-10 border border-white/50 shadow-2xl shadow-slate-200/50">
-                            <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Common tasks</h2>
+                        <div className="bg-white rounded-[1.5rem] p-6 md:p-8 border border-slate-200 shadow-sm">
+                            <h2 className="text-2xl font-semibold text-slate-900 tracking-tight mb-2">Common tasks</h2>
                             <p className="text-sm text-slate-400 mb-8">Jump to the main product areas without leaving the app.</p>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -34,13 +34,13 @@ const HelpCenter = () => {
                             </div>
                         </div>
 
-                        <div className="glass-morphism rounded-[2.5rem] p-8 md:p-10 border border-white/50 shadow-2xl shadow-slate-200/50">
-                            <h3 className="text-xl font-black text-slate-900 mb-4">Need direct help?</h3>
+                        <div className="bg-white rounded-[1.5rem] p-6 md:p-8 border border-slate-200 shadow-sm">
+                            <h3 className="text-xl font-semibold text-slate-900 mb-4">Need direct help?</h3>
                             <p className="text-sm text-slate-500 leading-relaxed mb-6">
                                 Need assistance with your organization settings or matching algorithms? Use the button below to update your company profile or configure security parameters.
                             </p>
                             <div className="flex flex-wrap gap-4">
-                                <Link to="/settings" className="btn btn-primary px-6 py-3 font-black">
+                                <Link to="/settings" className="btn btn-primary px-6 py-3 font-semibold">
                                     Update Company Info
                                 </Link>
                             </div>
@@ -53,11 +53,11 @@ const HelpCenter = () => {
 };
 
 const Panel = ({ icon: Icon, title, text }) => (
-    <div className="glass-morphism rounded-[2.5rem] p-8 border border-white/50 shadow-2xl shadow-slate-200/50">
+    <div className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm">
         <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4">
             <Icon size={22} />
         </div>
-        <h3 className="text-xl font-black text-slate-900 mb-2">{title}</h3>
+        <h3 className="text-xl font-semibold text-slate-900 mb-2">{title}</h3>
         <p className="text-sm text-slate-500 leading-relaxed">{text}</p>
     </div>
 );
@@ -69,7 +69,7 @@ const QuickLink = ({ icon: Icon, title, to, description }) => (
                 <Icon size={20} />
             </div>
             <div>
-                <div className="font-black text-slate-900">{title}</div>
+                <div className="font-semibold text-slate-900">{title}</div>
                 <div className="text-sm text-slate-400 mt-1 leading-relaxed">{description}</div>
             </div>
         </div>
@@ -77,3 +77,5 @@ const QuickLink = ({ icon: Icon, title, to, description }) => (
 );
 
 export default HelpCenter;
+
+

@@ -165,9 +165,9 @@ const InterviewAssistant = () => {
     const isLastQuestion = session && currentQuestionIndex >= (session.questions?.length || 0) - 1;
 
     return (
-        <div className="flex bg-slate-50 min-h-screen font-inter">
+        <div className="flex bg-[#f8fafc] min-h-screen font-inter">
             <Sidebar />
-            <main className="flex-1 ml-0 lg:ml-[280px] p-6 md:p-10">
+            <main className="flex-1 ml-0 lg:ml-[280px] px-4 py-6 md:p-10">
                 <Topbar title="AI Interview Assistant" />
 
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-10">
@@ -183,15 +183,15 @@ const InterviewAssistant = () => {
 
                     {/* Interview Setup — shown when no active session */}
                     {!session && !completedSession && (
-                        <div className="glass-morphism rounded-[2.5rem] p-8 border border-white/50 shadow-2xl shadow-slate-200/50">
-                            <h3 className="text-xl font-black text-slate-900 mb-8 flex items-center gap-3">
+                        <div className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm">
+                            <h3 className="text-xl font-semibold text-slate-900 mb-8 flex items-center gap-3">
                                 <Brain size={22} className="text-indigo-600" /> Start New AI Interview
                             </h3>
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                                 {/* Step 1: Select Job */}
                                 <div>
-                                    <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">1. Select Job</h4>
+                                    <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-4">1. Select Job</h4>
                                     <div className="space-y-2 max-h-64 overflow-y-auto">
                                         {jobs.map(job => (
                                             <button key={job.id} onClick={() => handleSelectJob(job)}
@@ -205,7 +205,7 @@ const InterviewAssistant = () => {
 
                                 {/* Step 2: Select Candidate */}
                                 <div>
-                                    <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">2. Select Candidate</h4>
+                                    <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-4">2. Select Candidate</h4>
                                     <div className="space-y-2 max-h-64 overflow-y-auto">
                                         {candidates.map(c => (
                                             <button key={c.resume_id} onClick={() => setSelectedCandidate(c)}
@@ -221,7 +221,7 @@ const InterviewAssistant = () => {
 
                                 {/* Step 3: Interview Type */}
                                 <div>
-                                    <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">3. Interview Type</h4>
+                                    <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-4">3. Interview Type</h4>
                                     <div className="space-y-2">
                                         {['technical', 'behavioral', 'general'].map(t => (
                                             <button key={t} onClick={() => setInterviewType(t)}
@@ -232,7 +232,7 @@ const InterviewAssistant = () => {
                                     </div>
 
                                     <button onClick={handleStartInterview} disabled={!selectedCandidate || !selectedJob || starting}
-                                        className="btn btn-primary w-full justify-center py-4 mt-6 font-black text-base shadow-xl shadow-indigo-600/20 disabled:opacity-40">
+                                        className="btn btn-primary w-full justify-center py-4 mt-6 font-semibold text-base shadow-sm disabled:opacity-40">
                                         {starting ? <Loader2 className="animate-spin" size={22} /> : <Play size={22} />}
                                         {starting ? 'Generating Questions...' : 'Start Interview'}
                                     </button>
@@ -243,15 +243,15 @@ const InterviewAssistant = () => {
 
                     {/* Active Interview Session */}
                     {session && !completedSession && (
-                        <div className="glass-morphism rounded-[2.5rem] p-8 border border-white/50 shadow-2xl shadow-slate-200/50">
+                        <div className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm">
                             {/* Progress */}
                             <div className="flex items-center justify-between mb-8">
                                 <div>
-                                    <h3 className="text-xl font-black text-slate-900">AI Interview in Progress</h3>
+                                    <h3 className="text-xl font-semibold text-slate-900">AI Interview in Progress</h3>
                                     <p className="text-sm text-slate-400 font-medium">Question {currentQuestionIndex + 1} of {session.questions?.length || 0}</p>
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-xs font-black text-indigo-600 uppercase tracking-widest">{session.interview_type}</div>
+                                    <div className="text-xs font-semibold text-indigo-600 uppercase tracking-widest">{session.interview_type}</div>
                                 </div>
                             </div>
 
@@ -263,12 +263,12 @@ const InterviewAssistant = () => {
                             </div>
 
                             {/* Question */}
-                            <div className="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-[2rem] p-8 text-white mb-8 relative overflow-hidden">
+                            <div className="bg-slate-950 rounded-[1.5rem] p-8 text-white mb-8 relative overflow-hidden">
                                 <div className="absolute top-0 right-0 opacity-10 translate-x-1/4 -translate-y-1/4">
                                     <Brain size={160} />
                                 </div>
                                 <div className="relative z-10">
-                                    <div className="text-xs font-black uppercase tracking-widest text-indigo-200 mb-3 flex items-center gap-2">
+                                    <div className="text-xs font-semibold uppercase tracking-widest text-indigo-200 mb-3 flex items-center gap-2">
                                         <MessageSquare size={14} />
                                         {session.questions?.[currentQuestionIndex]?.category || 'Question'}
                                     </div>
@@ -307,7 +307,7 @@ const InterviewAssistant = () => {
                                         {isLastQuestion && (
                                             <button onClick={async () => { if (answerText.trim()) { await handleSubmitAnswer(); } handleCompleteInterview(); }}
                                                 disabled={completing}
-                                                className="btn btn-primary px-8 py-3 font-bold shadow-lg shadow-indigo-600/20">
+                                                className="btn btn-primary px-8 py-3 font-bold shadow-sm">
                                                 {completing ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
                                                 {completing ? 'Evaluating...' : 'Complete Interview'}
                                             </button>
@@ -321,12 +321,12 @@ const InterviewAssistant = () => {
                     {/* Completed Interview Results */}
                     {completedSession && (
                         <div className="space-y-8">
-                            <div className="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-[2.5rem] p-10 text-white relative overflow-hidden shadow-2xl shadow-indigo-600/30">
+                            <div className="bg-slate-950 rounded-[1.5rem] p-10 text-white relative overflow-hidden shadow-lg shadow-slate-300/50">
                                 <div className="absolute top-0 right-0 opacity-10 translate-x-1/4 -translate-y-1/4">
                                     <Brain size={240} />
                                 </div>
                                 <div className="relative z-10">
-                                    <div className="flex items-center gap-2 text-indigo-200 font-black text-xs uppercase tracking-widest mb-6">
+                                    <div className="flex items-center gap-2 text-indigo-200 font-semibold text-xs uppercase tracking-widest mb-6">
                                         <Award size={16} /> Interview Evaluation Complete
                                     </div>
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
@@ -351,13 +351,13 @@ const InterviewAssistant = () => {
 
                     {/* Recent Interviews */}
                     {companyStats?.interviews?.length > 0 && !session && !completedSession && (
-                        <div className="glass-morphism rounded-[2.5rem] p-8 border border-white/50">
-                            <h3 className="text-lg font-black text-slate-900 mb-6">Recent Interviews</h3>
+                        <div className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm">
+                            <h3 className="text-lg font-semibold text-slate-900 mb-6">Recent Interviews</h3>
                             <div className="space-y-3">
                                 {companyStats.interviews.slice(0, 5).map((interview, i) => (
                                     <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-white/50 border border-slate-100 hover:bg-white transition-all">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black">
+                                            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-semibold">
                                                 {interview.candidate_name?.charAt(0) || '?'}
                                             </div>
                                             <div>
@@ -367,7 +367,7 @@ const InterviewAssistant = () => {
                                         </div>
                                         <div className="flex items-center gap-4">
                                             {interview.overall_score !== null && (
-                                                <span className="text-lg font-black text-indigo-600">{interview.overall_score}%</span>
+                                                <span className="text-lg font-semibold text-indigo-600">{interview.overall_score}%</span>
                                             )}
                                             {interview.recommendation && <RecommendationBadge recommendation={interview.recommendation} small />}
                                         </div>
@@ -384,14 +384,14 @@ const InterviewAssistant = () => {
 
 const MiniStatCard = ({ icon: Icon, label, value }) => (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-        className="glass-morphism p-6 rounded-[2rem] border border-white/50 hover:shadow-2xl hover:shadow-indigo-600/10 transition-all duration-500 group">
+        className="bg-white p-5 rounded-[1.5rem] border border-slate-200 shadow-sm hover:shadow-2xl hover:shadow-indigo-600/10 transition-all duration-500 group">
         <div className="flex justify-between items-start mb-4">
             <div className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-slate-50 flex items-center justify-center text-slate-400 group-hover:text-indigo-600 group-hover:scale-110 transition-all duration-300">
                 <Icon size={24} />
             </div>
         </div>
-        <h2 className="text-3xl font-black text-slate-900 tracking-tighter">{value}</h2>
-        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mt-1">{label}</p>
+        <h2 className="text-3xl font-semibold text-slate-900 tracking-tighter">{value}</h2>
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mt-1">{label}</p>
     </motion.div>
 );
 
@@ -403,9 +403,9 @@ const ScoreCircle = ({ label, score }) => (
                 <circle cx="18" cy="18" r="16" fill="none" stroke="white" strokeWidth="2"
                     strokeDasharray={`${(score || 0)} ${100 - (score || 0)}`} strokeDashoffset="0" strokeLinecap="round" />
             </svg>
-            <span className="text-xl font-black relative z-10">{score || 0}</span>
+            <span className="text-xl font-semibold relative z-10">{score || 0}</span>
         </div>
-        <div className="text-[10px] font-black uppercase tracking-widest text-indigo-200">{label}</div>
+        <div className="text-[10px] font-semibold uppercase tracking-widest text-indigo-200">{label}</div>
     </div>
 );
 
@@ -419,10 +419,13 @@ const recommendationConfig = {
 const RecommendationBadge = ({ recommendation, small = false }) => {
     const config = recommendationConfig[recommendation] || recommendationConfig.consider;
     return (
-        <span className={`${config.bg} ${config.text} ${small ? 'px-3 py-1 text-[10px]' : 'px-5 py-2 text-xs'} font-black uppercase tracking-widest rounded-xl shadow-lg`}>
+        <span className={`${config.bg} ${config.text} ${small ? 'px-3 py-1 text-[10px]' : 'px-5 py-2 text-xs'} font-semibold uppercase tracking-widest rounded-xl shadow-lg`}>
             {config.label}
         </span>
     );
 };
 
 export default InterviewAssistant;
+
+
+

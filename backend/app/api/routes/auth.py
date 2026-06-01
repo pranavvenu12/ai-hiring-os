@@ -49,6 +49,18 @@ def _get_supabase_user_by_email(client, email: str):
     return next((u for u in sb_users if u.email == email), None)
 
 
+def _company_not_registered_detail(company_name: str) -> str:
+    if company_name:
+        return (
+            f"Company '{company_name}' is not registered. Please contact your "
+            "HR/Admin to register the company or confirm the company name."
+        )
+    return (
+        "Company is not registered. Please contact your HR/Admin to register "
+        "the company or confirm the company name."
+    )
+
+
 @router.post("/login", response_model=AuthResponse)
 async def login(
     payload: LoginRequest,
@@ -88,12 +100,29 @@ async def signup(
 ):
     """
     Public signup flow:
-    1. Register in Supabase.
-    2. Create a Company (if it doesn't exist).
-    3. Create local User record with Role.
+    1. Validate company access.
+    2. Register in Supabase.
+    3. Create a Company (if it doesn't exist).
+    4. Create local User record with Role.
     """
     # 0. Check if user already exists in local DB
     existing_user = await user_service.get_user_by_email(db, payload.email)
+    company_name = (payload.company_name or "").strip()
+
+    # Employees and managers can only join companies that HR/Admin has already
+    # registered. Validate this before calling Supabase so the UI gets a clear
+    # tenant error instead of a generic auth provider error.
+    from app.services import company_service
+    from app.schemas.company import CompanyCreate
+
+    company = None
+    if not existing_user and payload.role.value not in ["hr", "admin"]:
+        company = await company_service.get_company_by_name(db, company_name) if company_name else None
+        if not company:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=_company_not_registered_detail(company_name),
+            )
 
     # 1. Supabase Register or re-link existing account
     try:
@@ -122,9 +151,6 @@ async def signup(
             )
 
     # 2. Create or reuse company
-    from app.services import company_service
-    from app.schemas.company import CompanyCreate
-
     if existing_user:
         company = await company_service.get_company_by_id(db, existing_user.company_id)
         if company and payload.company_name and company.name != payload.company_name:
@@ -132,18 +158,17 @@ async def signup(
             await db.flush()
     else:
         # Check if company already exists by name case-insensitively
-        company = None
-        if payload.company_name:
-            company = await company_service.get_company_by_name(db, payload.company_name)
+        if company_name:
+            company = await company_service.get_company_by_name(db, company_name)
         
         if not company:
             if payload.role.value not in ["hr", "admin"]:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Company '{payload.company_name}' is not registered. Only HR/Admins can register new company profiles. Please verify the spelling or ask your administrator to register your company first."
+                    detail=_company_not_registered_detail(company_name),
                 )
             company = await company_service.create_company(
-                db, CompanyCreate(name=payload.company_name or f"{payload.name}'s Org")
+                db, CompanyCreate(name=company_name or f"{payload.name}'s Org")
             )
 
     if company is None and existing_user:
