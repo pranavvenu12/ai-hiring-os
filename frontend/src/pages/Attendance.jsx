@@ -5,6 +5,7 @@ import Topbar from '../components/Topbar';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { formatAttendanceDuration } from '../utils/date';
 import { Clock, LogIn, LogOut, CheckCircle2, XCircle, MinusCircle, Users, BarChart3, Calendar } from 'lucide-react';
 
 const Attendance = () => {
@@ -16,6 +17,7 @@ const Attendance = () => {
     const [loading, setLoading] = useState(true);
     const [clockingIn, setClockingIn] = useState(false);
     const [clockingOut, setClockingOut] = useState(false);
+    const [now, setNow] = useState(Date.now());
 
     const isHROrAdmin = user && ['admin', 'hr'].includes(user.role.toLowerCase());
     const isManager = user && user.role.toLowerCase() === 'manager';
@@ -23,6 +25,11 @@ const Attendance = () => {
     useEffect(() => {
         document.title = 'AI Hiring OS - Attendance';
         fetchData();
+    }, []);
+
+    useEffect(() => {
+        const timer = window.setInterval(() => setNow(Date.now()), 1000);
+        return () => window.clearInterval(timer);
     }, []);
 
     const fetchData = async () => {
@@ -98,7 +105,7 @@ const Attendance = () => {
                             <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <MiniStat label="Clock In" value={today.clock_in ? new Date(today.clock_in).toLocaleTimeString() : '—'} />
                                 <MiniStat label="Clock Out" value={today.clock_out ? new Date(today.clock_out).toLocaleTimeString() : '—'} />
-                                <MiniStat label="Hours" value={today.total_hours ? `${today.total_hours}h` : '—'} />
+                                <MiniStat label="Hours" value={formatAttendanceDuration(today, now)} />
                                 <MiniStat label="Status" value={today.status ? today.status.replace('_', ' ') : 'Not Clocked In'} />
                             </div>
                         </div>
@@ -166,7 +173,7 @@ const Attendance = () => {
                                         </div>
                                         <div className="mt-4 rounded-xl bg-slate-50 border border-slate-100 px-3 py-2">
                                             <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Hours</p>
-                                            <p className="text-sm font-semibold text-slate-700 mt-1">{r.total_hours ? `${r.total_hours}h` : '-'}</p>
+                                            <p className="text-sm font-semibold text-slate-700 mt-1">{formatAttendanceDuration(r, now)}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -188,7 +195,7 @@ const Attendance = () => {
                                                 <td className="px-6 py-4 font-bold text-slate-900">{r.employee_name}</td>
                                                 <td className="px-6 py-4 text-sm text-slate-500">{r.clock_in ? new Date(r.clock_in).toLocaleTimeString() : '—'}</td>
                                                 <td className="px-6 py-4 text-sm text-slate-500">{r.clock_out ? new Date(r.clock_out).toLocaleTimeString() : '—'}</td>
-                                                <td className="px-6 py-4 text-sm font-bold text-slate-700">{r.total_hours ? `${r.total_hours}h` : '—'}</td>
+                                                <td className="px-6 py-4 text-sm font-bold text-slate-700">{formatAttendanceDuration(r, now)}</td>
                                                 <td className="px-6 py-4">
                                                     <StatusBadge status={r.status} />
                                                 </td>
@@ -220,7 +227,7 @@ const Attendance = () => {
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between sm:justify-end gap-4">
-                                        <span className="text-sm font-semibold text-indigo-600">{r.total_hours ? `${r.total_hours}h` : '—'}</span>
+                                        <span className="text-sm font-semibold text-indigo-600 tabular-nums">{formatAttendanceDuration(r, now)}</span>
                                         <StatusBadge status={r.status} />
                                     </div>
                                 </div>

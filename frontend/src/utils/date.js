@@ -37,3 +37,22 @@ export const formatShortDate = (value) => {
         year: 'numeric',
     }).format(date);
 };
+
+export const formatAttendanceDuration = (record, now = Date.now()) => {
+    if (!record?.clock_in) return '00:00:00';
+
+    const start = new Date(record.clock_in).getTime();
+    const end = record.clock_out ? new Date(record.clock_out).getTime() : now;
+
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) {
+        return '00:00:00';
+    }
+
+    const totalSeconds = Math.floor((end - start) / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    const pad = (value) => String(value).padStart(2, '0');
+
+    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+};

@@ -6,6 +6,7 @@ import api from '../services/api';
 import { Mail, Building, Users, Shield, Calendar, MapPin, ExternalLink, Globe, Layers3, UserCheck, Clock, Star, AlertCircle, FileText, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { formatAttendanceDuration } from '../utils/date';
 
 const DashboardEmployee = () => {
     const { user } = useAuth();
@@ -33,6 +34,7 @@ const DashboardEmployee = () => {
     const [performanceData, setPerformanceData] = useState({ reviews: [], avg_rating: 0 });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [now, setNow] = useState(Date.now());
 
     useEffect(() => {
         document.title = 'AI Hiring OS - Employee Dashboard';
@@ -49,6 +51,11 @@ const DashboardEmployee = () => {
             }
         }
     }, [user]);
+
+    useEffect(() => {
+        const timer = window.setInterval(() => setNow(Date.now()), 1000);
+        return () => window.clearInterval(timer);
+    }, []);
 
     const fetchData = async () => {
         setLoading(true);
@@ -200,9 +207,11 @@ const DashboardEmployee = () => {
                                     <div className="text-sm font-bold text-slate-700">
                                         {attendanceData.today?.clocked_in ? (
                                             attendanceData.today?.clocked_out ? (
-                                                <span className="text-slate-500">Clocked out. Total time: {attendanceData.today.total_hours?.toFixed(2)}h</span>
+                                                <span className="text-slate-500">Clocked out. Total time: {formatAttendanceDuration(attendanceData.today, now)}</span>
                                             ) : (
-                                                <span className="text-indigo-600 font-bold">Currently Clocked In since {new Date(attendanceData.today.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                <span className="text-indigo-600 font-bold">
+                                                    Currently Clocked In since {new Date(attendanceData.today.clock_in).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {formatAttendanceDuration(attendanceData.today, now)}
+                                                </span>
                                             )
                                         ) : (
                                             <span className="text-slate-400">You haven't clocked in today yet.</span>
