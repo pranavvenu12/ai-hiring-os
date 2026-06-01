@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, Briefcase, Users, BadgeCheck, LogOut, Rocket, Settings, HelpCircle, Menu, X, Clock, TrendingUp, Mic } from 'lucide-react';
+import { LayoutDashboard, Briefcase, Users, BadgeCheck, Rocket, Settings, HelpCircle, Menu, X, Clock, TrendingUp, Mic } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Sidebar = () => {
-    const { user, logout } = useAuth();
+    const { user } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
 
     if (!user) return null;
@@ -97,13 +97,6 @@ const Sidebar = () => {
                         <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest truncate">{user.role}</p>
                     </div>
                 </div>
-                <button 
-                    onClick={logout}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm text-rose-600 hover:bg-rose-50 transition-all duration-200"
-                >
-                    <LogOut size={20} />
-                    Sign Out
-                </button>
             </div>
         </div>
     );
