@@ -42,6 +42,7 @@ const Careers = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isApplying, setIsApplying] = useState(false);
     const [applicationSent, setApplicationSent] = useState(false);
+    const [showApplyForm, setShowApplyForm] = useState(false);
     const [form, setForm] = useState(emptyForm);
     const { toast } = useToast();
     const { isDark, toggleTheme } = useTheme();
@@ -56,9 +57,6 @@ const Careers = () => {
         try {
             const data = await api.get('/jobs/public');
             setJobs(Array.isArray(data) ? data : []);
-            if (Array.isArray(data) && data.length > 0) {
-                setSelectedJobId(data[0].id);
-            }
         } catch (error) {
             toast.error(error.detail || 'Unable to load open roles.');
         } finally {
@@ -76,13 +74,29 @@ const Careers = () => {
         ));
     }, [jobs, searchQuery]);
 
-    const selectedJob = filteredJobs.find((job) => job.id === selectedJobId) || filteredJobs[0] || null;
+    const selectedJob = filteredJobs.find((job) => job.id === selectedJobId) || null;
 
     useEffect(() => {
-        if (filteredJobs.length > 0 && !filteredJobs.some((job) => job.id === selectedJobId)) {
-            setSelectedJobId(filteredJobs[0].id);
+        if (selectedJobId && !filteredJobs.some((job) => job.id === selectedJobId)) {
+            setSelectedJobId(null);
+            setShowApplyForm(false);
         }
     }, [filteredJobs, selectedJobId]);
+
+    const selectJob = (jobId) => {
+        setSelectedJobId(jobId);
+        setShowApplyForm(false);
+        setApplicationSent(false);
+        setForm(emptyForm);
+    };
+
+    const openApplyForm = () => {
+        if (!selectedJob) return;
+        setShowApplyForm(true);
+        requestAnimationFrame(() => {
+            document.getElementById('apply')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    };
 
     const updateForm = (field, value) => {
         setApplicationSent(false);
@@ -194,10 +208,7 @@ const Careers = () => {
                                         <button
                                             key={job.id}
                                             type="button"
-                                            onClick={() => {
-                                                setSelectedJobId(job.id);
-                                                setApplicationSent(false);
-                                            }}
+                                            onClick={() => selectJob(job.id)}
                                             className={`w-full border-b border-slate-100 px-5 py-4 text-left transition hover:bg-slate-50 ${
                                                 selectedJob?.id === job.id ? 'bg-slate-50' : ''
                                             }`}
@@ -278,72 +289,101 @@ const Careers = () => {
                                             {selectedJob.description}
                                         </p>
                                     </div>
+                                    <button
+                                        type="button"
+                                        onClick={openApplyForm}
+                                        className="theme-primary-action mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-slate-950 px-6 text-sm font-semibold text-white"
+                                    >
+                                        Apply for this job
+                                        <ArrowRight size={17} />
+                                    </button>
                                 </>
                             ) : (
                                 <div className="flex min-h-[360px] flex-col items-center justify-center text-center">
                                     <Briefcase className="text-slate-300" size={42} />
-                                    <h2 className="mt-4 text-xl font-semibold text-slate-900">No open jobs yet</h2>
-                                    <p className="mt-2 max-w-sm text-sm text-slate-500">
-                                        Careers will stay empty until HR/Admin/Manager publishes a job with a future open-till date.
-                                    </p>
+                                    {filteredJobs.length > 0 ? (
+                                        <>
+                                            <h2 className="mt-4 text-xl font-semibold text-slate-900">Select a job</h2>
+                                            <p className="mt-2 max-w-sm text-sm text-slate-500">
+                                                Click any open role to view details. The application form appears after you choose a job.
+                                            </p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <h2 className="mt-4 text-xl font-semibold text-slate-900">No open jobs yet</h2>
+                                            <p className="mt-2 max-w-sm text-sm text-slate-500">
+                                                Careers will stay empty until HR/Admin/Manager publishes a job with a future open-till date.
+                                            </p>
+                                        </>
+                                    )}
                                 </div>
                             )}
                         </div>
 
-                        <form
-                            id="apply"
-                            onSubmit={handleApply}
-                            className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm md:p-7"
-                        >
-                            <div className="mb-6">
-                                <h3 className="text-2xl font-semibold tracking-tight text-slate-950">Apply</h3>
-                                <p className="mt-1 text-sm font-medium text-slate-500">
-                                    Your resume enters AI screening automatically after upload.
+                        {selectedJob && showApplyForm ? (
+                            <form
+                                id="apply"
+                                onSubmit={handleApply}
+                                className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm md:p-7"
+                            >
+                                <div className="mb-6">
+                                    <h3 className="text-2xl font-semibold tracking-tight text-slate-950">Apply</h3>
+                                    <p className="mt-1 text-sm font-medium text-slate-500">
+                                        Your resume enters AI screening automatically after upload.
+                                    </p>
+                                </div>
+
+                                {applicationSent && (
+                                    <div className="mb-5 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-semibold text-emerald-700">
+                                        <CheckCircle2 className="mb-2" size={18} />
+                                        Application received. Recruiters can now see your candidate record.
+                                    </div>
+                                )}
+
+                                <div className="space-y-4">
+                                    <CareersField icon={User} label="Name" value={form.name} onChange={(value) => updateForm('name', value)} required />
+                                    <CareersField icon={Mail} label="Email" type="email" value={form.email} onChange={(value) => updateForm('email', value)} required />
+                                    <CareersField icon={Phone} label="Phone" value={form.phone} onChange={(value) => updateForm('phone', value)} required />
+                                    <CareersField icon={LinkIcon} label="LinkedIn URL" value={form.linkedin_url} onChange={(value) => updateForm('linkedin_url', value)} />
+                                    <CareersField icon={Globe} label="Portfolio URL" value={form.portfolio_url} onChange={(value) => updateForm('portfolio_url', value)} />
+
+                                    <label className="block">
+                                        <span className="mb-2 block text-xs font-semibold uppercase tracking-widest text-slate-400">Resume PDF</span>
+                                        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center transition hover:border-indigo-200">
+                                            <UploadCloud className="mx-auto text-slate-400" size={26} />
+                                            <p className="mt-2 text-sm font-semibold text-slate-700">
+                                                {form.resume ? form.resume.name : 'Upload your resume'}
+                                            </p>
+                                            <p className="mt-1 text-xs font-medium text-slate-400">PDF only</p>
+                                            <input
+                                                type="file"
+                                                accept="application/pdf,.pdf"
+                                                className="sr-only"
+                                                onChange={(event) => updateForm('resume', event.target.files?.[0] || null)}
+                                                required
+                                            />
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={!selectedJob || isApplying}
+                                    className="btn btn-primary mt-6 w-full justify-center py-3.5 text-sm disabled:opacity-60"
+                                >
+                                    {isApplying ? <Loader2 className="animate-spin" size={18} /> : <ArrowRight size={18} />}
+                                    Submit Application
+                                </button>
+                            </form>
+                        ) : (
+                            <div id="apply" className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm md:p-7">
+                                <FileText className="text-slate-300" size={30} />
+                                <h3 className="mt-4 text-xl font-semibold tracking-tight text-slate-950">Application form</h3>
+                                <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
+                                    Select a job and click Apply to enter your basic details and upload your resume.
                                 </p>
                             </div>
-
-                            {applicationSent && (
-                                <div className="mb-5 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-semibold text-emerald-700">
-                                    <CheckCircle2 className="mb-2" size={18} />
-                                    Application received. Recruiters can now see your candidate record.
-                                </div>
-                            )}
-
-                            <div className="space-y-4">
-                                <CareersField icon={User} label="Name" value={form.name} onChange={(value) => updateForm('name', value)} required />
-                                <CareersField icon={Mail} label="Email" type="email" value={form.email} onChange={(value) => updateForm('email', value)} required />
-                                <CareersField icon={Phone} label="Phone" value={form.phone} onChange={(value) => updateForm('phone', value)} required />
-                                <CareersField icon={LinkIcon} label="LinkedIn URL" value={form.linkedin_url} onChange={(value) => updateForm('linkedin_url', value)} />
-                                <CareersField icon={Globe} label="Portfolio URL" value={form.portfolio_url} onChange={(value) => updateForm('portfolio_url', value)} />
-
-                                <label className="block">
-                                    <span className="mb-2 block text-xs font-semibold uppercase tracking-widest text-slate-400">Resume PDF</span>
-                                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center transition hover:border-indigo-200">
-                                        <UploadCloud className="mx-auto text-slate-400" size={26} />
-                                        <p className="mt-2 text-sm font-semibold text-slate-700">
-                                            {form.resume ? form.resume.name : 'Upload your resume'}
-                                        </p>
-                                        <p className="mt-1 text-xs font-medium text-slate-400">PDF only</p>
-                                        <input
-                                            type="file"
-                                            accept="application/pdf,.pdf"
-                                            className="sr-only"
-                                            onChange={(event) => updateForm('resume', event.target.files?.[0] || null)}
-                                            required
-                                        />
-                                    </div>
-                                </label>
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={!selectedJob || isApplying}
-                                className="btn btn-primary mt-6 w-full justify-center py-3.5 text-sm disabled:opacity-60"
-                            >
-                                {isApplying ? <Loader2 className="animate-spin" size={18} /> : <ArrowRight size={18} />}
-                                Submit Application
-                            </button>
-                        </form>
+                        )}
                     </section>
                 </div>
             </main>
