@@ -37,8 +37,37 @@
 }
 
 @layer base {
+  :root {
+    color-scheme: light;
+    --app-bg: #f8fafc;
+    --app-surface: #ffffff;
+    --app-surface-muted: #f1f5f9;
+    --app-border: #e2e8f0;
+    --app-text: #020617;
+    --app-muted: #64748b;
+    --app-soft-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
+  }
+
+  html.dark {
+    color-scheme: dark;
+    --app-bg: #09090b;
+    --app-surface: #111113;
+    --app-surface-muted: #18181b;
+    --app-border: #27272a;
+    --app-text: #f5f5f7;
+    --app-muted: #a1a1aa;
+    --app-soft-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  }
+
+  html {
+    background: var(--app-bg);
+  }
+
   body {
-    @apply bg-slate-50 text-slate-900 font-['Inter',_sans-serif] antialiased;
+    @apply font-['Inter',_sans-serif] antialiased;
+    background: var(--app-bg);
+    color: var(--app-text);
+    transition: background-color 180ms ease, color 180ms ease;
   }
 }
 
@@ -59,12 +88,213 @@
     @apply bg-slate-950 text-white hover:bg-indigo-700 hover:-translate-y-px shadow-sm hover:shadow-md;
   }
 
+  .dark .btn-primary {
+    @apply bg-white text-slate-950 hover:bg-slate-200 shadow-sm hover:shadow-md;
+  }
+
+  .dark .theme-primary-action {
+    background-color: #f5f5f7 !important;
+    color: #09090b !important;
+  }
+
+  .dark .theme-primary-action:hover {
+    background-color: #e4e4e7 !important;
+  }
+
   .btn-secondary {
     @apply bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 shadow-sm;
   }
 
+  .dark .btn-secondary {
+    @apply bg-zinc-900 text-zinc-100 border-zinc-800 hover:bg-zinc-800;
+  }
+
   .form-control {
     @apply w-full px-4 py-3 rounded-xl border border-slate-200 bg-white transition-all duration-200 focus:outline-none focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-600/10;
+  }
+}
+
+@layer utilities {
+  .dark .bg-\[\#f8fafc\],
+  .dark .bg-slate-50 {
+    background-color: #09090b !important;
+  }
+
+  .dark .bg-white {
+    background-color: #111113 !important;
+  }
+
+  .dark .bg-white\/30,
+  .dark .bg-white\/40,
+  .dark .bg-white\/50,
+  .dark .bg-white\/60,
+  .dark .bg-white\/70,
+  .dark .bg-white\/75,
+  .dark .bg-white\/80,
+  .dark .bg-white\/90 {
+    background-color: rgba(17, 17, 19, 0.88) !important;
+  }
+
+  .dark .bg-slate-50\/30,
+  .dark .bg-slate-50\/50,
+  .dark .bg-slate-50\/60,
+  .dark .bg-slate-50\/70,
+  .dark .bg-slate-50\/80,
+  .dark .bg-slate-100,
+  .dark .bg-indigo-50,
+  .dark .bg-violet-50,
+  .dark .bg-cyan-50 {
+    background-color: #18181b !important;
+  }
+
+  .dark .bg-slate-200,
+  .dark .bg-indigo-100,
+  .dark .bg-violet-100,
+  .dark .bg-cyan-100,
+  .dark .bg-indigo-100\/30 {
+    background-color: #27272a !important;
+  }
+
+  .dark .bg-rose-50 {
+    background-color: rgba(244, 63, 94, 0.12) !important;
+  }
+
+  .dark .bg-emerald-50,
+  .dark .bg-green-50 {
+    background-color: rgba(16, 185, 129, 0.12) !important;
+  }
+
+  .dark .bg-amber-50,
+  .dark .bg-yellow-50 {
+    background-color: rgba(245, 158, 11, 0.12) !important;
+  }
+
+  .dark .bg-blue-50 {
+    background-color: rgba(59, 130, 246, 0.12) !important;
+  }
+
+  .dark .text-slate-950,
+  .dark .text-slate-900,
+  .dark .text-slate-800,
+  .dark .text-slate-700 {
+    color: #f5f5f7 !important;
+  }
+
+  .dark .text-slate-600,
+  .dark .text-slate-500,
+  .dark .text-indigo-700,
+  .dark .text-indigo-800 {
+    color: #d4d4d8 !important;
+  }
+
+  .dark .text-slate-400,
+  .dark .text-slate-300 {
+    color: #a1a1aa !important;
+  }
+
+  .dark .text-indigo-600,
+  .dark .text-violet-600,
+  .dark .text-cyan-600 {
+    color: #f5f5f7 !important;
+  }
+
+  .dark .text-rose-600,
+  .dark .text-rose-700 {
+    color: #fb7185 !important;
+  }
+
+  .dark .text-emerald-600,
+  .dark .text-emerald-700,
+  .dark .text-green-600,
+  .dark .text-green-700 {
+    color: #6ee7b7 !important;
+  }
+
+  .dark .text-amber-600,
+  .dark .text-amber-700,
+  .dark .text-yellow-600,
+  .dark .text-yellow-700 {
+    color: #fbbf24 !important;
+  }
+
+  .dark .border-slate-50,
+  .dark .border-slate-100,
+  .dark .border-slate-200,
+  .dark .border-indigo-100,
+  .dark .border-indigo-200,
+  .dark .border-white\/10,
+  .dark .border-white\/20,
+  .dark .border-white\/30,
+  .dark .border-slate-200\/50,
+  .dark .border-slate-200\/70 {
+    border-color: #27272a !important;
+  }
+
+  .dark .shadow-slate-200\/60,
+  .dark .shadow-slate-200\/70,
+  .dark .shadow-slate-300\/60,
+  .dark .shadow-xl,
+  .dark .shadow-2xl,
+  .dark .shadow-lg,
+  .dark .shadow-md,
+  .dark .shadow-sm {
+    box-shadow: var(--app-soft-shadow) !important;
+  }
+
+  .dark input,
+  .dark textarea,
+  .dark select {
+    background-color: #111113 !important;
+    border-color: #27272a !important;
+    color: #f5f5f7 !important;
+  }
+
+  .dark input::placeholder,
+  .dark textarea::placeholder {
+    color: #71717a !important;
+  }
+
+  .dark input:disabled,
+  .dark textarea:disabled,
+  .dark select:disabled,
+  .dark .disabled\:bg-slate-100:disabled {
+    background-color: #18181b !important;
+    color: #71717a !important;
+  }
+
+  .dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+  .dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+    border-color: #27272a !important;
+  }
+
+  .dark .hover\:bg-white:hover {
+    background-color: #18181b !important;
+  }
+
+  .dark .hover\:bg-slate-50:hover,
+  .dark .hover\:bg-slate-100:hover {
+    background-color: #18181b !important;
+  }
+
+  .dark .hover\:text-slate-950:hover,
+  .dark .hover\:text-slate-900:hover,
+  .dark .hover\:text-indigo-600:hover {
+    color: #ffffff !important;
+  }
+
+  .dark .focus\:bg-white:focus,
+  .dark .focus-within\:bg-white:focus-within {
+    background-color: #111113 !important;
+  }
+
+  .dark .selection\:bg-indigo-100 ::selection {
+    background: #27272a;
+    color: #ffffff;
+  }
+
+  .dark .backdrop-blur-xl,
+  .dark .backdrop-blur-2xl {
+    backdrop-filter: blur(18px);
   }
 }
 
@@ -87,4 +317,11 @@
   backdrop-filter: blur(18px);
   border: 1px solid rgba(226, 232, 240, 0.9);
   box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
+}
+
+.dark .glass-morphism,
+.dark .glass {
+  background: rgba(17, 17, 19, 0.9);
+  border-color: rgba(39, 39, 42, 0.95);
+  box-shadow: var(--app-soft-shadow);
 }

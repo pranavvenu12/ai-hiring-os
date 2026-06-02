@@ -15,9 +15,12 @@ import {
     Search,
     ShieldCheck,
     Sparkles,
+    Sun,
+    Moon,
     Users,
     X,
 } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 const fadeUp = {
     initial: { opacity: 0, y: 22 },
@@ -28,6 +31,7 @@ const fadeUp = {
 
 const Landing = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+    const { isDark, toggleTheme } = useTheme();
 
     React.useEffect(() => {
         document.title = 'AI Hiring OS | Intelligent talent operations';
@@ -59,8 +63,17 @@ const Landing = () => {
                     </div>
 
                     <div className="hidden items-center gap-4 md:flex">
+                        <button
+                            type="button"
+                            onClick={toggleTheme}
+                            className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:text-slate-950"
+                            aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+                            title={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+                        >
+                            {isDark ? <Moon size={17} /> : <Sun size={18} />}
+                        </button>
                         <Link to="/login" className="text-sm font-medium text-slate-500 hover:text-slate-950">Sign in</Link>
-                        <Link to="/signup" className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700">
+                        <Link to="/signup" className="theme-primary-action rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700">
                             Get started
                         </Link>
                     </div>
@@ -88,6 +101,16 @@ const Landing = () => {
                             <button onClick={() => scrollToSection('security')} className="rounded-xl px-3 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50">
                                 Security
                             </button>
+                            <button
+                                type="button"
+                                onClick={toggleTheme}
+                                className="mt-1 flex items-center justify-between rounded-xl px-3 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                            >
+                                <span>{isDark ? 'Dark theme' : 'Light theme'}</span>
+                                <span className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500">
+                                    {isDark ? <Moon size={17} /> : <Sun size={18} />}
+                                </span>
+                            </button>
                             <div className="mt-3 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
                                 <Link
                                     to="/login"
@@ -99,7 +122,7 @@ const Landing = () => {
                                 <Link
                                     to="/signup"
                                     onClick={() => setIsMobileMenuOpen(false)}
-                                    className="flex h-11 items-center justify-center rounded-full bg-slate-950 text-sm font-semibold text-white"
+                                    className="theme-primary-action flex h-11 items-center justify-center rounded-full bg-slate-950 text-sm font-semibold text-white"
                                 >
                                     Get started
                                 </Link>
@@ -149,7 +172,7 @@ const Landing = () => {
                             transition={{ delay: 0.25, duration: 0.7 }}
                             className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"
                         >
-                            <Link to="/signup" className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-slate-950 px-6 text-sm font-semibold text-white transition hover:bg-indigo-700">
+                            <Link to="/signup" className="theme-primary-action inline-flex h-12 items-center justify-center gap-2 rounded-full bg-slate-950 px-6 text-sm font-semibold text-white transition hover:bg-indigo-700">
                                 Create account
                                 <ArrowRight size={17} />
                             </Link>
@@ -351,7 +374,7 @@ const Landing = () => {
                             Start with one role, one candidate pipeline, and the clarity your hiring team needs to move faster.
                         </p>
                         <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
-                            <Link to="/signup" className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-slate-950 px-6 text-sm font-semibold text-white transition hover:bg-indigo-700">
+                            <Link to="/signup" className="theme-primary-action inline-flex h-12 items-center justify-center gap-2 rounded-full bg-slate-950 px-6 text-sm font-semibold text-white transition hover:bg-indigo-700">
                                 Create account
                                 <ArrowRight size={17} />
                             </Link>

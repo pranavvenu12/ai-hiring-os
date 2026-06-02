@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
+import { ThemeProvider } from './context/ThemeContext';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -57,10 +58,11 @@ const LandingRoute = () => {
 
 function App() {
     return (
-        <ToastProvider>
-            <AuthProvider>
-                <Router>
-                    <Routes>
+        <ThemeProvider>
+            <ToastProvider>
+                <AuthProvider>
+                    <Router>
+                        <Routes>
                         <Route path="/" element={<LandingRoute />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/signup" element={<Signup />} />
@@ -141,10 +143,11 @@ function App() {
                         } />
 
                         <Route path="*" element={<Navigate to="/" />} />
-                    </Routes>
-                </Router>
-            </AuthProvider>
-        </ToastProvider>
+                        </Routes>
+                    </Router>
+                </AuthProvider>
+            </ToastProvider>
+        </ThemeProvider>
     );
 }
 

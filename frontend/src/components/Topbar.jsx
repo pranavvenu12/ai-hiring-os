@@ -2,11 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { Bell, Search, ChevronRight, Briefcase, Users, UserPlus, X, Settings, LogOut, Sparkles, Loader2 } from 'lucide-react';
+import { Bell, Search, ChevronRight, Briefcase, Users, UserPlus, X, Settings, LogOut, Sparkles, Loader2, Sun, Moon } from 'lucide-react';
 import { formatRelativeTime } from '../utils/date';
+import { useTheme } from '../context/ThemeContext';
 
 const Topbar = ({ title }) => {
     const { user, logout } = useAuth();
+    const { isDark, toggleTheme } = useTheme();
     const panelRef = useRef(null);
     const profileRef = useRef(null);
     const [isOpen, setIsOpen] = useState(false);
@@ -531,7 +533,7 @@ const Topbar = ({ title }) => {
                     </button>
 
                     {isProfileOpen && (
-                        <div className="absolute right-0 top-14 mt-2 w-56 rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/70 overflow-hidden py-1.5 z-50">
+                        <div className="absolute right-0 top-14 mt-2 w-72 rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/70 overflow-hidden z-50">
                             <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
                                 <div className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Signed In As</div>
                                 <div className="text-sm font-semibold text-slate-800 truncate mt-1">{user.name}</div>
@@ -545,17 +547,28 @@ const Topbar = ({ title }) => {
                                 <Settings size={16} />
                                 Account Settings
                             </Link>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setIsProfileOpen(false);
-                                    logout();
-                                }}
-                                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-50 transition-colors text-left"
-                            >
-                                <LogOut size={16} />
-                                Sign Out
-                            </button>
+                            <div className="mt-1 flex items-center justify-between border-t border-slate-100 bg-slate-50/60 px-4 py-3">
+                                <button
+                                    type="button"
+                                    onClick={toggleTheme}
+                                    className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm border border-slate-200 hover:text-slate-950 hover:border-slate-300 transition-all"
+                                    aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+                                    title={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+                                >
+                                    {isDark ? <Moon size={19} /> : <Sun size={21} />}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsProfileOpen(false);
+                                        logout();
+                                    }}
+                                    className="flex items-center gap-2.5 px-3 py-2 text-sm font-semibold text-rose-600 hover:text-rose-700 transition-colors text-left"
+                                >
+                                    <LogOut size={16} />
+                                    Sign Out
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
