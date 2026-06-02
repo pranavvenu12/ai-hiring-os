@@ -20,7 +20,7 @@ from fastapi import (
     status,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import or_, select
 
 from app.api.deps import CurrentUser, require_roles
 from app.core.security import Role
@@ -113,8 +113,7 @@ async def list_public_jobs(
         .join(Company, Job.company_id == Company.id)
         .where(
             Job.status == "open",
-            Job.open_until.isnot(None),
-            Job.open_until >= datetime.now(timezone.utc),
+            or_(Job.open_until.is_(None), Job.open_until >= datetime.now(timezone.utc)),
         )
         .order_by(Job.created_at.desc())
         .offset(skip)
@@ -139,8 +138,7 @@ async def get_public_job(
         .where(
             Job.id == job_id,
             Job.status == "open",
-            Job.open_until.isnot(None),
-            Job.open_until >= datetime.now(timezone.utc),
+            or_(Job.open_until.is_(None), Job.open_until >= datetime.now(timezone.utc)),
         )
     )
     row = result.one_or_none()
@@ -171,7 +169,7 @@ async def apply_to_public_job(
     job = await job_service.get_job_by_id(db, job_id)
     if not job:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found.")
-    if job.status != "open" or job.open_until is None or job.open_until < datetime.now(timezone.utc):
+    if job.status != "open" or (job.open_until is not None and job.open_until < datetime.now(timezone.utc)):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="This job is not open for applications.",

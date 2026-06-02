@@ -16,7 +16,7 @@ AI Hiring OS is a hackathon-ready MVP for AI-powered recruiting and HRMS operati
 
 Current implementation:
 - Public candidate portal is available at `/careers`, `/jobs/public`, and `/apply`.
-- Careers is empty by default unless HR/Admin/Manager publishes a job with a future open-till date.
+- Careers is empty by default unless HR/Admin/Manager publishes an open job. Jobs with an expired open-till date are hidden.
 - Candidates can view open jobs, search jobs, inspect job details, and apply.
 - Application form collects name, email, phone, resume PDF, LinkedIn URL, and portfolio URL.
 - Resume upload reuses the existing Supabase Storage path.
