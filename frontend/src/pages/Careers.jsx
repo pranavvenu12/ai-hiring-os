@@ -8,9 +8,11 @@ import {
     CheckCircle2,
     FileText,
     Globe,
+    CalendarDays,
     Link as LinkIcon,
     Loader2,
     Mail,
+    MapPin,
     Phone,
     Rocket,
     Search,
@@ -207,8 +209,13 @@ const Careers = () => {
                                                 <div className="min-w-0">
                                                     <div className="font-semibold text-slate-950">{job.title}</div>
                                                     <div className="mt-1 text-xs font-semibold text-slate-400">{job.company_name}</div>
-                                                    <div className="mt-2 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-                                                        Posted {formatShortDate(job.created_at)}
+                                                    <div className="mt-2 flex flex-wrap gap-2">
+                                                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+                                                            {job.location || 'Location not set'}
+                                                        </span>
+                                                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+                                                            Till {job.open_until ? formatShortDate(job.open_until) : 'not set'}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -236,9 +243,25 @@ const Careers = () => {
                                             <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
                                                 {selectedJob.title}
                                             </h2>
-                                            <p className="mt-2 text-sm font-semibold text-slate-400">
-                                                Posted {formatShortDate(selectedJob.created_at)}
-                                            </p>
+                                            <div className="mt-2 flex flex-wrap gap-2">
+                                                <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-slate-600">
+                                                    {selectedJob.department || 'General'}
+                                                </span>
+                                                <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-slate-600">
+                                                    {selectedJob.employment_type || 'Full-time'}
+                                                </span>
+                                            </div>
+                                            <div className="mt-4 flex flex-col gap-2 text-sm font-semibold text-slate-500 sm:flex-row sm:flex-wrap sm:items-center">
+                                                <span className="inline-flex items-center gap-2">
+                                                    <MapPin size={15} />
+                                                    {selectedJob.location || 'Location not specified'}
+                                                </span>
+                                                <span className="hidden sm:inline text-slate-300">-</span>
+                                                <span className="inline-flex items-center gap-2">
+                                                    <CalendarDays size={15} />
+                                                    Open till {selectedJob.open_until ? formatShortDate(selectedJob.open_until) : 'not specified'}
+                                                </span>
+                                            </div>
                                         </div>
                                         <a
                                             href="#apply"
@@ -259,8 +282,10 @@ const Careers = () => {
                             ) : (
                                 <div className="flex min-h-[360px] flex-col items-center justify-center text-center">
                                     <Briefcase className="text-slate-300" size={42} />
-                                    <h2 className="mt-4 text-xl font-semibold text-slate-900">No role selected</h2>
-                                    <p className="mt-2 text-sm text-slate-500">Select a role to view details and apply.</p>
+                                    <h2 className="mt-4 text-xl font-semibold text-slate-900">No open jobs yet</h2>
+                                    <p className="mt-2 max-w-sm text-sm text-slate-500">
+                                        Careers will stay empty until HR/Admin/Manager publishes a job with a future open-till date.
+                                    </p>
                                 </div>
                             )}
                         </div>

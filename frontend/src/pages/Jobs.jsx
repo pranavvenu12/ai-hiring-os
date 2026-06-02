@@ -11,7 +11,14 @@ import { formatShortDate } from '../utils/date';
 const Jobs = () => {
     const [jobs, setJobs] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [newJob, setNewJob] = useState({ title: '', description: '' });
+    const [newJob, setNewJob] = useState({
+        title: '',
+        department: '',
+        location: '',
+        employment_type: 'Full-time',
+        open_until: '',
+        description: '',
+    });
     const [isLoading, setIsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const { toast } = useToast();
@@ -32,9 +39,19 @@ const Jobs = () => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            await api.post('/jobs', newJob);
+            await api.post('/jobs', {
+                ...newJob,
+                open_until: newJob.open_until ? `${newJob.open_until}T23:59:59` : null,
+            });
             setIsModalOpen(false);
-            setNewJob({ title: '', description: '' });
+            setNewJob({
+                title: '',
+                department: '',
+                location: '',
+                employment_type: 'Full-time',
+                open_until: '',
+                description: '',
+            });
             fetchJobs();
             toast.success('Job posting published successfully!');
         } catch (err) { toast.error(err.detail || 'Failed to create job'); }
@@ -99,12 +116,17 @@ const Jobs = () => {
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <h3 className="font-semibold text-slate-950 leading-snug break-words">{job.title}</h3>
-                                        <p className="text-xs font-medium text-slate-400 mt-1">Created {formatShortDate(job.created_at)}</p>
+                                        <p className="text-xs font-medium text-slate-400 mt-1">
+                                            {job.location || 'Location not set'} • Open till {job.open_until ? formatShortDate(job.open_until) : 'not set'}
+                                        </p>
                                     </div>
                                 </div>
                                 <div className="mt-4 flex flex-wrap items-center gap-2">
                                     <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-semibold uppercase tracking-widest">
                                         {job.department || 'General'}
+                                    </span>
+                                    <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-semibold uppercase tracking-widest">
+                                        {job.employment_type || 'Full-time'}
                                     </span>
                                     <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-semibold uppercase tracking-widest">
                                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
@@ -160,13 +182,18 @@ const Jobs = () => {
                                                 </div>
                                                 <div>
                                                     <div className="font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors">{job.title}</div>
-                                                    <div className="text-xs font-bold text-slate-400 mt-0.5">Created {formatShortDate(job.created_at)}</div>
+                                                    <div className="text-xs font-bold text-slate-400 mt-0.5">
+                                                        {job.location || 'Location not set'} • Open till {job.open_until ? formatShortDate(job.open_until) : 'not set'}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-8 py-6">
                                             <div className="px-3 py-1 rounded-lg bg-slate-100 text-slate-600 text-[10px] font-semibold uppercase tracking-widest inline-block">
                                                 {job.department || 'General'}
+                                            </div>
+                                            <div className="mt-2 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                                                {job.employment_type || 'Full-time'}
                                             </div>
                                         </td>
                                         <td className="px-8 py-6">
@@ -226,7 +253,7 @@ const Jobs = () => {
                                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                                className="relative bg-white max-w-xl w-full p-8 rounded-[1.5rem] shadow-xl shadow-slate-200/70 border border-slate-200"
+                                className="relative bg-white max-w-2xl w-full max-h-[92vh] overflow-y-auto p-8 rounded-[1.5rem] shadow-xl shadow-slate-200/70 border border-slate-200"
                             >
                                 <div className="flex justify-between items-start mb-10">
                                     <div className="flex items-center gap-4">
@@ -257,6 +284,55 @@ const Jobs = () => {
                                             onChange={e => setNewJob({...newJob, title: e.target.value})}
                                             required 
                                         />
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                        <div className="space-y-3">
+                                            <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Department</label>
+                                            <input
+                                                type="text"
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-6 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 transition-all font-medium"
+                                                placeholder="e.g. Engineering"
+                                                value={newJob.department}
+                                                onChange={e => setNewJob({...newJob, department: e.target.value})}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Location</label>
+                                            <input
+                                                type="text"
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-6 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 transition-all font-medium"
+                                                placeholder="e.g. Bangalore / Remote"
+                                                value={newJob.location}
+                                                onChange={e => setNewJob({...newJob, location: e.target.value})}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Employment Type</label>
+                                            <select
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-6 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 transition-all font-medium"
+                                                value={newJob.employment_type}
+                                                onChange={e => setNewJob({...newJob, employment_type: e.target.value})}
+                                                required
+                                            >
+                                                <option>Full-time</option>
+                                                <option>Internship</option>
+                                                <option>Contract</option>
+                                                <option>Part-time</option>
+                                                <option>Remote</option>
+                                            </select>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Open Till</label>
+                                            <input
+                                                type="date"
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-6 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 transition-all font-medium"
+                                                value={newJob.open_until}
+                                                onChange={e => setNewJob({...newJob, open_until: e.target.value})}
+                                                required
+                                            />
+                                        </div>
                                     </div>
                                     <div className="space-y-3">
                                         <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Job Description & Requirements</label>

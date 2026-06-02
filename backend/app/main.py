@@ -10,6 +10,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from app.api.routes import auth, companies, health, users, jobs, employees, attendance, performance, interviews, payroll
 from app.core.config import get_settings
@@ -30,6 +31,11 @@ async def lifespan(app: FastAPI):
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS department VARCHAR(255)"))
+        await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS location VARCHAR(255)"))
+        await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS employment_type VARCHAR(80)"))
+        await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS open_until TIMESTAMPTZ"))
+        await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS status VARCHAR(40) NOT NULL DEFAULT 'open'"))
     yield
     await engine.dispose()
 

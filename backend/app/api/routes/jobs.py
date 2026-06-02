@@ -5,6 +5,7 @@ AI Hiring OS — Job Routes
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 from typing import Annotated, List
 
 from fastapi import (
@@ -47,6 +48,10 @@ def _public_job_out(job: Job, company_name: str) -> PublicJobOut:
         company_id=job.company_id,
         company_name=company_name,
         created_at=job.created_at,
+        department=job.department,
+        location=job.location,
+        employment_type=job.employment_type,
+        open_until=job.open_until,
     )
 
 
@@ -106,6 +111,11 @@ async def list_public_jobs(
     query = (
         select(Job, Company.name)
         .join(Company, Job.company_id == Company.id)
+        .where(
+            Job.status == "open",
+            Job.open_until.isnot(None),
+            Job.open_until >= datetime.now(timezone.utc),
+        )
         .order_by(Job.created_at.desc())
         .offset(skip)
         .limit(limit)
@@ -126,7 +136,12 @@ async def get_public_job(
     result = await db.execute(
         select(Job, Company.name)
         .join(Company, Job.company_id == Company.id)
-        .where(Job.id == job_id)
+        .where(
+            Job.id == job_id,
+            Job.status == "open",
+            Job.open_until.isnot(None),
+            Job.open_until >= datetime.now(timezone.utc),
+        )
     )
     row = result.one_or_none()
     if not row:
@@ -156,6 +171,11 @@ async def apply_to_public_job(
     job = await job_service.get_job_by_id(db, job_id)
     if not job:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found.")
+    if job.status != "open" or job.open_until is None or job.open_until < datetime.now(timezone.utc):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="This job is not open for applications.",
+        )
 
     if not resume.filename or not resume.filename.lower().endswith(".pdf"):
         raise HTTPException(
