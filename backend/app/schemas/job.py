@@ -28,3 +28,14 @@ class JobOut(JobBase):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class PublicJobOut(JobBase):
+    """Public job posting shown on the candidate careers portal."""
+
+    id: uuid.UUID
+    company_id: uuid.UUID
+    company_name: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

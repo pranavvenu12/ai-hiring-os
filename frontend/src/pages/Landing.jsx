@@ -60,6 +60,7 @@ const Landing = () => {
                         <button onClick={() => scrollToSection('product')} className="hover:text-slate-950">Product</button>
                         <button onClick={() => scrollToSection('workflow')} className="hover:text-slate-950">Workflow</button>
                         <button onClick={() => scrollToSection('security')} className="hover:text-slate-950">Security</button>
+                        <Link to="/careers" className="hover:text-slate-950">Careers</Link>
                     </div>
 
                     <div className="hidden items-center gap-4 md:flex">
@@ -101,6 +102,13 @@ const Landing = () => {
                             <button onClick={() => scrollToSection('security')} className="rounded-xl px-3 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50">
                                 Security
                             </button>
+                            <Link
+                                to="/careers"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="rounded-xl px-3 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                            >
+                                Careers
+                            </Link>
                             <button
                                 type="button"
                                 onClick={toggleTheme}

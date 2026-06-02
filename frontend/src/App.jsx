@@ -6,6 +6,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import Careers from './pages/Careers';
 import DashboardHR from './pages/DashboardHR';
 import DashboardManager from './pages/DashboardManager';
 import DashboardEmployee from './pages/DashboardEmployee';
@@ -66,6 +67,9 @@ function App() {
                         <Route path="/" element={<LandingRoute />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/signup" element={<Signup />} />
+                        <Route path="/careers" element={<Careers />} />
+                        <Route path="/jobs/public" element={<Careers />} />
+                        <Route path="/apply" element={<Careers />} />
                         
                         {/* Role-Based Dashboards */}
                         <Route path="/dashboard/hr" element={
