@@ -1,190 +1,140 @@
 # Application Flow Architecture
 
-This document maps the user journeys, authentication loops, dynamic data queries, and AI processing pipelines within AI Hiring OS using structured visual flows.
-
----
-
-## 1. Authentication Flow
-
-This flow handles user registration, company binding, secure sign-in, and role-based redirect routes.
+## 1. Authentication and Role Routing
 
 ```mermaid
 sequenceDiagram
-    autonumber
-    actor User as User / Candidate
-    participant SPA as React Frontend
-    participant Supabase as Supabase Auth
-    participant API as FastAPI Backend
+    actor User
+    participant SPA as React SPA
+    participant API as FastAPI
+    participant SB as Supabase Auth
+    participant DB as PostgreSQL
 
-    User->>SPA: Enters Credentials & Clicks Submit
-    SPA->>Supabase: oauth/signin (email + password)
-    Supabase-->>SPA: Returns Session + Signed JWT
-    SPA->>API: GET /me (Headers: Bearer JWT)
-    API->>API: Validates Signature & Decodes Payload
-    API-->>SPA: Returns User Profile (role, company_id)
-    SPA->>SPA: Stores State & Redirects to Guarded Router
+    User->>SPA: Submit login/signup
+    SPA->>API: POST /auth/login or /auth/signup
+    API->>SB: Authenticate or create auth user
+    API->>DB: Sync local user/company/employee profile
+    API-->>SPA: JWT or signup response
+    SPA->>SPA: Store JWT and user in localStorage
+    SPA->>API: GET /me with Bearer token
+    API-->>SPA: User role and company
+    SPA->>SPA: Route to role dashboard
 ```
 
----
-
-## 2. Recruitment & Resume Screening Flow
-
-HR professionals can upload resumes and trigger the AI candidate scoring pipeline.
-
-```mermaid
-graph TD
-    HR[HR Specialist] -->|1. Creates Position| JobsPage[Jobs Directory]
-    JobsPage -->|2. Clicks Upload Resumes| Dropzone[Drag & Drop PDF Portal]
-    Dropzone -->|3. Sends PDF File| API[FastAPI Upload Route]
-    
-    subgraph Asynchronous Backend Worker
-        API -->|4. Saves File| Storage[Supabase S3 Bucket]
-        API -->|5. Triggers Parsing| AIProcessor[Extraction Service]
-        AIProcessor -->|6. Call Gemini/OpenAI| LLM[LLM Parser Chain]
-        LLM -->|7. Parses JSON Metrics| Scorecard[AI Score Engine]
-        Scorecard -->|8. Saves Record| DB[(PostgreSQL database)]
-    end
-
-    DB -->|9. Poll Status (200)| SPA[React Candidates Board]
-    SPA -->|10. Display AI Scores & Explanation| HR
-```
-
----
-
-## 3. Employee Portal Flow (Attendance & Performance)
-
-This flow maps daily employee clock-in/out procedures and how their performance scorecards are reviewed.
-
-```mermaid
-graph LR
-    subgraph Employee Portal
-        Emp[Employee User] -->|Clock-in| ClockIn[POST /attendance/clock-in]
-        Emp -->|Clock-out| ClockOut[POST /attendance/clock-out]
-        Emp -->|View Review| PerfMe[GET /performance/me]
-    end
-
-    subgraph Backend Validation
-        ClockIn -->|Verify Once Per Day| DB1[(PostgreSQL)]
-        ClockOut -->|Calculate Hours worked| DB1
-        PerfMe -->|Filter reviews by Employee ID| DB1
-    end
-```
-
----
-
-## 4. Manager Portal Flow (Appraisal Scorecard)
-
-This flow illustrates how managers review their team's performance and log continuous appraisals.
-
-```mermaid
-graph TD
-    Manager[Manager User] -->|1. Opens Team Dashboard| Dashboard[Manager Dashboard]
-    Dashboard -->|2. Selects Team Member| Profile[Team Member Profile]
-    Profile -->|3. Clicks Submit Performance Review| Drawer[Appraisal Drawer Form]
-    
-    Drawer -->|4. Input Strengths, Comments, Rating 1-5| PostReview[POST /performance]
-    PostReview -->|5. Verify target is a direct report| DB[(PostgreSQL)]
-    DB -->|6. Save review with manager_id| DB
-    DB -->|7. Return success code 201| Manager
-```
-
----
-
-## 5. End-to-End AI Interview Flow
-
-The full workflow of setting up and completing an AI-conducted voice screening session.
+## 2. Resume Screening Flow
 
 ```mermaid
 sequenceDiagram
-    autonumber
-    actor HR as Recruiter / HR
-    actor Cand as Candidate
-    participant SPA as React Frontend
-    participant API as FastAPI Backend
-    participant LLM as LLM Engine (Gemini/OpenAI)
+    actor HR
+    participant SPA
+    participant API
+    participant Storage as Supabase Storage
+    participant DB as PostgreSQL
+    participant AI as AI Fallback Chain
 
-    HR->>SPA: Selects Candidate & Job, Clicks "Start AI Interview"
-    SPA->>API: POST /interviews/start {candidate_id, job_id, type}
-    API->>LLM: Generate 5 Contextual Interview Questions
-    LLM-->>API: Returns 5 customized questions JSON
-    API-->>SPA: Load setup complete, Return Session ID
-    
-    Note over Cand, SPA: Interview Screen Launches
-    
-    loop Dynamic Q&A Loop
-        SPA->>Cand: Display Question Card
-        Cand->>SPA: Speaks Answer into Microphone
-        SPA->>SPA: Browser WebkitSpeechRecognition parses Audio
-        SPA->>Cand: Displays Real-time Response Text
-        Cand->>SPA: Clicks "Submit Answer"
-        SPA->>API: POST /interviews/{id}/answer {index, text}
+    HR->>SPA: Upload one or more PDF resumes for a job
+    SPA->>API: POST /jobs/{job_id}/upload-resumes
+    API->>Storage: Store PDF
+    API->>DB: Create resume metadata
+    API-->>SPA: 202 accepted
+    API->>API: BackgroundTasks extracts PDF text
+    API->>AI: Evaluate resume against job
+    AI-->>API: Scores, explanation, matched/missing skills
+    API->>DB: Store AI score
+    SPA->>API: GET /jobs/{job_id}/candidates
+    API-->>SPA: Candidate ranking
+```
+
+## 3. AI Interview Flow
+
+```mermaid
+sequenceDiagram
+    actor HR
+    actor Candidate
+    participant SPA
+    participant API
+    participant AI as Gemini/HF/Template
+    participant DB
+
+    HR->>SPA: Select candidate, job, interview type
+    SPA->>API: POST /interviews/start
+    API->>AI: Generate 5 questions
+    API->>DB: Create interview session
+    API-->>SPA: Questions and session id
+    loop Each question
+        Candidate->>SPA: Speak answer
+        SPA->>SPA: Browser speech recognition creates text
+        SPA->>API: POST /interviews/{id}/answer
+        API->>DB: Append transcript
     end
-
     SPA->>API: POST /interviews/{id}/complete
-    API->>LLM: Evaluate full Q&A Transcript against Job Details
-    LLM-->>API: Return scorecard (Technical, Comm, Confidence, Overall) + Summary
-    API-->>SPA: Display dynamic Evaluation Dashboard to Recruiter
+    API->>AI: Evaluate transcript
+    API->>DB: Store scores and recommendation
+    API-->>SPA: AI scorecard
 ```
 
----
-
-## 6. Multi-Tenant Row Isolation Flow
-
-To prevent data leaks, the system enforces multi-tenant row isolation across all database queries.
+## 4. Attendance Flow
 
 ```mermaid
-graph TD
-    UserA[Client Tenant A] -->|1. Request /employees| Server[FastAPI Server]
-    UserB[Client Tenant B] -->|2. Request /employees| Server
-    
-    Server -->|3. Extract Tenant ID A| QueryA["SELECT * FROM employees WHERE company_id = 'TENANT-A-UUID'"]
-    Server -->|4. Extract Tenant ID B| QueryB["SELECT * FROM employees WHERE company_id = 'TENANT-B-UUID'"]
-    
-    QueryA --> DB[(Shared PostgreSQL Database)]
-    QueryB --> DB
-    
-    DB -->|5. Return isolated records| Server
-    Server -->|6. Return Client A data| UserA
-    Server -->|7. Return Client B data| UserB
+flowchart TD
+    Employee[Employee] --> ClockIn[POST /attendance/clock-in]
+    ClockIn --> Record[Create attendance record]
+    Employee --> ClockOut[POST /attendance/clock-out]
+    ClockOut --> Hours[Calculate total hours]
+    Hours --> Status{Hours}
+    Status -->|>= 8| Present[present]
+    Status -->|4 to 8| Half[half_day]
+    Status -->|< 4| Absent[absent]
 ```
 
----
-
-## 7. Payroll Generation And Payslip Flow
-
-This flow shows how HR generates attendance-linked payroll and how employees access their own payslips.
+## 5. Payroll Flow
 
 ```mermaid
 sequenceDiagram
-    autonumber
-    actor HR as HR / Admin
-    actor Emp as Employee
-    participant SPA as React Frontend
-    participant API as FastAPI Backend
-    participant DB as Supabase PostgreSQL
-    participant AI as Gemini / HF / Template Fallback
+    actor HR
+    actor Employee
+    participant SPA
+    participant API
+    participant DB
+    participant AI
 
-    HR->>SPA: Opens Payroll Management
+    HR->>SPA: Open Payroll
     SPA->>API: GET /payroll?month=&year=
-    API->>DB: Query payroll_records by company_id and period
-    DB-->>API: Company payroll records
-    API-->>SPA: Payroll register and summary
-
-    HR->>SPA: Generates payroll
-    SPA->>API: POST /payroll/generate or /payroll/generate-all
-    API->>DB: Fetch employee and attendance_records
-    API->>API: Calculate gross salary, deductions, net salary
-    API->>AI: Request payroll summary
-    AI-->>API: AI summary or template fallback
-    API->>DB: Upsert payroll_records
-    API-->>SPA: Generated payroll
-
-    HR->>SPA: Approves and marks paid
-    SPA->>API: PUT /payroll/{id}/approve then /mark-paid
-    API->>DB: Update status with company_id isolation
-
-    Emp->>SPA: Opens My Payroll
+    API->>DB: Read company payroll
+    HR->>SPA: Generate payroll
+    SPA->>API: POST /payroll/generate or /generate-all
+    API->>DB: Fetch employee and attendance
+    API->>API: Calculate gross, deductions, net
+    API->>AI: Generate payroll insight
+    API->>DB: Upsert payroll record
+    HR->>API: PUT /payroll/{id}/approve
+    HR->>API: PUT /payroll/{id}/mark-paid
+    Employee->>SPA: Open My Payroll
     SPA->>API: GET /payroll/me
-    API->>DB: Query own employee payroll only
-    API-->>SPA: Payslip history and PDF-ready payslip
+    API-->>SPA: Own payslip history
+```
+
+## 6. Performance Flow
+
+```mermaid
+flowchart LR
+    Manager[Manager] --> Select[Select team member]
+    Select --> Review[Submit rating, strengths, improvements, comments]
+    Review --> API[POST /performance]
+    API --> Guard[Verify reviewer/tenant access]
+    Guard --> DB[(performance_reviews)]
+    Employee[Employee] --> Own[GET /performance/me]
+    HR[HR/Admin] --> Company[GET /performance/company]
+```
+
+## 7. Tenant Isolation Flow
+
+```mermaid
+flowchart TD
+    Request[Authenticated request] --> JWT[Verify JWT]
+    JWT --> User[Load local user]
+    User --> Company[Resolve company_id]
+    Company --> Query[Append company_id filter]
+    Query --> DB[(Database)]
+    DB --> Response[Return isolated data]
 ```

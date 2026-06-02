@@ -1,179 +1,142 @@
 # AI Hiring OS
 
-AI Hiring OS is a production-grade, multi-tenant Software-as-a-Service (SaaS) platform built for modern enterprise recruitment and Human Resource Management (HRMS). By integrating state-of-the-art Artificial Intelligence (AI) scoring, automated resume parsing, interactive voice/text-based AI interviewers, and granular tenant-isolated employee, attendance, payroll, and performance modules, AI Hiring OS unites recruitment pipelines and internal workforce analytics under a single, highly performant architecture.
+AI Hiring OS is a multi-tenant recruiting and HRMS platform for companies that need candidate screening, AI interviews, employee management, attendance, performance reviews, and attendance-driven payroll in one product.
 
----
+The current implementation is a React/Vite frontend backed by a FastAPI API. Authentication is handled through Supabase Auth, application data is stored in Supabase PostgreSQL, and the backend enforces tenant isolation through `company_id` checks on every business module.
 
-## 📖 Table of Contents
-*   [Overview](#overview)
-*   [Key Features](#key-features)
-*   [Screenshots & UI Showcase](#screenshots-section)
-*   [Architecture Overview](#architecture-overview)
-*   [Detailed Documentation Links](#documentation-links)
-*   [Installation & Setup](#installation)
-*   [Multi-role Access & RBAC](#multi-role-access)
-*   [AI & LLM Architecture](#ai-architecture)
-*   [Future Roadmap](#future-roadmap)
+## Implemented Modules
 
----
+| Area | Implemented Capability |
+|---|---|
+| Authentication | Login/signup through Supabase Auth, JWT verification, local user synchronization, company registration validation |
+| Roles | Admin, HR, Manager, Employee route protection and backend RBAC |
+| Company Settings | Company profile edit/read, manager and employee read-only behavior where applicable |
+| Jobs | HR/Admin job creation and company-scoped job listing |
+| Candidates | Bulk PDF resume upload, Supabase Storage upload, background extraction, AI scoring, candidate list by job |
+| AI Screening | Resume parsing, skill match score, semantic score, overall score, summary/explanation, matched/missing skills |
+| AI Interview | Question generation, browser speech-to-text capture, transcript recording, AI evaluation, recommendation, interview analytics |
+| Employees | Employee directory, department filtering, HR/Admin create/update/delete, manager team visibility, employee self visibility |
+| Attendance | Clock in/out, total hour calculation, present/half-day/absent status, own/team/company views |
+| Performance | Manager reviews, employee review history, team reviews, company analytics |
+| Payroll | Generate payroll from attendance, HR approval, paid status, employee payslip history, PDF-ready payslip, AI payroll insight |
+| Dashboards | Role-specific HR, Manager, and Employee dashboards with recruitment and HRMS widgets |
 
-## 🔍 Overview
-
-Modern talent acquisition is fractured, relying on separate tools for job listings, applicant screening, interview coordinating, and employee tracking. AI Hiring OS bridges this gap by offering a singular workspace where candidates transition seamlessly from prospects to employees. 
-
-Backed by a secure, tenant-isolated architecture where all companies, applicants, and employees reside in fully segregated database contexts, the platform enables:
-1.  **AI-Powered Sourcing & Screener**: Multi-format resume extraction coupled with semantic matching against target job descriptions.
-2.  **Voice-Activated AI Interviewing**: Automatic interview setups where a browser-native voice screen collects candidate responses, generating full transcripts and multi-dimensional reports.
-3.  **Comprehensive HRMS Tools**: Employee records, attendance check-ins, payroll generation, payslips, performance scorecards, department trackers, and manager reviews.
-
----
-
-## ⚡ Key Features
-
-*   **Multi-Tenant Isolation**: Complete row-level database protection using structured tenant keys (`company_id`) that keep all files, listings, and employee profiles segregated.
-*   **Role-Based Access Control (RBAC)**: Fine-grained security profiles protecting APIs and user interfaces for **Admin**, **HR**, **Manager**, and **Employee** accounts.
-*   **Advanced AI Screening**: Parsing resumes, compiling skills profiles, assessing gap analyses, and scoring semantic alignment with targeted job postings.
-*   **AI Interview Assistant**: Live browser voice interface with speech-to-text integration, sequential dynamic question queues, and multi-dimensional (Technical, Communication, Confidence) rating reports.
-*   **Intelligent Attendance tracking**: Single click clock-in/out records with smart status determination (Present, Half-Day, Absent) based on logged active hours.
-*   **Payroll & Payslips**: Attendance-derived payroll generation with HR approval, paid status tracking, employee payslip history, PDF-ready payslip output, and AI payroll summaries.
-*   **Star-Rating Appraisals**: Performance appraisal workflows with manager scorecards and team analytics.
-*   **Modern Premium Glassmorphism UI**: Beautifully designed dashboard workspaces built with React, Vite, TailwindCSS, and Framer Motion for premium user interactions.
-
----
-
-## 📸 Screenshots Section
-
-Below are mockup representations of the core workspaces within AI Hiring OS:
-
-| Dashboard View | Employee Management | AI Interview Interface |
-| :--- | :--- | :--- |
-| ![HR Dashboard](https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80) | ![Employee Grid](https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=600&q=80) | ![AI Interview Session](https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80) |
-
----
-
-## 🏗️ Architecture Overview
+## Architecture
 
 ```mermaid
-graph TD
-    Client[React SPA - Vite + Tailwind] -->|HTTPS Requests + Bearer Token| Gateway[FastAPI API Gateway]
-    Gateway -->|JWT Auth & RBAC Checks| SupabaseAuth[Supabase Auth Service]
-    Gateway -->|Async SQL Session| DB[(Supabase PostgreSQL Database)]
-    Gateway -->|Semantic Analysis & Q&A| AI[LLM Service - Gemini / OpenAI]
-    DB -->|Isolated Queries by company_id| DB
+graph LR
+    SPA[React Vite SPA] -->|JWT + HTTPS| API[FastAPI Backend]
+    API -->|Verify token| SupabaseAuth[Supabase Auth]
+    API -->|Async SQLAlchemy| DB[(Supabase PostgreSQL)]
+    API -->|File upload| Storage[Supabase Storage]
+    API -->|Gemini/HF| AI[AI Providers]
+    API -->|Fallback| Templates[Local Template Logic]
 ```
 
-### Tech Stack Detail
-*   **Frontend**: React (18+), Vite, TailwindCSS, React Router, Lucide Icons, Framer Motion
-*   **Backend**: FastAPI, SQLAlchemy (Async), Pydantic (v2), Uvicorn
-*   **Database**: Supabase PostgreSQL, row-isolated architecture
-*   **Auth**: Supabase JWT Auth Verification
-*   **AI Integration**: Google Gemini API & OpenAI API integrations with robust schema-fallback structures
+## Tech Stack
 
----
+| Layer | Technology |
+|---|---|
+| Frontend | React 19, Vite 6, React Router, Tailwind CSS v4, Framer Motion, Lucide React |
+| Backend | FastAPI, Uvicorn, SQLAlchemy async, Pydantic v2 |
+| Database | Supabase PostgreSQL with asyncpg |
+| Auth | Supabase Auth JWT verification plus local `users` table |
+| AI | Gemini API, HuggingFace Router, deterministic template fallback |
+| File Processing | PyMuPDF for PDF text extraction, Supabase Storage for resume files |
+| Deployment | Vercel frontend, AWS EC2 Docker backend, legacy Render config retained |
 
-## 📂 Documentation Links
+## Role Matrix
 
-To explore the detailed design, engineering, and UX blueprints of the system, click on the links below:
+| Role | Primary Screens | Backend Access |
+|---|---|---|
+| Admin | HR dashboard, jobs, candidates, employees, attendance, performance, payroll, AI interviews, settings | Full company-scoped access |
+| HR | HR dashboard, jobs, candidates, employees, attendance, performance, payroll, AI interviews, settings | Full company-scoped HR access |
+| Manager | Manager dashboard, jobs, candidates, employees, attendance, performance, payroll, settings | Read candidate/payroll data, manage team reviews and attendance visibility |
+| Employee | Employee dashboard, attendance, performance, payroll, settings | Own attendance, performance, payroll, and profile-related data |
 
-*   📄 [**Product Requirements Document (PRD)**](docs/PRD.md): Outlines user personas, stories, requirements, and key performance indicators (KPIs).
-*   📄 [**Technical Requirements Document (TRD)**](docs/TRD.md): Contains system designs, security setups, database patterns, and LLM retry fallback flows.
-*   📄 [**UI/UX Design Specification**](docs/UI_UX_DESIGN.md): Details colors, responsive structures, typography systems, and interaction tokens.
-*   📄 [**Application Flow Architecture**](docs/APP_FLOW.md): Includes visual user journeys and comprehensive system-level flowcharts.
-*   📄 [**Backend Database Schema**](docs/BACKEND_SCHEMA.md): Complete data definitions, constraints, indexes, ER diagrams, and endpoint configurations.
-*   📄 [**Implementation Plan**](docs/IMPLEMENTATION_PLAN.md): Outlines phased engineering stages, risk mitigations, validation checks, and milestones.
+## Important API Groups
 
----
+| Group | Endpoints |
+|---|---|
+| Auth | `POST /auth/login`, `POST /auth/signup`, `GET /me` |
+| Jobs/Candidates | `POST /jobs`, `GET /jobs`, `POST /jobs/{id}/upload-resumes`, `GET /jobs/{id}/candidates` |
+| Employees | `GET /employees`, `POST /employees`, `PUT /employees/{id}`, `DELETE /employees/{id}` |
+| Attendance | `POST /attendance/clock-in`, `POST /attendance/clock-out`, `GET /attendance/me`, `GET /attendance/team`, `GET /attendance/company` |
+| Performance | `POST /performance`, `GET /performance/me`, `GET /performance/team`, `GET /performance/company` |
+| Interviews | `POST /interviews/start`, `POST /interviews/{id}/answer`, `POST /interviews/{id}/complete`, `GET /interviews/company/analytics` |
+| Payroll | `POST /payroll/generate`, `POST /payroll/generate-all`, `GET /payroll`, `GET /payroll/me`, `PUT /payroll/{id}/approve`, `PUT /payroll/{id}/mark-paid` |
 
-## 🛠️ Installation
+## Local Setup
 
-### Prerequisites
-*   Node.js (v18+)
-*   Python (v3.10+)
-*   PostgreSQL or a Supabase Database account
+### Backend
 
-### Backend Setup
-1.  Navigate to the backend directory:
-    ```bash
-    cd backend
-    ```
-2.  Create and activate a virtual environment:
-    ```bash
-    python -m venv venv
-    # On Windows:
-    .\venv\Scripts\activate
-    # On Unix/macOS:
-    source venv/bin/activate
-    ```
-3.  Install dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
-4.  Configure the environment file (`.env`):
-    ```env
-    APP_NAME="AI Hiring OS"
-    DATABASE_URL="postgresql+asyncpg://postgres:[password]@db.[supabase-project].supabase.co:5432/postgres"
-    SUPABASE_URL="https://[project-id].supabase.co"
-    SUPABASE_SERVICE_ROLE_KEY="eyJhbG..."
-    GEMINI_API_KEY="AIzaSy..."
-    OPENAI_API_KEY="sk-..."
-    ```
-5.  Launch the FastAPI server:
-    ```bash
-    uvicorn app.main:app --reload
-    ```
+```bash
+cd backend
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
 
-### Frontend Setup
-1.  Navigate to the frontend directory:
-    ```bash
-    cd frontend
-    ```
-2.  Install packages:
-    ```bash
-    npm install
-    ```
-3.  Configure the environment file (`.env`):
-    ```env
-    VITE_API_BASE_URL="http://127.0.0.1:8000"
-    ```
-4.  Run the Vite development server:
-    ```bash
-    npm run dev
-    ```
+Required backend environment variables:
 
----
+```env
+APP_NAME="AI Hiring OS"
+APP_ENV=development
+DEBUG=true
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_JWT_SECRET=
+DATABASE_URL=
+CORS_ORIGINS=http://localhost:5173
+AI_GEMINI_KEY=
+AI_HF_KEY=
+AI_HF_BASE_URL=https://router.huggingface.co/v1
+AI_HF_MODEL=meta-llama/Llama-3.1-8B-Instruct
+```
 
-## 🔐 Multi-role Access
+### Frontend
 
-AI Hiring OS enforces role-based endpoint validation dynamically. Roles align as follows:
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-| Role | Navigation & Screens | Permission Scope |
-| :--- | :--- | :--- |
-| **Admin** / **HR** | Full HR Dashboard, Jobs, Candidates Pool, Employee Directory, Payroll, Settings | Full administrative read/write, start AI interviews, add jobs, add employees, generate/approve/pay payroll. |
-| **Manager** | Manager Dashboard, Candidates, Employees, Team Reviews, Attendance, Payroll | Reads candidates, views read-only payroll summaries, manages team attendance, logs appraisal scorecards for direct reports. |
-| **Employee** | Employee Portal, Clock In/Out, Payroll, Performance Scorecard, Settings | Clock-in, profile update, personal attendance logs, own payslips, view personal reviews. |
+Required frontend environment variable:
 
----
+```env
+VITE_API_BASE_URL=http://127.0.0.1:8000
+```
 
-## 🧠 AI Architecture
+## Production Deployment
 
-1.  **Semantic Match Engine**: Evaluates applicant CV structures against targeted job listings utilizing custom prompt templates to return consistent JSON matching tables.
-2.  **Adaptive AI Interviewer**: Generates customized Q&A tracks derived from applicant resumes and the target JD. The system feeds questions dynamically, registers transcription responses, and evaluates answers to compute structured scorecard records.
-3.  **Graceful Fallback**: If LLM API limits are reached, the system falls back onto pre-compiled parsing templates, ensuring recruitment pipelines remain accessible.
+The frontend is configured for Vercel through `vercel.json` with `frontend` as the root directory. The backend currently has an AWS EC2 Docker deployment path using `docker-compose.aws.yml`. A legacy `render.yaml` remains in the repository for Render-style backend deployment but the active always-on path is EC2.
 
----
+## Documentation
 
-## 🗺️ Future Roadmap
+| Document | Purpose |
+|---|---|
+| `docs/PRD.md` | Product requirements and implemented scope |
+| `docs/TRD.md` | Technical requirements and service design |
+| `docs/UI_UX_DESIGN.md` | UI system, responsiveness, and page design |
+| `docs/APP_FLOW.md` | User and system flows |
+| `docs/BACKEND_SCHEMA.md` | Database schema and endpoint map |
+| `docs/IMPLEMENTATION_PLAN.md` | Completed phases and remaining gaps |
+| `docs/TECH_STACK_EXPLAINED.md` | Interview-ready stack explanation |
+| `docs/SYSTEM_DESIGN_DEEP_DIVE.md` | End-to-end system design |
+| `docs/INTERVIEW_PREPARATION_GUIDE.md` | Product, technical, and HR interview preparation |
+| `docs/PROJECT_WALKTHROUGH.md` | Screen-by-screen walkthrough |
+| `docs/FWC_REQUIREMENT_MAPPING.md` | FWC requirement compliance mapping |
+| `docs/ARCHITECTURE_DECISIONS.md` | Architecture decision records |
 
-- [ ] **Automated PDF parsing with OCR** to bypass formatting limits of scans.
-- [ ] **AI-driven career advice chatbot** for candidates.
-- [ ] **Slack & Teams calendar integration** for interview coordination.
-- [ ] **Interactive candidate comparative analytics tool** for managers.
-- [x] **Attendance-linked payroll generation and employee payslips**.
-- [ ] **External HR payroll payment integrations**.
+## Known Limitations
 
----
-
-## 👥 Contributors
-
-*   **Pranav** - Lead Full Stack Architect & Project Owner
-*   **Antigravity** - Intelligent Coding Assistant (Google DeepMind Team)
+| Limitation | Current State |
+|---|---|
+| Payroll payments | Payroll records can be generated, approved, and marked paid; no bank transfer integration exists |
+| PDF generation | Payslips use browser print/save-as-PDF, not a server-side PDF renderer |
+| Background jobs | Resume extraction uses FastAPI `BackgroundTasks`, not a durable queue |
+| Migrations | Models are auto-created on startup; Alembic is installed but no formal migration history is maintained |
+| Scale testing | Architecture is designed for horizontal scale, but no load-test evidence is included in the repo |

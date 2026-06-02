@@ -1,251 +1,102 @@
-# Backend Database Schema Blueprint
+# Backend Schema and API Reference
 
-This document details the database architecture of AI Hiring OS, mapping the relational schema, constraints, indexing strategies, foreign key constraints, and multi-tenant row-isolation designs that power the platform.
+## 1. Database Tables
 
----
+| Table | Purpose | Key Relationships |
+|---|---|---|
+| `companies` | Tenant company | Has users, jobs, employees, profile, payroll records |
+| `company_profiles` | Extended company settings | One-to-one with company |
+| `users` | Local app user linked to Supabase Auth | Belongs to company, optional employee profile |
+| `jobs` | Job postings | Belongs to company and creator user |
+| `resumes` | Uploaded candidate resumes | Belongs to job |
+| `ai_scores` | Candidate AI evaluation | One-to-one with resume |
+| `employees` | Employee directory records | Belongs to company, optional user, optional manager |
+| `attendance_records` | Daily clock records | Belongs to company and employee |
+| `performance_reviews` | Manager performance reviews | Belongs to company, employee, reviewer |
+| `interview_sessions` | AI interview sessions | Belongs to company, candidate resume, job |
+| `payroll_records` | Monthly payroll records | Belongs to company and employee |
 
-## 1. Entity Relationship (ER) Diagram
+## 2. ER Diagram
 
 ```mermaid
 erDiagram
-    COMPANIES ||--o{ USERS : "has users"
-    COMPANIES ||--o{ JOBS : "publishes jobs"
-    COMPANIES ||--o{ EMPLOYEES : "employs workers"
-    
-    USERS ||--o| EMPLOYEES : "links profile"
-    
-    EMPLOYEES ||--o{ ATTENDANCE_RECORDS : "tracks attendance"
-    EMPLOYEES ||--o{ PERFORMANCE_REVIEWS : "reviews employee"
-    EMPLOYEES ||--o{ PERFORMANCE_REVIEWS : "acts as reviewer"
-    EMPLOYEES ||--o{ PAYROLL_RECORDS : "receives payroll"
-    
-    JOBS ||--o{ RESUMES : "has resumes"
-    RESUMES ||--o| AI_SCORES : "gets scores"
-    
-    RESUMES ||--o{ INTERVIEW_SESSIONS : "interviews candidate"
-    JOBS ||--o{ INTERVIEW_SESSIONS : "conducts for job"
+    COMPANIES ||--o{ USERS : has
+    COMPANIES ||--o| COMPANY_PROFILES : profile
+    COMPANIES ||--o{ JOBS : posts
+    COMPANIES ||--o{ EMPLOYEES : employs
+    COMPANIES ||--o{ PAYROLL_RECORDS : owns
+    USERS ||--o| EMPLOYEES : maps_to
+    JOBS ||--o{ RESUMES : receives
+    RESUMES ||--o| AI_SCORES : scored_by
+    RESUMES ||--o{ INTERVIEW_SESSIONS : interviewed
+    JOBS ||--o{ INTERVIEW_SESSIONS : interview_for
+    EMPLOYEES ||--o{ ATTENDANCE_RECORDS : clocks
+    EMPLOYEES ||--o{ PERFORMANCE_REVIEWS : reviewed
+    EMPLOYEES ||--o{ PAYROLL_RECORDS : paid
 ```
 
----
+## 3. Important Columns
 
-## 2. Table Specifications
+### `users`
 
-### 2.1 Table: `companies`
-Stores core tenant accounts. Everything else in the database relates to this table.
+| Column | Notes |
+|---|---|
+| `id` | UUID primary key |
+| `email` | Unique email |
+| `name` | Display name |
+| `role` | `admin`, `hr`, `manager`, `employee` |
+| `company_id` | Tenant key |
+| `supabase_uid` | Links to Supabase Auth user |
+| `is_active` | Invited/active state |
 
-*   **Primary Key**: `id` (UUID, Auto-generated)
-*   **Properties**:
-    *   `name`: `VARCHAR(255)` (Unique, Required)
-    *   `description`: `TEXT` (Optional)
-    *   `website`: `VARCHAR(255)` (Optional)
-    *   `location`: `VARCHAR(255)` (Optional)
-    *   `industry`: `VARCHAR(255)` (Optional)
-    *   `employee_count_range`: `VARCHAR(50)` (Optional)
-    *   `contact_email`: `VARCHAR(255)` (Optional)
-    *   `created_at`: `TIMESTAMP WITH TIME ZONE` (Default: `now()`)
+### `employees`
 
----
+| Column | Notes |
+|---|---|
+| `company_id` | Tenant key |
+| `user_id` | Optional link to local user |
+| `employee_code` | Generated employee identifier |
+| `department`, `designation` | Org metadata |
+| `manager_id` | Self-reference for team hierarchy |
+| `status` | `active`, `inactive`, `terminated` |
 
-### 2.2 Table: `users`
-Saves verified user login records and links them to platforms.
+### `attendance_records`
 
-*   **Primary Key**: `id` (UUID, Auto-generated)
-*   **Properties**:
-    *   `supabase_uid`: `UUID` (Unique, links directly to Supabase authentication)
-    *   `company_id`: `UUID` (Foreign Key → `companies.id`, Row isolated)
-    *   `email`: `VARCHAR(255)` (Unique, Required)
-    *   `name`: `VARCHAR(255)` (Required)
-    *   `role`: `VARCHAR(50)` (Role enum: `admin`, `hr`, `manager`, `employee`)
-    *   `created_at`: `TIMESTAMP WITH TIME ZONE` (Default: `now()`)
-*   **Indexes**:
-    *   `idx_users_company`: ON `company_id`
-    *   `idx_users_email`: ON `email`
+| Column | Notes |
+|---|---|
+| `employee_id`, `company_id` | Ownership |
+| `clock_in`, `clock_out` | Time tracking |
+| `total_hours` | Calculated on clock-out |
+| `attendance_date` | Unique per employee per date |
+| `status` | `present`, `half_day`, `absent` |
 
----
+### `payroll_records`
 
-### 2.3 Table: `employees`
-Tracks workforce directories, roles, reporting lines, and linked credentials.
+| Column | Notes |
+|---|---|
+| `employee_id`, `company_id` | Ownership |
+| `month`, `year` | Payroll period |
+| `base_salary` | Input monthly salary |
+| `present_days`, `half_days`, `absent_days`, `working_days` | Attendance-derived values |
+| `gross_salary`, `deductions`, `net_salary` | Calculated salary values |
+| `status` | `draft`, `generated`, `approved`, `paid` |
+| `ai_summary` | AI/template payroll summary |
+| `generated_at`, `approved_at` | Workflow timestamps |
 
-*   **Primary Key**: `id` (UUID, Auto-generated)
-*   **Properties**:
-    *   `company_id`: `UUID` (Foreign Key → `companies.id`, Row isolated)
-    *   `user_id`: `UUID` (Foreign Key → `users.id`, Nullable, link to login profile)
-    *   `employee_code`: `VARCHAR(50)` (Unique per company)
-    *   `full_name`: `VARCHAR(255)` (Required)
-    *   `email`: `VARCHAR(255)` (Required)
-    *   `phone`: `VARCHAR(50)` (Optional)
-    *   `department`: `VARCHAR(255)` (Required)
-    *   `designation`: `VARCHAR(255)` (Required)
-    *   `manager_id`: `UUID` (Self-referencing Foreign Key → `employees.id`, Nullable)
-    *   `joining_date`: `DATE` (Required)
-    *   `employment_type`: `VARCHAR(50)` (`full_time`, `part_time`, `contract`, `intern`)
-    *   `status`: `VARCHAR(50)` (Default: `active`, can be `inactive` or `terminated`)
-    *   `profile_photo`: `TEXT` (Optional profile picture link)
-    *   `created_at`: `TIMESTAMP WITH TIME ZONE` (Default: `now()`)
-*   **Indexes**:
-    *   `idx_employees_company`: ON `company_id`
-    *   `idx_employees_dept`: ON `department`
+Unique payroll constraint: `(employee_id, month, year)`.
 
----
+## 4. API Security Summary
 
-### 2.4 Table: `jobs`
-Maintains vacancy listings created by HR and Recruiters.
+| API Group | Tenant Rule | Role Rule |
+|---|---|---|
+| Jobs | Job must belong to current company | Create/upload HR/Admin, list Manager+ |
+| Candidates | Parent job must belong to current company | Manager+ |
+| Employees | Filter by company, manager team, or own profile | HR/Admin write, Manager team read, Employee self read |
+| Attendance | Employee profile must belong to company | All own, Manager team, HR/Admin company |
+| Performance | Company/team/self checks | Manager submit, HR/Admin company analytics |
+| Payroll | Payroll record company and employee checks | HR/Admin write, Manager read-only, Employee own only |
+| Interviews | Session/candidate company checks | HR/Admin write, Manager read |
 
-*   **Primary Key**: `id` (UUID, Auto-generated)
-*   **Properties**:
-    *   `company_id`: `UUID` (Foreign Key → `companies.id`, Row isolated)
-    *   `title`: `VARCHAR(255)` (Required)
-    *   `description`: `TEXT` (Required)
-    *   `requirements`: `TEXT` (Required)
-    *   `location`: `VARCHAR(255)` (Optional)
-    *   `salary`: `VARCHAR(100)` (Optional)
-    *   `created_at`: `TIMESTAMP WITH TIME ZONE` (Default: `now()`)
-*   **Indexes**:
-    *   `idx_jobs_company`: ON `company_id`
+## 5. Startup Behavior
 
----
-
-### 2.5 Table: `resumes`
-Tracks candidate applications and extracted CV details.
-
-*   **Primary Key**: `id` (UUID, Auto-generated)
-*   **Properties**:
-    *   `company_id`: `UUID` (Foreign Key → `companies.id`, Row isolated)
-    *   `job_id`: `UUID` (Foreign Key → `jobs.id`)
-    *   `file_name`: `VARCHAR(255)` (Required)
-    *   `storage_path`: `VARCHAR(555)` (Required storage URL)
-    *   `candidate_name`: `VARCHAR(255)` (Default: `Extracting...`)
-    *   `status`: `VARCHAR(50)` (Default: `pending`, can be `processing`, `completed`, or `failed`)
-    *   `created_at`: `TIMESTAMP WITH TIME ZONE` (Default: `now()`)
-*   **Indexes**:
-    *   `idx_resumes_job`: ON `job_id`
-
----
-
-### 2.6 Table: `ai_scores`
-Calculates and stores match ratings generated by AI screening routines.
-
-*   **Primary Key**: `id` (UUID, Auto-generated)
-*   **Properties**:
-    *   `resume_id`: `UUID` (Foreign Key → `resumes.id`, Unique)
-    *   `skill_match_score`: `INTEGER` (0 to 100)
-    *   `semantic_score`: `INTEGER` (0 to 100)
-    *   `overall_score`: `INTEGER` (0 to 100)
-    *   `explanation`: `TEXT` (Summarized AI evaluation justification)
-    *   `matched_skills`: `JSON` (List of matched skill tags)
-    *   `missing_skills`: `JSON` (List of missing skill tags)
-    *   `created_at`: `TIMESTAMP WITH TIME ZONE` (Default: `now()`)
-
----
-
-### 2.7 Table: `attendance_records`
-Logs employee check-ins and active hours.
-
-*   **Primary Key**: `id` (UUID, Auto-generated)
-*   **Properties**:
-    *   `company_id`: `UUID` (Foreign Key → `companies.id`, Row isolated)
-    *   `employee_id`: `UUID` (Foreign Key → `employees.id`)
-    *   `clock_in`: `TIMESTAMP WITH TIME ZONE` (Required)
-    *   `clock_out`: `TIMESTAMP WITH TIME ZONE` (Nullable)
-    *   `total_hours`: `DOUBLE PRECISION` (Nullable)
-    *   `attendance_date`: `DATE` (Required)
-    *   `status`: `VARCHAR(50)` (`present`, `half_day`, `absent`)
-*   **Constraints**:
-    *   `uq_employee_date`: Unique constraint on `(employee_id, attendance_date)`
-*   **Indexes**:
-    *   `idx_attendance_company_date`: ON `(company_id, attendance_date)`
-
----
-
-### 2.8 Table: `performance_reviews`
-Records periodic performance ratings logged by team managers.
-
-*   **Primary Key**: `id` (UUID, Auto-generated)
-*   **Properties**:
-    *   `company_id`: `UUID` (Foreign Key → `companies.id`, Row isolated)
-    *   `employee_id`: `UUID` (Foreign Key → `employees.id`)
-    *   `reviewer_id`: `UUID` (Foreign Key → `employees.id` (Manager))
-    *   `rating`: `DOUBLE PRECISION` (Range: 1.0 to 5.0)
-    *   `strengths`: `TEXT` (Required)
-    *   `improvements`: `TEXT` (Required)
-    *   `comments`: `TEXT` (Required)
-    *   `review_date`: `DATE` (Required)
-    *   `created_at`: `TIMESTAMP WITH TIME ZONE` (Default: `now()`)
-*   **Indexes**:
-    *   `idx_reviews_employee`: ON `employee_id`
-
----
-
-### 2.9 Table: `interview_sessions`
-Maintains histories and scorecards for AI interview sessions.
-
-*   **Primary Key**: `id` (UUID, Auto-generated)
-*   **Properties**:
-    *   `company_id`: `UUID` (Foreign Key → `companies.id`, Row isolated)
-    *   `candidate_id`: `UUID` (Foreign Key → `resumes.id`)
-    *   `job_id`: `UUID` (Foreign Key → `jobs.id`)
-    *   `interview_type`: `VARCHAR(50)` (`technical`, `behavioral`, `general`)
-    *   `status`: `VARCHAR(50)` (Default: `pending`, can be `in_progress` or `completed`)
-    *   `questions`: `JSON` (List of generated questions)
-    *   `transcript`: `JSON` (Captured Q&A exchange history list)
-    *   `ai_summary`: `TEXT` (Nullable)
-    *   `technical_score`: `DOUBLE PRECISION` (0.0 to 100.0)
-    *   `communication_score`: `DOUBLE PRECISION` (0.0 to 100.0)
-    *   `confidence_score`: `DOUBLE PRECISION` (0.0 to 100.0)
-    *   `overall_score`: `DOUBLE PRECISION` (0.0 to 100.0)
-    *   `recommendation`: `VARCHAR(50)` (`strong_hire`, `hire`, `consider`, `reject`)
-    *   `created_at`: `TIMESTAMP WITH TIME ZONE` (Default: `now()`)
-
----
-
-### 2.10 Table: `payroll_records`
-Stores generated monthly payroll records derived from employee attendance.
-
-*   **Primary Key**: `id` (UUID, Auto-generated)
-*   **Properties**:
-    *   `company_id`: `UUID` (Foreign Key -> `companies.id`, Row isolated)
-    *   `employee_id`: `UUID` (Foreign Key -> `employees.id`)
-    *   `month`: `INTEGER` (1-12)
-    *   `year`: `INTEGER`
-    *   `base_salary`: `DOUBLE PRECISION`
-    *   `present_days`: `DOUBLE PRECISION`
-    *   `half_days`: `DOUBLE PRECISION`
-    *   `absent_days`: `DOUBLE PRECISION`
-    *   `working_days`: `DOUBLE PRECISION`
-    *   `gross_salary`: `DOUBLE PRECISION`
-    *   `deductions`: `DOUBLE PRECISION`
-    *   `net_salary`: `DOUBLE PRECISION`
-    *   `status`: `VARCHAR(20)` (`draft`, `generated`, `approved`, `paid`)
-    *   `ai_summary`: `TEXT` (Nullable AI payroll insight)
-    *   `generated_at`: `TIMESTAMP WITH TIME ZONE`
-    *   `approved_at`: `TIMESTAMP WITH TIME ZONE` (Nullable)
-    *   `created_at`: `TIMESTAMP WITH TIME ZONE`
-    *   `updated_at`: `TIMESTAMP WITH TIME ZONE`
-*   **Constraints**:
-    *   `uq_employee_payroll_month`: Unique constraint on `(employee_id, month, year)`
-*   **Indexes**:
-    *   `ix_payroll_company_period`: ON `(company_id, year, month)`
-    *   `ix_payroll_employee_period`: ON `(employee_id, year, month)`
-    *   `ix_payroll_company_status`: ON `(company_id, status)`
-
----
-
-## 3. Row-Level Tenant Isolation Design
-To ensure secure data isolation in a multi-tenant environment, the database implements a strict row-level isolation strategy:
-
-```
-[Incoming HTTP Client Request] 
-      │ 
-      ▼
-[Reads JWT from Bearer Header]
-      │
-      ▼
-[API Extract claims: company_id = 'COMP-ALPHA-UUID']
-      │
-      ▼
-[FastAPI dynamically appends filter condition to raw/ORM query]
-   SELECT * FROM employees 
-   WHERE company_id = 'COMP-ALPHA-UUID' AND status = 'active';
-```
-
-All dynamic services dynamically fetch the active `company_id` parameter directly from validated token payloads, ensuring users can never read, modify, or delete cross-tenant data.
+`backend/app/main.py` imports `app.models` and calls `Base.metadata.create_all` during startup. This creates missing tables automatically for development/demo deployments. Alembic is installed but a migration history is not currently implemented.

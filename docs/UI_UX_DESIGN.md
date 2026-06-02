@@ -1,118 +1,80 @@
 # UI/UX Design Specification
 
-## 1. Design Philosophy
-AI Hiring OS is designed around the principles of **clarity, premium aesthetics, and responsive micro-interactions**. The core philosophy is to simplify complex multi-role HR processes into visually stunning workspaces that minimize cognitive load. 
+## 1. Design Direction
 
-By leveraging **glassmorphism**, dynamic state transitions, and harmonious color palettes, the application delivers a modern software experience that is both functional and delightful.
+The current UI uses a minimal, professional, Apple-inspired visual direction:
 
----
+| Token | Implementation |
+|---|---|
+| Primary action | Near-black `#1d1d1f` / `#000000` |
+| Background | Light slate/white surfaces |
+| Accent | Muted teal/cyan scale for selected secondary accents |
+| Typography | Inter-style sans serif through Tailwind font utilities |
+| Shape | Rounded panels, mostly `1.5rem` page cards and rounded buttons |
+| Motion | Framer Motion for page/card entrance and drawer animation |
+| Icons | Lucide React icons |
 
-## 2. Brand Identity
-*   **Personality**: Professional, cutting-edge, secure, and human-centric.
-*   **Design Language**: Glassmorphism (subtle blurs, white borders, light backgrounds) combined with clean layout boxes and structured typography.
-*   **Motion**: Fluid transitions powered by Framer Motion to provide instant feedback and make the app feel alive.
+The code keeps Tailwind's `indigo-*` class names for compatibility, but the actual tokens in `frontend/src/index.css` map the indigo scale to neutral black/gray values.
 
----
+## 2. Layout System
 
-## 3. Color System
-The color system features a tailored slate-gray base paired with modern, vibrant brand colors:
+| UI Element | Behavior |
+|---|---|
+| Sidebar | Desktop fixed sidebar; mobile slide-out drawer |
+| Topbar | Role/dashboard page title, search area, notification/profile affordances |
+| Cards | White cards on `#f8fafc`, border `slate-200`, subtle shadow |
+| Tables | Horizontal overflow on mobile for dense register views |
+| Forms | Large rounded inputs with icon prefix and focus ring |
+| Toasts | Bottom-right glass-style notifications |
 
-| Category | Primary Color | HSL Code | Purpose |
-| :--- | :--- | :--- | :--- |
-| **Brand Primary** | Indigo Violet | `hsl(243, 75%, 59%)` | High-importance actions, active tabs, buttons. |
-| **Brand Accent** | Deep Violet | `hsl(263, 70%, 50%)` | Secondary accents and visual gradients. |
-| **Neutral Dark** | Slate 900 | `hsl(222, 47%, 11%)` | Headings, main text, and structural accents. |
-| **Neutral Muted** | Slate 400 | `hsl(215, 16%, 57%)` | Subtitles, helper text, and secondary details. |
-| **Success** | Emerald Green | `hsl(142, 70%, 45%)` | Status badges (e.g., active, completed, present). |
-| **Warning** | Amber Yellow | `hsl(35, 92%, 50%)` | Pending items, half-days, and warning notices. |
-| **Danger** | Rose Red | `hsl(346, 84%, 61%)` | Deleted items, alerts, and failed screens. |
+## 3. Page Inventory
 
----
+| Page | Route | Roles | UX Notes |
+|---|---|---|---|
+| Landing | `/` | Public | Minimal professional marketing entry, mobile hamburger menu |
+| Login | `/login` | Public | Centered auth card, password visibility toggle, back link |
+| Signup | `/signup` | Public | Role selection, company validation, responsive form |
+| HR Dashboard | `/dashboard/hr`, `/dashboard/admin` | Admin, HR | Recruitment, HRMS, payroll, company, candidate widgets |
+| Manager Dashboard | `/dashboard/manager` | Manager | Candidate review, team attendance, payroll overview |
+| Employee Dashboard | `/dashboard/employee` | Employee | Profile, attendance, performance, latest payslip |
+| Jobs | `/jobs` | Admin, HR, Manager | Job posting list and create form for privileged users |
+| Candidates | `/candidates` | Admin, HR, Manager | Candidate list, upload resumes, interview history |
+| AI Interview | `/interviews` | Admin, HR | Setup, voice capture, transcript, AI evaluation |
+| Employees | `/employees` | Admin, HR, Manager | Directory, filters, create/edit access for HR/Admin |
+| Attendance | `/attendance` | All | Clock in/out, own/team/company attendance |
+| Performance | `/performance` | All | Reviews by access level |
+| Payroll | `/payroll` | All | HR/Admin manage, Manager read-only, Employee self-payslips |
+| Settings | `/settings` | All | Company profile, view-only state for non-edit roles |
+| Help | `/help` | All | Static help center |
 
-## 4. Typography
-The system uses the **Inter** font family, optimized for readability on multiple screen sizes:
+## 4. Mobile Responsiveness
 
-*   **Display / Hero Headings**: `font-black font-inter tracking-tight` (used for titles and key metrics).
-*   **Section Headers**: `font-bold text-slate-800 text-lg` (titles for lists and card sections).
-*   **Status / Badge Text**: `font-black text-[10px] tracking-widest uppercase` (ensures readability for badges).
-*   **Body Copy**: `font-medium text-slate-500 text-sm` (clean, legible body text).
+Implemented mobile patterns:
 
----
+| Area | Behavior |
+|---|---|
+| Landing navigation | Hamburger menu opens mobile nav |
+| App navigation | Sidebar becomes slide-out drawer |
+| Forms | Auth and settings forms stack vertically |
+| Dashboards | Stats grids collapse to single-column or two-column layouts |
+| Tables | Payroll and data-heavy views use horizontal overflow |
+| Actions | Buttons wrap or stack on smaller widths |
 
-## 5. Layout Principles
-The layout uses a **persistent sidebar + fixed header** grid structure:
-*   **Desktop Layout**: A 280px wide sidebar is locked to the left. The remaining space features a scrollable content box with standard 40px margins.
-*   **Grid Gradients**: Interactive cards feature HSL-based border overlays, giving them a premium feel as they hover.
-*   **Glassmorphic Overlays**: Dropdowns and drawers use light background blurs (`backdrop-blur-md bg-white/80`) to maintain a clean visual hierarchy.
+## 5. UX Constraints
 
----
+| Constraint | Current Handling |
+|---|---|
+| Dense HRMS data | Tables and compact stat cards instead of marketing sections |
+| Role complexity | Navigation and routes hide inaccessible pages |
+| Feedback | Toast notifications for success/error |
+| Payroll PDF | Browser print/save-as-PDF from a payslip window |
+| Voice interview support | Browser SpeechRecognition/webkitSpeechRecognition with fallback notice |
 
-## 6. Dashboard Workspaces
+## 6. Known UI Gaps
 
-### 6.1 HR & Recruiter Dashboard
-*   **Key Widgets**: Total Employees, Attendance Today, Average Performance, and Interview Completion Rate.
-*   **Interaction**: Clickable quick links allow users to open candidate profiles, launch active job boards, or review attendance lists with a single click.
-
-### 6.2 Manager Dashboard
-*   **Focus**: Appraising team performance and tracking direct reports.
-*   **Interaction**: Features a quick-action review drawer that allows managers to submit appraisal scorecards directly from their dashboard.
-
-### 6.3 Employee Portal
-*   **Focus**: Single-click clock-in and profile management.
-*   **Interaction**: Prominently displays the daily attendance widget with a high-contrast check-in button, alongside a list of historic performance ratings.
-
----
-
-## 7. AI Interview Workspace
-The AI Interview Assistant interface features a step-by-step wizard to set up and conduct interviews:
-
-```
-+--------------------------------------------------------------+
-| [Step 1: Select Job] -> [Step 2: Candidate] -> [Step 3: Type]|
-+--------------------------------------------------------------+
-|                                                              |
-|                "AI INTERVIEW SESSION ACTIVE"                 |
-|                                                              |
-|   [Question Card]                                            |
-|   "Describe a complex technical challenge you solved."        |
-|                                                              |
-|   [Record Button (Mic)]                                      |
-|   "Click to speak..."                                        |
-|                                                              |
-|   [Real-time Transcript Box]                                 |
-|   "I designed a secure multi-tenant indexing layer..."       |
-|                                                              |
-+--------------------------------------------------------------+
-```
-
-*   **Voice Integration**: Features an interactive microphone button with pulse animations during active recording, alongside real-time transcript generation.
-
----
-
-## 8. UX States
-
-### 8.1 Loading State
-*   **Visual**: Displays a subtle indigo loading spinner (`Loader2`) with page-level fade-ins to prevent visual stuttering.
-
-### 8.2 Error State
-*   **Visual**: Uses soft rose warning cards (`bg-rose-50 border-rose-100`) to display clear error messages and include a "Try again" action button.
-
-### 8.3 Empty State
-*   **Visual**: Displays a clean, muted icon (e.g., folder or group) centered with clear copy (e.g., "Talent Pool is empty") and an primary CTA to take action.
-
-### 8.4 Success State
-*   **Visual**: Features slide-down emerald notification alerts with clear feedback messages (e.g., "Employee profile updated successfully!").
-
----
-
-## 9. Mobile Responsiveness
-*   **Collapsible Menu**: The desktop sidebar collapses on mobile screens into a slide-out drawer triggered by a responsive menu button.
-*   **Fluid Grids**: Dashboard metrics automatically stack, transitioning from 4 columns on desktop to 2 columns on tablet and 1 column on mobile devices.
-*   **Mobile-Friendly Inputs**: Interactive tables automatically transition into easy-to-read vertical cards on mobile screens.
-
----
-
-## 10. Design Rules & Accessibility
-*   **High Contrast**: Maintain a WCAG 2.1 AA compliant contrast ratio (minimum 4.5:1) for all core headings and body text.
-*   **Keyboard Navigation**: Form modals are fully accessible, supporting keyboard controls like escaping modals via the `ESC` key.
-*   **Aria Roles**: Interactive elements feature descriptive labels to ensure compatibility with screen readers.
+| Gap | Reason |
+|---|---|
+| No full design system package | Tailwind classes are used directly |
+| No server-rendered PDFs | Payslips are print-ready but not generated by a PDF backend |
+| No charting library | Payroll analytics use CSS bars rather than Recharts/Chart.js |
+| Bundle warning | Vite warns the app bundle is large; route-level lazy loading is future work |

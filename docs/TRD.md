@@ -1,180 +1,122 @@
-# Technical Requirements Document (TRD)
+# Technical Requirements Document
 
-## 1. Technical Overview
-AI Hiring OS is a modern multi-tenant SaaS platform leveraging high-performance, asynchronous REST APIs backed by a secure relational database. The frontend is engineered as a responsive Single Page Application (SPA), while the backend handles authentication, business logic, tenant isolation, and AI integrations.
+## 1. System Overview
 
----
+AI Hiring OS is implemented as a React single-page application and a FastAPI backend. The backend owns all business logic, Supabase Auth verification, RBAC checks, SQLAlchemy persistence, AI provider calls, resume extraction, and payroll calculation.
 
-## 2. System Architecture
+## 2. High-Level Architecture
 
 ```mermaid
 graph TB
-    subgraph Client Tier
-        SPA[React SPA / Tailwind / Vite]
-    end
-
-    subgraph API Gateway & Authentication
-        Gateway[FastAPI Application]
-        SupabaseAuth[Supabase Auth API]
-    end
-
-    subgraph Business Logic & Worker Tier
-        EmployeeSvc[Employee Service]
-        AttendanceSvc[Attendance Service]
-        PerformanceSvc[Performance Service]
-        PayrollSvc[Payroll Service]
-        InterviewSvc[Interview / AI Evaluator]
-    end
-
-    subgraph Data & Storage Tier
-        DB[(Supabase PostgreSQL)]
-        Storage[Supabase Object Storage]
-    end
-
-    subgraph AI Foundation
-        Gemini[Google Gemini API]
-        OpenAI[OpenAI API]
-    end
-
-    SPA -->|HTTPS + JWT| Gateway
-    Gateway -->|Verify Token| SupabaseAuth
-    Gateway --> EmployeeSvc
-    Gateway --> AttendanceSvc
-    Gateway --> PerformanceSvc
-    Gateway --> PayrollSvc
-    Gateway --> InterviewSvc
-    
-    EmployeeSvc --> DB
-    AttendanceSvc --> DB
-    PerformanceSvc --> DB
-    PayrollSvc --> DB
-    InterviewSvc --> DB
-    InterviewSvc --> Gemini
-    InterviewSvc --> OpenAI
-    
-    SPA -->|Direct Upload| Storage
+    Browser[Browser] --> SPA[React/Vite SPA]
+    SPA -->|Axios + Bearer JWT| API[FastAPI API]
+    API --> Auth[Supabase Auth Verification]
+    API --> DB[(Supabase PostgreSQL)]
+    API --> Storage[Supabase Storage]
+    API --> Gemini[Gemini]
+    API --> HF[HuggingFace Router]
+    API --> Fallback[Template Fallbacks]
 ```
 
----
+## 3. Backend Architecture
 
-## 3. Frontend Architecture
-The client tier is engineered with **React (18+)** and bundled via **Vite** for optimized assets compilation.
+| Layer | Files | Responsibility |
+|---|---|---|
+| App entry | `backend/app/main.py` | FastAPI app, CORS, router registration, startup table creation |
+| Dependencies | `backend/app/api/deps.py` | JWT extraction, current user resolution, RBAC |
+| Models | `backend/app/models/*` | SQLAlchemy ORM tables |
+| Schemas | `backend/app/schemas/*` | Pydantic request/response contracts |
+| Routes | `backend/app/api/routes/*` | HTTP endpoints and access checks |
+| Services | `backend/app/services/*` | Business logic and database operations |
+| Auth | `backend/app/auth/supabase_auth.py` | Supabase client, sign in, sign up, JWT validation |
+| DB | `backend/app/db/session.py` | Async SQLAlchemy engine/session |
 
-*   **State Management**: Context-based global authentication manager (`AuthContext.jsx`) coupled with React Hook States for isolated page-level parameters.
-*   **Routing Hierarchy**: Implements role-aware guarded routing blocks using `react-router-dom` to enforce route protections.
-*   **Style Framework**: Custom-styled layout utilizing pure **TailwindCSS** for responsive structures. Enhanced with micro-animations powered by **Framer Motion**.
-*   **API Client**: Axios instance configured with global request interceptors that inject Bearer JWT authorization headers, with response interceptors to automatically handle token renewals.
+## 4. Frontend Architecture
 
----
+| Layer | Files | Responsibility |
+|---|---|---|
+| Routing | `frontend/src/App.jsx` | Protected routes by role |
+| API client | `frontend/src/services/api.js` | Axios base URL, JWT headers, auth error handling |
+| Auth state | `frontend/src/context/AuthContext.jsx` | User/session persistence and login/signup/logout |
+| Toasts | `frontend/src/context/ToastContext.jsx` | Global toast notifications |
+| Layout | `Sidebar.jsx`, `Topbar.jsx` | Role-aware navigation and dashboard header |
+| Pages | `frontend/src/pages/*` | Domain screens |
+| Styling | `index.css`, Tailwind config | Apple-inspired neutral theme and responsive utilities |
 
-## 4. Backend Architecture
-The backend is powered by **FastAPI**, achieving high concurrency via Python's `asyncio` loop.
+## 5. Database and Tenant Model
+
+Every major business table includes `company_id` except child records where ownership is reached through parent relationships. The API resolves the current user and company from the JWT/local user record and applies company filtering in services/routes.
 
 ```mermaid
-sequenceDiagram
-    autonumber
-    Candidate/HR->>FastAPI: HTTPS Request + JWT Token
-    FastAPI->>Deps: verify_jwt_and_role()
-    Deps-->>FastAPI: Validated Current User & company_id
-    FastAPI->>Service: Async Business Logic Call
-    Service->>SQLAlchemy: DB Query with company_id Filter
-    SQLAlchemy-->>Service: Isolated Data
-    Service-->>FastAPI: Schema Output validation
-    FastAPI-->>Candidate/HR: JSON HTTP Response
+erDiagram
+    COMPANIES ||--o{ USERS : owns
+    COMPANIES ||--o{ EMPLOYEES : employs
+    COMPANIES ||--o{ JOBS : publishes
+    COMPANIES ||--o{ PAYROLL_RECORDS : pays
+    USERS ||--o| EMPLOYEES : links
+    EMPLOYEES ||--o{ ATTENDANCE_RECORDS : tracks
+    EMPLOYEES ||--o{ PERFORMANCE_REVIEWS : receives
+    EMPLOYEES ||--o{ PAYROLL_RECORDS : receives
+    JOBS ||--o{ RESUMES : receives
+    RESUMES ||--o| AI_SCORES : scored
+    RESUMES ||--o{ INTERVIEW_SESSIONS : interviewed
 ```
 
-*   **Database ORM**: SQLAlchemy using `asyncpg` drivers for non-blocking database queries.
-*   **Tenant Separation**: Sub-queries dynamically extract the `company_id` directly from validated Supabase JWT payloads, appending isolation filters onto every database access.
-*   **Access Guards (RBAC)**: Custom FastAPI dependencies (`require_roles`) enforce role checks before route execution.
-*   **Payroll Service**: Calculates salary from attendance records, stores period-specific payroll records, enforces generated/approved/paid status transitions, and generates payroll AI summaries with Gemini/HF/template fallback.
+## 6. API Architecture
 
----
+| Group | Endpoints |
+|---|---|
+| Health | `GET /`, `GET /health` |
+| Auth | `POST /auth/login`, `POST /auth/signup` |
+| Users | `GET /me`, `GET /users`, `POST /users` |
+| Companies | `GET /companies`, `POST /companies`, `GET /companies/{id}`, `PUT /companies/{id}` |
+| Jobs | `POST /jobs`, `GET /jobs`, `POST /jobs/{id}/upload-resumes`, `GET /jobs/{id}/candidates` |
+| Employees | `POST /employees`, `GET /employees`, `GET /employees/departments`, `GET/PUT/DELETE /employees/{id}` |
+| Attendance | `POST /attendance/clock-in`, `POST /attendance/clock-out`, `GET /attendance/me`, `GET /attendance/team`, `GET /attendance/company` |
+| Performance | `POST /performance`, `GET /performance/me`, `GET /performance/team`, `GET /performance/company` |
+| Interviews | `POST /interviews/start`, `POST /interviews/{id}/answer`, `POST /interviews/{id}/complete`, `GET /interviews/{id}`, `GET /interviews/candidate/{id}`, `GET /interviews/company/analytics` |
+| Payroll | `POST /payroll/generate`, `POST /payroll/generate-all`, `GET /payroll`, `GET /payroll/me`, `GET /payroll/{id}`, `PUT /payroll/{id}/approve`, `PUT /payroll/{id}/mark-paid` |
 
-## 5. AI & LLM Architecture
-
-The AI module uses a robust, schema-driven evaluation flow to score applicants and run dynamic interviews.
-
-### LLM Chain of Responsibility & Fallback
-To ensure complete system reliability even during third-party service outages or API rate-limiting, the AI integration implements a strict multi-provider fallback architecture.
+## 7. AI Architecture
 
 ```mermaid
-graph TD
-    Start[AI Action Request] --> GeminiCheck{Is Gemini Key Active?}
-    GeminiCheck -->|Yes| GeminiCall[Query Gemini API]
-    GeminiCheck -->|No| OpenAICheck{Is OpenAI Key Active?}
-    
-    GeminiCall -->|Success| Complete[Return Scorecard JSON]
-    GeminiCall -->|Failure / Rate Limit| OpenAICheck
-    
-    OpenAICheck -->|Yes| OpenAICall[Query OpenAI API]
-    OpenAICheck -->|No| Fallback[Execute Local Structural Fallback]
-    
-    OpenAICall -->|Success| Complete
-    OpenAICall -->|Failure| Fallback
-    
-    Fallback -->|Compile Templates| Complete
+flowchart TD
+    Request[AI request] --> GeminiAvailable{Gemini key?}
+    GeminiAvailable -->|Yes| GeminiCall[Call Gemini]
+    GeminiAvailable -->|No| HFAvailable{HF key?}
+    GeminiCall -->|Success| Result[Structured result]
+    GeminiCall -->|Failure| HFAvailable
+    HFAvailable -->|Yes| HFCall[Call HuggingFace Router]
+    HFAvailable -->|No| Template[Template fallback]
+    HFCall -->|Success| Result
+    HFCall -->|Failure| Template
+    Template --> Result
 ```
 
-*   **Prompt Engineering**: Leverages strict Pydantic models with schema formats to force LLMs to return consistent JSON objects.
-*   **Local Fallback Parser**: If all external APIs are unreachable, a backup parsing engine analyzes the texts and generates structured matching scores, keeping the application online.
+Implemented AI paths:
 
----
+| Feature | Service |
+|---|---|
+| Resume scoring | `ai_service.py`, `scoring_service.py`, `evaluation_service.py` |
+| Interview questions/evaluation | `interview_ai_service.py`, `interview_service.py` |
+| Payroll summary | `payroll_service.py` |
 
-## 6. Authentication Flow
-Supabase is used for user management. When a user authenticates:
-1.  The client sends credentials directly to Supabase Auth, receiving a signed JWT.
-2.  The client stores the JWT and sends it in the `Authorization: Bearer <JWT>` header of subsequent API requests.
-3.  The FastAPI backend decodes the token, validating its signature against Supabase public keys, extracting the user email, role, and linked `company_id` to establish context.
+## 8. Deployment Architecture
 
----
+| Environment | Current Repo Support |
+|---|---|
+| Frontend | Vercel through `vercel.json` with root directory `frontend` |
+| Backend active path | AWS EC2 Docker Compose through `docker-compose.aws.yml` |
+| Backend legacy path | Render through `render.yaml` |
+| Database/Auth/Storage | Supabase |
+| Backend HTTPS | Caddy/DuckDNS configured outside repo per deployment notes |
 
-## 7. Deployment Architecture
-*   **Client Hosting**: Deployed to Vercel/Netlify for low-latency, globally cached asset distribution.
-*   **Server Hosting**: Run inside Docker containers deployed on Render, optimizing scale-out performance.
-*   **Database Cloud**: Scaled using Supabase managed clusters with auto-growing tables.
+## 9. Technical Risks
 
----
-
-## 8. API Architecture (Sample Endpoints)
-
-| Method | Endpoint | Access Role | Description |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/auth/login` | Public | Authenticate user, return JWT and profile details. |
-| `POST` | `/jobs` | Admin, HR | Create job position for active tenant. |
-| `GET` | `/employees` | HR, Admin (all) / Manager (team) / Employee (self) | Paginated employee listings with dynamic access filters. |
-| `POST` | `/attendance/clock-in` | All roles | Clock in once per day. |
-| `POST` | `/performance` | Manager | Submit appraisal for a direct report. |
-| `POST` | `/interviews/start` | Admin, HR | Setup and start an AI interview session. |
-| `POST` | `/payroll/generate` | Admin, HR | Generate monthly payroll for one employee. |
-| `POST` | `/payroll/generate-all` | Admin, HR | Generate payroll for all active company employees. |
-| `GET` | `/payroll` | Admin, HR, Manager | Read company payroll records and analytics. |
-| `GET` | `/payroll/me` | Employee | Read own payroll history and payslips. |
-| `PUT` | `/payroll/{id}/approve` | Admin, HR | Approve generated payroll. |
-| `PUT` | `/payroll/{id}/mark-paid` | Admin, HR | Mark approved payroll as paid. |
-
----
-
-## 9. Security Architecture
-*   **Data Isolation**: Absolutely no cross-tenant DB sharing. Every query filters dynamically using the validated `company_id` in the JWT payload.
-*   **Secret Management**: Sensitive variables (API keys, DB URIs) are loaded strictly through secure environment contexts (`core/config.py`).
-*   **CORS Safeguards**: Restricts API interaction to white-listed client URLs.
-
----
-
-## 10. Scalability Strategy
-*   **Database Optimization**: Indexes are defined on columns like `company_id`, `email`, and `department` to keep query execution times low as tables grow.
-*   **Stateless Services**: All FastAPI operations run stateless, allowing developers to scale out server instances horizontally behind load balancers.
-
----
-
-## 11. Monitoring Strategy
-*   **Structured Logs**: Python's logging library records system behaviors, database queries, and API latency.
-*   **Error Monitoring**: Sentry integration tracks runtime exceptions on both the frontend and backend.
-
----
-
-## 12. Risks and Mitigation
-*   **Risk: Third-party LLM Outage**
-    *   *Mitigation*: The platform implements a local structural template parser that handles key operations without calling external APIs.
-*   **Risk: Heavy PDF Upload Lag**
-    *   *Mitigation*: File uploads are handled asynchronously, enabling instant UI updates while the file processes in the background.
+| Risk | Current Mitigation | Remaining Work |
+|---|---|---|
+| Cross-tenant data leakage | company-scoped route/service checks | Add automated tenant isolation tests |
+| Background task loss | FastAPI background tasks for resume processing | Add Celery/RQ/Cloud Tasks-style durable workers |
+| Schema drift | SQLAlchemy auto-create tables | Add Alembic migrations |
+| Large frontend bundle | Vite production build works but warns on chunk size | Add route-level code splitting |
+| Secrets exposure | `.env` based config | Rotate exposed keys and use secret manager in production |
