@@ -16,6 +16,7 @@ import {
     ShieldCheck,
     Sparkles,
     Users,
+    X,
 } from 'lucide-react';
 
 const fadeUp = {
@@ -26,12 +27,15 @@ const fadeUp = {
 };
 
 const Landing = () => {
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+
     React.useEffect(() => {
         document.title = 'AI Hiring OS | Intelligent talent operations';
     }, []);
 
     const scrollToSection = (id) => {
         document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+        setIsMobileMenuOpen(false);
     };
 
     return (
@@ -61,10 +65,48 @@ const Landing = () => {
                         </Link>
                     </div>
 
-                    <button className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white md:hidden" aria-label="Open menu">
-                        <Menu size={18} />
+                    <button
+                        type="button"
+                        onClick={() => setIsMobileMenuOpen((open) => !open)}
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white md:hidden"
+                        aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+                        aria-expanded={isMobileMenuOpen}
+                    >
+                        {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
                     </button>
                 </div>
+
+                {isMobileMenuOpen && (
+                    <div className="border-t border-slate-200 bg-white px-5 py-4 shadow-lg shadow-slate-200/60 md:hidden">
+                        <div className="mx-auto flex max-w-6xl flex-col gap-1">
+                            <button onClick={() => scrollToSection('product')} className="rounded-xl px-3 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                                Product
+                            </button>
+                            <button onClick={() => scrollToSection('workflow')} className="rounded-xl px-3 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                                Workflow
+                            </button>
+                            <button onClick={() => scrollToSection('security')} className="rounded-xl px-3 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                                Security
+                            </button>
+                            <div className="mt-3 grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
+                                <Link
+                                    to="/login"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-800"
+                                >
+                                    Sign in
+                                </Link>
+                                <Link
+                                    to="/signup"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="flex h-11 items-center justify-center rounded-full bg-slate-950 text-sm font-semibold text-white"
+                                >
+                                    Get started
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </nav>
 
             <main>
