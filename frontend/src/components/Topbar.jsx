@@ -26,6 +26,7 @@ const Topbar = ({ title }) => {
             { name: 'Dashboard', path: `/dashboard/${user.role.toLowerCase()}`, category: 'Navigation' },
             { name: 'Attendance Management', path: '/attendance', category: 'HRMS Module' },
             { name: 'Performance Hub', path: '/performance', category: 'HRMS Module' },
+            { name: 'Payroll', path: '/payroll', category: 'HRMS Module' },
             { name: 'Account Settings', path: '/settings', category: 'System' },
             { name: 'Help Center', path: '/help', category: 'System' },
         ];
@@ -420,7 +421,7 @@ const Topbar = ({ title }) => {
                             </div>
 
                             {aiAnswer && (
-                                <div className="mx-2 mb-2 rounded-xl border border-indigo-100 bg-indigo-50/70 p-3">
+                                <div className="dashboard-ai-answer mx-2 mb-2 rounded-xl border border-indigo-100 bg-indigo-50/70 p-3">
                                     <div className="flex items-center gap-2 text-xs font-semibold text-indigo-800">
                                         <Sparkles size={14} />
                                         {aiAnswer.title}

@@ -42,8 +42,12 @@ const Settings = () => {
     });
     const [isLoading, setIsLoading] = useState(!company);
     const [isSaving, setIsSaving] = useState(false);
+    const [companyUsers, setCompanyUsers] = useState([]);
 
     const canEdit = ['admin', 'hr'].includes(user?.role?.toLowerCase?.() || '');
+    const hrContact = companyUsers.find((member) => ['admin', 'hr'].includes(member.role?.toLowerCase?.() || ''));
+    const visibleTeamSize = company?.employee_count_range || (companyUsers.length ? `${companyUsers.length} team member${companyUsers.length === 1 ? '' : 's'}` : '');
+    const visibleContactEmail = company?.contact_email || hrContact?.email || '';
 
     useEffect(() => {
         document.title = 'AI Hiring OS - Settings';
@@ -64,6 +68,7 @@ const Settings = () => {
                 setIsLoading(false);
             }
             fetchCompany();
+            fetchCompanyUsers();
         }
     }, [user]);
 
@@ -85,6 +90,15 @@ const Settings = () => {
             console.error(error);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const fetchCompanyUsers = async () => {
+        try {
+            const users = await api.get('/users?limit=500');
+            setCompanyUsers(Array.isArray(users) ? users : []);
+        } catch (error) {
+            console.error(error);
         }
     };
 
@@ -172,8 +186,11 @@ const Settings = () => {
                                     <SettingSummary icon={Layers3} label="Industry" value={company?.industry} />
                                     <SettingSummary icon={Globe} label="Website" value={company?.website} />
                                     <SettingSummary icon={MapPin} label="Location" value={company?.location} />
-                                    <SettingSummary icon={Users} label="Team Size" value={company?.employee_count_range} />
-                                    <SettingSummary icon={Mail} label="Contact Email" value={company?.contact_email} />
+                                    <SettingSummary icon={Users} label="Team Size" value={visibleTeamSize} />
+                                    <SettingSummary icon={Mail} label="Contact Email" value={visibleContactEmail} />
+                                    {!canEdit && hrContact && (
+                                        <SettingSummary icon={ShieldCheck} label="HR/Admin Contact" value={`${hrContact.name} - ${hrContact.email}`} />
+                                    )}
                                 </div>
                             </div>
 
@@ -184,6 +201,11 @@ const Settings = () => {
                                 </div>
                                 <p className="text-sm text-slate-500 leading-relaxed mb-6">
                                     Auth is handled by Supabase, and company edits are restricted to HR/Admin roles within the authenticated tenant.
+                                    {!canEdit && !company?.industry && !company?.website && !company?.location && (
+                                        <span className="block mt-3 text-slate-400">
+                                            Company profile details have not been completed by HR/Admin yet.
+                                        </span>
+                                    )}
                                 </p>
                                 <div className="mt-6 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-slate-400">
                                     <Lock size={14} /> Read-only for non-admin roles
@@ -210,8 +232,8 @@ const Settings = () => {
                                     <Field label="Industry" icon={Layers3} value={form.industry} onChange={(value) => handleChange('industry', value)} disabled={!canEdit} />
                                     <Field label="Website" icon={Globe} value={form.website} onChange={(value) => handleChange('website', value)} disabled={!canEdit} />
                                     <Field label="Location" icon={MapPin} value={form.location} onChange={(value) => handleChange('location', value)} disabled={!canEdit} />
-                                    <Field label="Team Size" icon={Users} value={form.employee_count_range} onChange={(value) => handleChange('employee_count_range', value)} disabled={!canEdit} placeholder="11-50" />
-                                    <Field label="Contact Email" icon={Mail} value={form.contact_email} onChange={(value) => handleChange('contact_email', value)} disabled={!canEdit} />
+                                    <Field label="Team Size" icon={Users} value={form.employee_count_range || (!canEdit ? visibleTeamSize : '')} onChange={(value) => handleChange('employee_count_range', value)} disabled={!canEdit} placeholder="11-50" />
+                                    <Field label="Contact Email" icon={Mail} value={form.contact_email || (!canEdit ? visibleContactEmail : '')} onChange={(value) => handleChange('contact_email', value)} disabled={!canEdit} />
                                 </div>
 
                                 <div className="space-y-3">

@@ -147,6 +147,15 @@
     background-color: #18181b !important;
   }
 
+  .dark .bg-indigo-50\/70,
+  .dark .bg-violet-50\/70,
+  .dark .bg-cyan-50\/70,
+  .dark .bg-indigo-50\/80,
+  .dark .bg-violet-50\/80,
+  .dark .bg-cyan-50\/80 {
+    background-color: rgba(24, 24, 27, 0.92) !important;
+  }
+
   .dark .bg-slate-200,
   .dark .bg-indigo-100,
   .dark .bg-violet-100,
@@ -324,4 +333,14 @@
   background: rgba(17, 17, 19, 0.9);
   border-color: rgba(39, 39, 42, 0.95);
   box-shadow: var(--app-soft-shadow);
+}
+
+.dark .dashboard-ai-answer {
+  background: #18181b !important;
+  border-color: #27272a !important;
+  color: #f5f5f7 !important;
+}
+
+.dark .dashboard-ai-answer p {
+  color: #d4d4d8 !important;
 }
