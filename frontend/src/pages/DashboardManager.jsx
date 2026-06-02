@@ -3,13 +3,14 @@ import { motion } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
-import { CheckCircle2, XCircle, Star, Brain, Clock, Users, TrendingUp } from 'lucide-react';
+import { CheckCircle2, XCircle, Star, Brain, Clock, Users, TrendingUp, Wallet } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const DashboardManager = () => {
     const [candidates, setCandidates] = useState([]);
     const [teamAttendance, setTeamAttendance] = useState([]);
     const [teamAvgRating, setTeamAvgRating] = useState(0);
+    const [payrollSummary, setPayrollSummary] = useState({ total_payroll_cost: 0, department_costs: {} });
 
     useEffect(() => {
         document.title = 'AI Hiring OS - Manager Dashboard';
@@ -37,6 +38,10 @@ const DashboardManager = () => {
                 if (reviews.length > 0) {
                     setTeamAvgRating(+(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1));
                 }
+            } catch (e) { console.error(e); }
+            try {
+                const payrollData = await api.get('/payroll?limit=500');
+                setPayrollSummary(payrollData.summary || { total_payroll_cost: 0, department_costs: {} });
             } catch (e) { console.error(e); }
         } catch (error) { console.error(error); }
     };
@@ -68,7 +73,28 @@ const DashboardManager = () => {
                         <StatCard icon={Clock} label="Candidates Reviewed" value={candidates.length} color="emerald" />
                         <StatCard icon={Users} label="Team Present" value={teamAttendance.filter(r => r.status === 'present').length} color="indigo" />
                         <StatCard icon={TrendingUp} label="Team Avg Rating" value={`${teamAvgRating}/5`} color="violet" />
+                        <StatCard icon={Wallet} label="Payroll Overview" value={`₹${Math.round(payrollSummary.total_payroll_cost || 0).toLocaleString('en-IN')}`} color="emerald" />
                     </div>
+
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm">
+                        <div className="flex justify-between items-center gap-4 mb-6">
+                            <h3 className="text-xl font-semibold text-slate-900 flex items-center gap-3">
+                                <Wallet size={20} className="text-indigo-600" /> Department Payroll Overview
+                            </h3>
+                            <Link to="/payroll" className="btn btn-secondary px-4 py-2 text-xs font-bold uppercase tracking-widest">View Payroll</Link>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {Object.entries(payrollSummary.department_costs || {}).map(([department, cost]) => (
+                                <div key={department} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+                                    <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 truncate">{department}</div>
+                                    <div className="text-xl font-semibold text-slate-950 mt-2">₹{Math.round(cost).toLocaleString('en-IN')}</div>
+                                </div>
+                            ))}
+                            {Object.keys(payrollSummary.department_costs || {}).length === 0 && (
+                                <div className="text-sm font-semibold text-slate-400">No payroll records generated yet.</div>
+                            )}
+                        </div>
+                    </motion.div>
 
                     {/* Team Attendance Today */}
                     {teamAttendance.length > 0 && (

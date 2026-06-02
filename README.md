@@ -1,6 +1,6 @@
 # AI Hiring OS
 
-AI Hiring OS is a production-grade, multi-tenant Software-as-a-Service (SaaS) platform built for modern enterprise recruitment and Human Resource Management (HRMS). By integrating state-of-the-art Artificial Intelligence (AI) scoring, automated resume parsing, interactive voice/text-based AI interviewers, and granular tenant-isolated employee, attendance, and performance modules, AI Hiring OS unites recruitment pipelines and internal workforce analytics under a single, highly performant architecture.
+AI Hiring OS is a production-grade, multi-tenant Software-as-a-Service (SaaS) platform built for modern enterprise recruitment and Human Resource Management (HRMS). By integrating state-of-the-art Artificial Intelligence (AI) scoring, automated resume parsing, interactive voice/text-based AI interviewers, and granular tenant-isolated employee, attendance, payroll, and performance modules, AI Hiring OS unites recruitment pipelines and internal workforce analytics under a single, highly performant architecture.
 
 ---
 
@@ -24,7 +24,7 @@ Modern talent acquisition is fractured, relying on separate tools for job listin
 Backed by a secure, tenant-isolated architecture where all companies, applicants, and employees reside in fully segregated database contexts, the platform enables:
 1.  **AI-Powered Sourcing & Screener**: Multi-format resume extraction coupled with semantic matching against target job descriptions.
 2.  **Voice-Activated AI Interviewing**: Automatic interview setups where a browser-native voice screen collects candidate responses, generating full transcripts and multi-dimensional reports.
-3.  **Comprehensive HRMS Tools**: Attendance check-ins, performance scorecards, department trackers, and manager reviews.
+3.  **Comprehensive HRMS Tools**: Employee records, attendance check-ins, payroll generation, payslips, performance scorecards, department trackers, and manager reviews.
 
 ---
 
@@ -35,6 +35,7 @@ Backed by a secure, tenant-isolated architecture where all companies, applicants
 *   **Advanced AI Screening**: Parsing resumes, compiling skills profiles, assessing gap analyses, and scoring semantic alignment with targeted job postings.
 *   **AI Interview Assistant**: Live browser voice interface with speech-to-text integration, sequential dynamic question queues, and multi-dimensional (Technical, Communication, Confidence) rating reports.
 *   **Intelligent Attendance tracking**: Single click clock-in/out records with smart status determination (Present, Half-Day, Absent) based on logged active hours.
+*   **Payroll & Payslips**: Attendance-derived payroll generation with HR approval, paid status tracking, employee payslip history, PDF-ready payslip output, and AI payroll summaries.
 *   **Star-Rating Appraisals**: Performance appraisal workflows with manager scorecards and team analytics.
 *   **Modern Premium Glassmorphism UI**: Beautifully designed dashboard workspaces built with React, Vite, TailwindCSS, and Framer Motion for premium user interactions.
 
@@ -147,9 +148,9 @@ AI Hiring OS enforces role-based endpoint validation dynamically. Roles align as
 
 | Role | Navigation & Screens | Permission Scope |
 | :--- | :--- | :--- |
-| **Admin** / **HR** | Full HR Dashboard, Jobs, Candidates Pool, Employee Directory, Settings | Full administrative read/write, start AI interviews, add new jobs, add new employee profiles. |
-| **Manager** | Manager Dashboard, Candidates, Employees, Team Reviews, Attendance | Reads candidates, manages team attendance, logs appraisal scorecards for direct reports. |
-| **Employee** | Employee Portal, Clock In/Out, Performance Scorecard, Settings | Clock-in, profile update, personal attendance logs, view personal reviews. |
+| **Admin** / **HR** | Full HR Dashboard, Jobs, Candidates Pool, Employee Directory, Payroll, Settings | Full administrative read/write, start AI interviews, add jobs, add employees, generate/approve/pay payroll. |
+| **Manager** | Manager Dashboard, Candidates, Employees, Team Reviews, Attendance, Payroll | Reads candidates, views read-only payroll summaries, manages team attendance, logs appraisal scorecards for direct reports. |
+| **Employee** | Employee Portal, Clock In/Out, Payroll, Performance Scorecard, Settings | Clock-in, profile update, personal attendance logs, own payslips, view personal reviews. |
 
 ---
 
@@ -167,7 +168,8 @@ AI Hiring OS enforces role-based endpoint validation dynamically. Roles align as
 - [ ] **AI-driven career advice chatbot** for candidates.
 - [ ] **Slack & Teams calendar integration** for interview coordination.
 - [ ] **Interactive candidate comparative analytics tool** for managers.
-- [ ] **Advanced HR payroll integrations**.
+- [x] **Attendance-linked payroll generation and employee payslips**.
+- [ ] **External HR payroll payment integrations**.
 
 ---
 

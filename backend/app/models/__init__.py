@@ -10,3 +10,4 @@ from app.models.employee import Employee  # noqa: F401
 from app.models.attendance import AttendanceRecord  # noqa: F401
 from app.models.performance import PerformanceReview  # noqa: F401
 from app.models.interview import InterviewSession  # noqa: F401
+from app.models.payroll import PayrollRecord  # noqa: F401

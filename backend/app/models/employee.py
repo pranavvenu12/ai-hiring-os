@@ -96,6 +96,7 @@ class Employee(Base):
     company = relationship("Company", backref="employees")
     user = relationship("User", backref="employee_profile", uselist=False)
     manager = relationship("Employee", remote_side=[id], backref="direct_reports")
+    payroll_records = relationship("PayrollRecord", back_populates="employee", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<Employee id={self.id} name={self.full_name!r} code={self.employee_code}>"

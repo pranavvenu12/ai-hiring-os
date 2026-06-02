@@ -232,5 +232,22 @@ Detail future iterations and expansion plans for the AI Hiring OS platform.
 ### Planned Features
 *   **Automatic OCR Scanning**: Parse photo-based resume documents accurately.
 *   **Direct Outlook & Google Calendar Integrations**: Synchronize schedules for interviews seamlessly.
-*   **Automated Payroll Calculations**: Connect logged attendance hours directly to payroll systems.
+*   **External Payroll Payment Integrations**: Connect approved payroll records to accounting systems and bank transfer APIs.
 *   **Interactive Coding Sandbox**: Add programming screens directly inside the technical interview wizard.
+
+---
+
+## Phase 9: Payroll & HRMS Completion Layer
+
+### Objectives
+Close the core HRMS payroll requirement with a usable end-to-end payroll MVP.
+
+### Delivered Features
+*   Payroll database model with tenant isolation, employee relationship, period uniqueness, and indexed queries.
+*   Payroll generation for one employee or all active employees.
+*   Attendance-derived gross salary, deductions, net salary, and payroll status workflow.
+*   HR/Admin approval and mark-paid actions.
+*   Manager read-only payroll overview.
+*   Employee payroll history and payslip view.
+*   PDF-ready payslip output through browser print/save.
+*   AI payroll summary with Gemini/HF/template fallback.

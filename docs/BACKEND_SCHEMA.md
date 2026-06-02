@@ -17,6 +17,7 @@ erDiagram
     EMPLOYEES ||--o{ ATTENDANCE_RECORDS : "tracks attendance"
     EMPLOYEES ||--o{ PERFORMANCE_REVIEWS : "reviews employee"
     EMPLOYEES ||--o{ PERFORMANCE_REVIEWS : "acts as reviewer"
+    EMPLOYEES ||--o{ PAYROLL_RECORDS : "receives payroll"
     
     JOBS ||--o{ RESUMES : "has resumes"
     RESUMES ||--o| AI_SCORES : "gets scores"
@@ -194,6 +195,38 @@ Maintains histories and scorecards for AI interview sessions.
     *   `overall_score`: `DOUBLE PRECISION` (0.0 to 100.0)
     *   `recommendation`: `VARCHAR(50)` (`strong_hire`, `hire`, `consider`, `reject`)
     *   `created_at`: `TIMESTAMP WITH TIME ZONE` (Default: `now()`)
+
+---
+
+### 2.10 Table: `payroll_records`
+Stores generated monthly payroll records derived from employee attendance.
+
+*   **Primary Key**: `id` (UUID, Auto-generated)
+*   **Properties**:
+    *   `company_id`: `UUID` (Foreign Key -> `companies.id`, Row isolated)
+    *   `employee_id`: `UUID` (Foreign Key -> `employees.id`)
+    *   `month`: `INTEGER` (1-12)
+    *   `year`: `INTEGER`
+    *   `base_salary`: `DOUBLE PRECISION`
+    *   `present_days`: `DOUBLE PRECISION`
+    *   `half_days`: `DOUBLE PRECISION`
+    *   `absent_days`: `DOUBLE PRECISION`
+    *   `working_days`: `DOUBLE PRECISION`
+    *   `gross_salary`: `DOUBLE PRECISION`
+    *   `deductions`: `DOUBLE PRECISION`
+    *   `net_salary`: `DOUBLE PRECISION`
+    *   `status`: `VARCHAR(20)` (`draft`, `generated`, `approved`, `paid`)
+    *   `ai_summary`: `TEXT` (Nullable AI payroll insight)
+    *   `generated_at`: `TIMESTAMP WITH TIME ZONE`
+    *   `approved_at`: `TIMESTAMP WITH TIME ZONE` (Nullable)
+    *   `created_at`: `TIMESTAMP WITH TIME ZONE`
+    *   `updated_at`: `TIMESTAMP WITH TIME ZONE`
+*   **Constraints**:
+    *   `uq_employee_payroll_month`: Unique constraint on `(employee_id, month, year)`
+*   **Indexes**:
+    *   `ix_payroll_company_period`: ON `(company_id, year, month)`
+    *   `ix_payroll_employee_period`: ON `(employee_id, year, month)`
+    *   `ix_payroll_company_status`: ON `(company_id, status)`
 
 ---
 

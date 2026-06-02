@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
-import { Mail, Building, Users, Shield, Calendar, MapPin, ExternalLink, Globe, Layers3, UserCheck, Clock, Star, AlertCircle, FileText, ChevronRight } from 'lucide-react';
+import { Mail, Building, Users, Shield, Calendar, MapPin, ExternalLink, Globe, Layers3, UserCheck, Clock, Star, AlertCircle, FileText, ChevronRight, Wallet } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { formatAttendanceDuration } from '../utils/date';
@@ -32,6 +32,7 @@ const DashboardEmployee = () => {
     const [employeeProfile, setEmployeeProfile] = useState(null);
     const [attendanceData, setAttendanceData] = useState({ today: {}, records: [] });
     const [performanceData, setPerformanceData] = useState({ reviews: [], avg_rating: 0 });
+    const [payrollData, setPayrollData] = useState({ records: [] });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [now, setNow] = useState(Date.now());
@@ -88,6 +89,13 @@ const DashboardEmployee = () => {
                 console.error("Error fetching performance details:", err);
             }
 
+            try {
+                const payroll = await api.get('/payroll/me');
+                setPayrollData(payroll);
+            } catch (err) {
+                console.error("Error fetching payroll details:", err);
+            }
+
         } catch (error) {
             console.error("Error loading dashboard data:", error);
             setError("Failed to load dashboard metrics.");
@@ -111,6 +119,7 @@ const DashboardEmployee = () => {
     const latestReview = performanceData.reviews && performanceData.reviews.length > 0 
         ? performanceData.reviews[0] 
         : null;
+    const latestPayslip = payrollData.records && payrollData.records.length > 0 ? payrollData.records[0] : null;
 
     return (
         <div className="flex bg-[#f8fafc] min-h-screen font-inter">
@@ -283,6 +292,32 @@ const DashboardEmployee = () => {
                                     )}
                                 </div>
                             </div>
+                        </div>
+
+                        <div className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm">
+                            <div className="flex justify-between items-center mb-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                                        <Wallet size={20} />
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-slate-900 tracking-tight">Latest Payslip</h3>
+                                </div>
+                                <button 
+                                    onClick={() => navigate('/payroll')}
+                                    className="text-xs font-semibold text-indigo-600 uppercase tracking-widest flex items-center gap-1 hover:underline"
+                                >
+                                    My Payroll <ChevronRight size={14} />
+                                </button>
+                            </div>
+                            {latestPayslip ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <DetailCard label="Gross Salary" value={`₹${Math.round(latestPayslip.gross_salary).toLocaleString('en-IN')}`} />
+                                    <DetailCard label="Deductions" value={`₹${Math.round(latestPayslip.deductions).toLocaleString('en-IN')}`} />
+                                    <DetailCard label="Net Salary" value={`₹${Math.round(latestPayslip.net_salary).toLocaleString('en-IN')} · ${latestPayslip.status}`} />
+                                </div>
+                            ) : (
+                                <p className="text-sm font-medium text-slate-400">No payslip has been generated yet.</p>
+                            )}
                         </div>
 
                         {/* Company Details Section */}

@@ -147,3 +147,44 @@ graph TD
     Server -->|6. Return Client A data| UserA
     Server -->|7. Return Client B data| UserB
 ```
+
+---
+
+## 7. Payroll Generation And Payslip Flow
+
+This flow shows how HR generates attendance-linked payroll and how employees access their own payslips.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor HR as HR / Admin
+    actor Emp as Employee
+    participant SPA as React Frontend
+    participant API as FastAPI Backend
+    participant DB as Supabase PostgreSQL
+    participant AI as Gemini / HF / Template Fallback
+
+    HR->>SPA: Opens Payroll Management
+    SPA->>API: GET /payroll?month=&year=
+    API->>DB: Query payroll_records by company_id and period
+    DB-->>API: Company payroll records
+    API-->>SPA: Payroll register and summary
+
+    HR->>SPA: Generates payroll
+    SPA->>API: POST /payroll/generate or /payroll/generate-all
+    API->>DB: Fetch employee and attendance_records
+    API->>API: Calculate gross salary, deductions, net salary
+    API->>AI: Request payroll summary
+    AI-->>API: AI summary or template fallback
+    API->>DB: Upsert payroll_records
+    API-->>SPA: Generated payroll
+
+    HR->>SPA: Approves and marks paid
+    SPA->>API: PUT /payroll/{id}/approve then /mark-paid
+    API->>DB: Update status with company_id isolation
+
+    Emp->>SPA: Opens My Payroll
+    SPA->>API: GET /payroll/me
+    API->>DB: Query own employee payroll only
+    API-->>SPA: Payslip history and PDF-ready payslip
+```

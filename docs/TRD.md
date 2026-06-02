@@ -22,6 +22,7 @@ graph TB
         EmployeeSvc[Employee Service]
         AttendanceSvc[Attendance Service]
         PerformanceSvc[Performance Service]
+        PayrollSvc[Payroll Service]
         InterviewSvc[Interview / AI Evaluator]
     end
 
@@ -40,11 +41,13 @@ graph TB
     Gateway --> EmployeeSvc
     Gateway --> AttendanceSvc
     Gateway --> PerformanceSvc
+    Gateway --> PayrollSvc
     Gateway --> InterviewSvc
     
     EmployeeSvc --> DB
     AttendanceSvc --> DB
     PerformanceSvc --> DB
+    PayrollSvc --> DB
     InterviewSvc --> DB
     InterviewSvc --> Gemini
     InterviewSvc --> OpenAI
@@ -83,6 +86,7 @@ sequenceDiagram
 *   **Database ORM**: SQLAlchemy using `asyncpg` drivers for non-blocking database queries.
 *   **Tenant Separation**: Sub-queries dynamically extract the `company_id` directly from validated Supabase JWT payloads, appending isolation filters onto every database access.
 *   **Access Guards (RBAC)**: Custom FastAPI dependencies (`require_roles`) enforce role checks before route execution.
+*   **Payroll Service**: Calculates salary from attendance records, stores period-specific payroll records, enforces generated/approved/paid status transitions, and generates payroll AI summaries with Gemini/HF/template fallback.
 
 ---
 
@@ -141,6 +145,12 @@ Supabase is used for user management. When a user authenticates:
 | `POST` | `/attendance/clock-in` | All roles | Clock in once per day. |
 | `POST` | `/performance` | Manager | Submit appraisal for a direct report. |
 | `POST` | `/interviews/start` | Admin, HR | Setup and start an AI interview session. |
+| `POST` | `/payroll/generate` | Admin, HR | Generate monthly payroll for one employee. |
+| `POST` | `/payroll/generate-all` | Admin, HR | Generate payroll for all active company employees. |
+| `GET` | `/payroll` | Admin, HR, Manager | Read company payroll records and analytics. |
+| `GET` | `/payroll/me` | Employee | Read own payroll history and payslips. |
+| `PUT` | `/payroll/{id}/approve` | Admin, HR | Approve generated payroll. |
+| `PUT` | `/payroll/{id}/mark-paid` | Admin, HR | Mark approved payroll as paid. |
 
 ---
 

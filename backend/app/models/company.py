@@ -37,6 +37,7 @@ class Company(Base):
     # Relationships
     users = relationship("User", back_populates="company", lazy="selectin")
     jobs = relationship("Job", back_populates="company", cascade="all, delete-orphan")
+    payroll_records = relationship("PayrollRecord", back_populates="company", cascade="all, delete-orphan")
     profile = relationship(
         "CompanyProfile",
         back_populates="company",

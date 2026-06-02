@@ -5,7 +5,7 @@ import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Users, Briefcase, Star, ClipboardList, ArrowRight, Building2, MapPin, Globe, Mail, Layers3, UserCheck, Clock, TrendingUp, Brain, Mic } from 'lucide-react';
+import { Users, Briefcase, Star, ClipboardList, ArrowRight, Building2, MapPin, Globe, Mail, Layers3, UserCheck, Clock, TrendingUp, Brain, Mic, Wallet, Receipt, BadgeDollarSign } from 'lucide-react';
 import { formatRelativeTime, formatShortDate } from '../utils/date';
 
 const DashboardHR = () => {
@@ -37,6 +37,7 @@ const DashboardHR = () => {
     });
     const [loading, setLoading] = useState(true);
     const [hrmsStats, setHrmsStats] = useState({ totalEmployees: 0, attendanceToday: 0, avgPerformance: 0, interviewCompletion: 0 });
+    const [payrollStats, setPayrollStats] = useState({ totalPayrollCost: 0, pendingPayroll: 0, employeesPaid: 0 });
 
     useEffect(() => {
         document.title = 'AI Hiring OS - HR Dashboard';
@@ -109,6 +110,12 @@ const DashboardHR = () => {
                     avgPerformance: perfData.avg_rating || 0,
                     interviewCompletion: intData.completion_rate || 0,
                 });
+                const payrollData = await api.get('/payroll?limit=500').catch(() => ({ summary: {} }));
+                setPayrollStats({
+                    totalPayrollCost: payrollData.summary?.total_payroll_cost || 0,
+                    pendingPayroll: payrollData.summary?.pending_payroll || 0,
+                    employeesPaid: payrollData.summary?.employees_paid || 0,
+                });
             } catch (e) { console.error('HRMS stats fetch failed:', e); }
         } catch (error) {
             console.error(error);
@@ -155,6 +162,17 @@ const DashboardHR = () => {
                     <StatCard icon={Clock} label="Present Today" value={hrmsStats.attendanceToday} />
                     <StatCard icon={TrendingUp} label="Avg Performance" value={`${hrmsStats.avgPerformance}/5`} />
                     <StatCard icon={Mic} label="Interview Rate" value={`${hrmsStats.interviewCompletion}%`} />
+                </motion.div>
+
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.25 }}
+                    className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10"
+                >
+                    <Link to="/payroll"><StatCard icon={Wallet} label="Total Payroll Cost" value={`₹${Math.round(payrollStats.totalPayrollCost).toLocaleString('en-IN')}`} /></Link>
+                    <Link to="/payroll"><StatCard icon={Receipt} label="Pending Payroll" value={payrollStats.pendingPayroll} /></Link>
+                    <Link to="/payroll"><StatCard icon={BadgeDollarSign} label="Employees Paid" value={payrollStats.employeesPaid} /></Link>
                 </motion.div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

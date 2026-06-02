@@ -1,7 +1,7 @@
 # Product Requirements Document (PRD)
 
 ## 1. Executive Summary
-AI Hiring OS is a comprehensive multi-tenant SaaS application designed to revolutionize corporate talent acquisition and employee management by unifying recruitment pipelines, automated resume screening, voice-enabled AI interviews, and modern core HRMS features (Attendance, Employee Profiles, Performance Reviews) within a secure, isolated tenant architecture. 
+AI Hiring OS is a comprehensive multi-tenant SaaS application designed to revolutionize corporate talent acquisition and employee management by unifying recruitment pipelines, automated resume screening, voice-enabled AI interviews, and modern core HRMS features (Employee Profiles, Attendance, Payroll, Performance Reviews) within a secure, isolated tenant architecture. 
 
 By utilizing artificial intelligence at key stages of the employee lifecycle, AI Hiring OS dramatically reduces time-to-hire, removes human bias from initial screens, simplifies attendance and performance management, and consolidates fragmented tools into a single high-performance premium portal.
 
@@ -79,6 +79,13 @@ To build a state-of-the-art "Hire-to-Retain" workspace. A single platform that g
 *   **Multi-Dimensional Scorecard**: AI assesses transcripts, generating scores for technical depth, communication, and confidence.
 *   **Shortlist Drawer Tab**: Updates candidate profiles dynamically, appending historical AI interview logs to help recruiters evaluate candidates.
 
+### 6.9 Payroll Management
+*   **Payroll Generation**: HR/Admin users generate monthly payroll for one employee or all active employees in the company.
+*   **Attendance-Based Calculation**: Payroll calculates working days, present days, half days, absent days, gross salary, deductions, and net salary from attendance records.
+*   **Approval Workflow**: Payroll records move from `generated` to `approved` to `paid`.
+*   **Role-Based Access**: Managers receive read-only payroll analytics. Employees can only view their own payroll history and payslips.
+*   **Payslip Output**: Payslips include company, employee, department, attendance summary, gross salary, deductions, net salary, status, and AI summary.
+
 ---
 
 ## 7. Non-Functional Requirements
@@ -139,4 +146,4 @@ To build a state-of-the-art "Hire-to-Retain" workspace. A single platform that g
 ## 11. Future Enhancements
 *   **Advanced Talent Pool Sourcing**: Integrations with LinkedIn and external job boards to import candidates with a single click.
 *   **Interactive Coding Sandbox**: An in-browser coding environment within the AI Interview screen for technical candidates.
-*   **Automated Payroll Generation**: Connecting attendance logs directly with salary payment pipelines.
+*   **External Payroll Payment Rails**: Connect approved payroll records to bank transfer or accounting systems.
