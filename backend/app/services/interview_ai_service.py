@@ -37,6 +37,13 @@ async def generate_interview_questions(
         except Exception as e:
             logger.error(f"Gemini question generation failed: {e}")
 
+    # 1b. Try Groq (Backup)
+    if settings.AI_GROQ_KEY:
+        try:
+            return await _call_groq(prompt)
+        except Exception as e:
+            logger.error(f"Groq question generation failed: {e}")
+
     # 2. Try HF Router
     if settings.AI_HF_KEY:
         try:
@@ -65,6 +72,13 @@ async def evaluate_interview(
             return await _call_gemini(prompt)
         except Exception as e:
             logger.error(f"Gemini evaluation failed: {e}")
+
+    # 1b. Try Groq (Backup)
+    if settings.AI_GROQ_KEY:
+        try:
+            return await _call_groq(prompt)
+        except Exception as e:
+            logger.error(f"Groq evaluation failed: {e}")
 
     # 2. Try HF Router
     if settings.AI_HF_KEY:
@@ -160,6 +174,30 @@ async def _call_gemini(prompt: str) -> Any:
         response.raise_for_status()
         data = response.json()
         text = data["candidates"][0]["content"]["parts"][0]["text"]
+        return json.loads(text)
+
+
+async def _call_groq(prompt: str) -> Any:
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {settings.AI_GROQ_KEY}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": "llama-3.3-70b-versatile",
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.1,
+        "response_format": {"type": "json_object"},
+    }
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.post(url, json=payload, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+        text = data["choices"][0]["message"]["content"]
+        if "```json" in text:
+            text = text.split("```json")[1].split("```")[0].strip()
+        elif "```" in text:
+            text = text.split("```")[1].split("```")[0].strip()
         return json.loads(text)
 
 

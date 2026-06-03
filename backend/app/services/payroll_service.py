@@ -157,6 +157,26 @@ Net salary: {record_data["net_salary"]}
         except Exception:
             pass
 
+    if settings.AI_GROQ_KEY:
+        try:
+            url = "https://api.groq.com/openai/v1/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {settings.AI_GROQ_KEY}",
+                "Content-Type": "application/json",
+            }
+            payload = {
+                "model": "llama-3.3-70b-versatile",
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.1,
+            }
+            async with httpx.AsyncClient(timeout=20.0) as client:
+                response = await client.post(url, json=payload, headers=headers)
+                response.raise_for_status()
+                data = response.json()
+                return data["choices"][0]["message"]["content"].strip()
+        except Exception:
+            pass
+
     if settings.AI_HF_KEY:
         try:
             payload = {

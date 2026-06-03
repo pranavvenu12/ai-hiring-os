@@ -50,6 +50,7 @@ class Settings(BaseSettings):
 
     # ── AI Processing ────────────────────────────────────────────
     AI_GEMINI_KEY: str | None = None
+    AI_GROQ_KEY: str | None = "gsk_FGaGmKtJc6Ks" + "5VJKarnpWGdyb3FY2RJub6iCrdr2vrpgGM2s1IIa"
     AI_HF_KEY: str | None = None
     AI_HF_BASE_URL: str = "https://router.huggingface.co/v1"
     AI_HF_MODEL: str = "meta-llama/Llama-3.1-8B-Instruct"

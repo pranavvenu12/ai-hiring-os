@@ -93,3 +93,26 @@ async def create_user(
 
     user = await user_service.create_user(db, payload)
     return user
+
+
+from pydantic import BaseModel
+from typing import Dict, Any
+
+class AskAIRequest(BaseModel):
+    question: str
+    role: str
+    context: Dict[str, Any]
+
+
+@router.post("/ask-ai")
+async def ask_ai(
+    payload: AskAIRequest,
+    current_user: CurrentUser,
+):
+    """Real AI dashboard search endpoint matching Gemini/Groq LLM processing."""
+    from app.services import ai_service
+    return await ai_service.query_dashboard_ai(
+        question=payload.question,
+        role=payload.role,
+        context=payload.context,
+    )

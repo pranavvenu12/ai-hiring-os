@@ -276,21 +276,43 @@ const Topbar = ({ title }) => {
                 candidates = candidateLists.flat();
             }
 
-            const answer = buildDashboardAnswer({
-                question,
-                title,
-                role,
-                jobs,
-                candidates,
-                employeesData,
-                myAttendance,
-                teamAttendance,
-                companyAttendance,
-                myPerformance,
-                teamPerformance,
-                companyPerformance,
-                interviewAnalytics,
-            });
+            let answer;
+            try {
+                answer = await api.post('/ask-ai', {
+                    question,
+                    role,
+                    context: {
+                        title,
+                        jobs,
+                        candidates,
+                        employees: employeesData?.employees || [],
+                        myAttendance,
+                        teamAttendance,
+                        companyAttendance,
+                        myPerformance,
+                        teamPerformance,
+                        companyPerformance,
+                        interviewAnalytics,
+                    }
+                });
+            } catch (err) {
+                console.warn('Real AI search query failed, falling back to rule-based summary:', err);
+                answer = buildDashboardAnswer({
+                    question,
+                    title,
+                    role,
+                    jobs,
+                    candidates,
+                    employeesData,
+                    myAttendance,
+                    teamAttendance,
+                    companyAttendance,
+                    myPerformance,
+                    teamPerformance,
+                    companyPerformance,
+                    interviewAnalytics,
+                });
+            }
 
             setAiAnswer(answer);
         } catch (error) {
