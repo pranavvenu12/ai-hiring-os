@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect, useRef } from 'react';
+﻿import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
@@ -402,7 +402,7 @@ const Candidates = () => {
                                             </div>
                                             <div className="mt-8 pt-8 border-t border-white/10">
                                                 <p className="text-sm font-medium text-indigo-50 leading-relaxed italic">
-                                                    "{selectedCandidate.explanation || 'Processing AI-driven insights for this candidate...'}"
+                                                    {selectedCandidate.explanation && !selectedCandidate.explanation.includes('AI service is currently unavailable') && !selectedCandidate.explanation.includes('deterministic score') ? `"${selectedCandidate.explanation}"` : selectedCandidate.status === 'completed' ? `"${selectedCandidate.explanation || selectedCandidate.summary || 'Evaluation complete.'}"` : 'Processing AI-driven insights...'}
                                                 </p>
                                             </div>
                                         </div>

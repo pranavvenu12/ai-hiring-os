@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { BadgeDollarSign, BarChart3, CheckCircle2, Download, FileText, Loader2, Receipt, Sparkles, Wallet } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
@@ -303,58 +303,88 @@ const Payroll = () => {
                                     <h2 className="text-2xl font-semibold tracking-tight text-slate-950">{isEmployee ? 'Payslip History' : 'Payroll Register'}</h2>
                                     <p className="text-sm font-medium text-slate-500 mt-1">{summary.ai_summary || 'Attendance-based payroll records for the selected period.'}</p>
                                 </div>
-                                <div className="overflow-x-auto w-full">
-                                    <table className="min-w-[900px] w-full text-left">
-                                        <thead className="bg-slate-50 text-[10px] uppercase tracking-[0.2em] text-slate-400">
-                                            <tr>
-                                                <th className="px-6 py-4">Employee</th>
-                                                <th className="px-6 py-4">Department</th>
-                                                <th className="px-6 py-4">Components</th>
-                                                <th className="px-6 py-4">Present</th>
-                                                <th className="px-6 py-4">Absent</th>
-                                                <th className="px-6 py-4">Deductions</th>
-                                                <th className="px-6 py-4">Net</th>
-                                                <th className="px-6 py-4">Status</th>
-                                                <th className="px-6 py-4">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100">
-                                            {records.map((record) => (
-                                                <tr key={record.id} className="text-sm">
-                                                    <td className="px-6 py-5 font-semibold text-slate-900">{record.employee_name || 'Employee'}</td>
-                                                    <td className="px-6 py-5 text-slate-500">{record.department || 'Unassigned'}</td>
-                                                    <td className="px-6 py-5">
-                                                        <PayrollBreakdownMini record={record} />
-                                                    </td>
-                                                    <td className="px-6 py-5">{record.present_days}</td>
-                                                    <td className="px-6 py-5">{record.absent_days}</td>
-                                                    <td className="px-6 py-5 text-rose-600 font-semibold">{currency.format(record.deductions)}</td>
-                                                    <td className="px-6 py-5 font-semibold text-slate-950">{currency.format(record.net_salary)}</td>
-                                                    <td className="px-6 py-5"><StatusBadge status={record.status} /></td>
-                                                    <td className="px-6 py-5">
-                                                        <div className="flex flex-wrap gap-2">
-                                                            <button onClick={() => openPayslip(record)} className="btn btn-secondary text-xs px-3 py-2">View</button>
-                                                            <button onClick={() => printPayslip(record)} className="btn btn-secondary text-xs px-3 py-2"><Download size={14} /> PDF</button>
-                                                            {canManage && record.status === 'generated' && (
-                                                                <button onClick={() => updateStatus(record, 'approve')} className="btn btn-primary text-xs px-3 py-2">Approve</button>
-                                                            )}
-                                                            {canManage && record.status === 'approved' && (
-                                                                <button onClick={() => updateStatus(record, 'mark-paid')} className="btn btn-primary text-xs px-3 py-2">Mark Paid</button>
-                                                            )}
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                            {records.length === 0 && (
+                                {isEmployee ? (
+                                    /* Employee view — card-based payslip list, no horizontal scroll */
+                                    <div className="divide-y divide-slate-100">
+                                        {records.map((record) => (
+                                            <div key={record.id} className="p-6 flex flex-col sm:flex-row sm:items-center gap-4 hover:bg-slate-50/50 transition-colors">
+                                                <div className="flex-1 min-w-0 space-y-1">
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="text-base font-semibold text-slate-900">{monthNames[record.month - 1]} {record.year}</span>
+                                                        <StatusBadge status={record.status} />
+                                                    </div>
+                                                    <PayrollBreakdownMini record={record} />
+                                                    <div className="text-xs text-slate-400 font-medium">{record.present_days} present · {record.absent_days} absent · {record.half_days} half-day</div>
+                                                </div>
+                                                <div className="flex flex-col items-end gap-1 shrink-0">
+                                                    <div className="text-xl font-semibold text-slate-950">{currency.format(record.net_salary)}</div>
+                                                    <div className="text-xs text-rose-500 font-semibold">-{currency.format(record.deductions)} deducted</div>
+                                                </div>
+                                                <div className="flex gap-2 shrink-0">
+                                                    <button onClick={() => openPayslip(record)} className="btn btn-secondary text-xs px-3 py-2">View</button>
+                                                    <button onClick={() => printPayslip(record)} className="btn btn-secondary text-xs px-3 py-2"><Download size={14} /> PDF</button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {records.length === 0 && (
+                                            <div className="px-6 py-16 text-center text-slate-400 font-semibold">
+                                                No payroll records found.
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    /* HR / Manager view — scrollable table */
+                                    <div className="overflow-x-auto w-full">
+                                        <table className="min-w-[900px] w-full text-left">
+                                            <thead className="bg-slate-50 text-[10px] uppercase tracking-[0.2em] text-slate-400">
                                                 <tr>
-                                                    <td colSpan="9" className="px-6 py-16 text-center text-slate-400 font-semibold">
-                                                        No payroll records found.
-                                                    </td>
+                                                    <th className="px-6 py-4">Employee</th>
+                                                    <th className="px-6 py-4">Department</th>
+                                                    <th className="px-6 py-4">Components</th>
+                                                    <th className="px-6 py-4">Present</th>
+                                                    <th className="px-6 py-4">Absent</th>
+                                                    <th className="px-6 py-4">Deductions</th>
+                                                    <th className="px-6 py-4">Net</th>
+                                                    <th className="px-6 py-4">Status</th>
+                                                    <th className="px-6 py-4">Actions</th>
                                                 </tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {records.map((record) => (
+                                                    <tr key={record.id} className="text-sm">
+                                                        <td className="px-6 py-5 font-semibold text-slate-900">{record.employee_name || 'Employee'}</td>
+                                                        <td className="px-6 py-5 text-slate-500">{record.department || 'Unassigned'}</td>
+                                                        <td className="px-6 py-5"><PayrollBreakdownMini record={record} /></td>
+                                                        <td className="px-6 py-5">{record.present_days}</td>
+                                                        <td className="px-6 py-5">{record.absent_days}</td>
+                                                        <td className="px-6 py-5 text-rose-600 font-semibold">{currency.format(record.deductions)}</td>
+                                                        <td className="px-6 py-5 font-semibold text-slate-950">{currency.format(record.net_salary)}</td>
+                                                        <td className="px-6 py-5"><StatusBadge status={record.status} /></td>
+                                                        <td className="px-6 py-5">
+                                                            <div className="flex flex-wrap gap-2">
+                                                                <button onClick={() => openPayslip(record)} className="btn btn-secondary text-xs px-3 py-2">View</button>
+                                                                <button onClick={() => printPayslip(record)} className="btn btn-secondary text-xs px-3 py-2"><Download size={14} /> PDF</button>
+                                                                {canManage && record.status === 'generated' && (
+                                                                    <button onClick={() => updateStatus(record, 'approve')} className="btn btn-primary text-xs px-3 py-2">Approve</button>
+                                                                )}
+                                                                {canManage && record.status === 'approved' && (
+                                                                    <button onClick={() => updateStatus(record, 'mark-paid')} className="btn btn-primary text-xs px-3 py-2">Mark Paid</button>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                                {records.length === 0 && (
+                                                    <tr>
+                                                        <td colSpan="9" className="px-6 py-16 text-center text-slate-400 font-semibold">
+                                                            No payroll records found.
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
                             </section>
 
                             <aside className="space-y-6">
