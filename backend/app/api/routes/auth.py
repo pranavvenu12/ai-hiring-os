@@ -147,6 +147,16 @@ async def signup(
             else:
                 raise HTTPException(status_code=400, detail=f"Supabase error: {exc}")
         else:
+            err_str = str(exc).lower()
+            if "not allowed" in err_str or "unauthorized" in err_str:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        "Registration is currently restricted by the platform. "
+                        "Please ask your HR/Admin to enable signups in Supabase Auth settings "
+                        "(Authentication → Settings → 'Allow new users to sign up')."
+                    ),
+                )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Supabase registration failed: {exc}",

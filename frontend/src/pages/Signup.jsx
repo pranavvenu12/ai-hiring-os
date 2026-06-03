@@ -84,7 +84,7 @@ const Signup = () => {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="space-y-3">
-                        <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Select Your Role</label>
+                        <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Select Your Role <span className="text-rose-500">*</span></label>
                         <div className="grid grid-cols-3 gap-4">
                             {[
                                 { id: 'hr', name: 'HR / Admin', icon: BadgeCheck },
@@ -109,7 +109,7 @@ const Signup = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Full Name</label>
+                            <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Full Name <span className="text-rose-500">*</span></label>
                             <div className="relative group">
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
                                     <UserPlus size={18} />
@@ -118,7 +118,7 @@ const Signup = () => {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Designation</label>
+                            <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Designation <span className="text-rose-500">*</span></label>
                             <div className="relative group">
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
                                     <Briefcase size={18} />
@@ -127,7 +127,7 @@ const Signup = () => {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Company</label>
+                            <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Company <span className="text-rose-500">*</span></label>
                             <div className="relative group">
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
                                     <Building size={18} />
@@ -138,7 +138,7 @@ const Signup = () => {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Email Address</label>
+                        <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Email Address <span className="text-rose-500">*</span></label>
                         <div className="relative group">
                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
                                 <Mail size={18} />
@@ -155,7 +155,7 @@ const Signup = () => {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Password</label>
+                        <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Password <span className="text-rose-500">*</span></label>
                         <div className="relative group">
                             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
                                 <Lock size={18} />

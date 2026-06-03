@@ -369,7 +369,7 @@ const ApplicationForm = ({ form, applicationSent, isApplying, onFieldChange, onA
             <CareersField icon={Globe} label="Portfolio URL" value={form.portfolio_url} onChange={(value) => onFieldChange('portfolio_url', value)} />
 
             <label className="block">
-                <span className="mb-2 block text-xs font-semibold uppercase tracking-widest text-slate-400">Resume PDF</span>
+                <span className="mb-2 block text-xs font-semibold uppercase tracking-widest text-slate-400">Resume PDF<span className="ml-0.5 text-rose-500">*</span></span>
                 <span className="block cursor-pointer rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center transition hover:border-slate-400 dark:border-white/10 dark:bg-black/20 dark:hover:border-white/30">
                     <UploadCloud className="mx-auto text-slate-400" size={26} />
                     <span className="mt-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -427,7 +427,9 @@ const DetailItem = ({ icon: Icon, label, value }) => (
 
 const CareersField = ({ icon: Icon, label, value, onChange, type = 'text', required = false }) => (
     <label className="block">
-        <span className="mb-2 block text-xs font-semibold uppercase tracking-widest text-slate-400">{label}</span>
+        <span className="mb-2 block text-xs font-semibold uppercase tracking-widest text-slate-400">
+            {label}{required && <span className="ml-0.5 text-rose-500">*</span>}
+        </span>
         <span className="relative block">
             <Icon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input
