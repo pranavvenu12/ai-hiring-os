@@ -113,14 +113,47 @@ async def get_employee_by_id(
 async def get_employee_by_user_id(
     db: AsyncSession, user_id: uuid.UUID, company_id: uuid.UUID,
 ) -> Employee | None:
-    """Fetch an employee by their linked user account."""
+    """Fetch an employee by their linked user account. Auto-creates if missing for non-employee roles."""
     result = await db.execute(
         select(Employee).where(
             Employee.user_id == user_id,
             Employee.company_id == company_id,
         )
     )
-    return result.scalar_one_or_none()
+    employee = result.scalar_one_or_none()
+    if not employee:
+        # Load user to auto-create employee profile
+        from app.models.user import User
+        user_result = await db.execute(select(User).where(User.id == user_id))
+        user = user_result.scalar_one_or_none()
+        if user:
+            employee_code = await _generate_employee_code(db, company_id)
+            department = "Management" if user.role in ("manager", "admin") else "HR" if user.role == "hr" else "General"
+            designation = user.role.upper()
+            
+            employee = Employee(
+                company_id=company_id,
+                user_id=user_id,
+                employee_code=employee_code,
+                full_name=user.name,
+                email=user.email,
+                department=department,
+                designation=designation,
+                status="active"
+            )
+            db.add(employee)
+            await db.flush()
+            await db.commit()  # Permanently save to database so subsequent calls find it.
+            
+            # Re-fetch after commit
+            result_refetched = await db.execute(
+                select(Employee).where(
+                    Employee.id == employee.id
+                )
+            )
+            employee = result_refetched.scalar_one_or_none()
+            
+    return employee
 
 
 async def get_team_members(

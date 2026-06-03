@@ -407,3 +407,38 @@ async def shortlist_candidate(
         "email": resume.email,
         "interview_url": f"/public-interview/{session.id}",
     }
+
+
+@router.patch(
+    "/{job_id}/status",
+    response_model=JobOut,
+    dependencies=[Depends(require_roles(Role.ADMIN, Role.HR, Role.MANAGER))],
+)
+async def update_job_status(
+    job_id: uuid.UUID,
+    status_value: str,
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """
+    Update a job's status (e.g. close it).
+    
+    Allowed roles: ADMIN, HR, MANAGER
+    """
+    job = await job_service.get_job_by_id(db, job_id)
+    if not job or job.company_id != current_user.company_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found in your organisation.",
+        )
+        
+    if status_value not in ("open", "closed"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Status must be either 'open' or 'closed'.",
+        )
+        
+    job.status = status_value
+    await db.commit()
+    await db.refresh(job)
+    return job

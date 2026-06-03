@@ -60,6 +60,17 @@ const Jobs = () => {
         finally { setIsLoading(false); }
     };
 
+    const handleToggleJobStatus = async (jobId, currentStatus) => {
+        const nextStatus = currentStatus === 'open' ? 'closed' : 'open';
+        try {
+            await api.patch(`/jobs/${jobId}/status?status_value=${nextStatus}`);
+            toast.success(`Job position ${nextStatus === 'open' ? 'reopened' : 'closed'} successfully!`);
+            fetchJobs();
+        } catch (err) {
+            toast.error(err.detail || 'Failed to update job status.');
+        }
+    };
+
     const filteredJobs = jobs.filter(job => 
         job.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
@@ -130,17 +141,36 @@ const Jobs = () => {
                                     <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-semibold uppercase tracking-widest">
                                         {job.employment_type || 'Full-time'}
                                     </span>
-                                    <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-semibold uppercase tracking-widest">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                        Active
-                                    </span>
+                                    {job.status === 'closed' ? (
+                                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                                            Closed
+                                        </span>
+                                    ) : (
+                                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-widest">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                            Active
+                                        </span>
+                                    )}
                                 </div>
-                                <Link
-                                    to={`/candidates?job_id=${job.id}`}
-                                    className="mt-4 btn btn-secondary w-full justify-center py-3 text-xs font-semibold bg-white"
-                                >
-                                    View Candidates <ExternalLink size={14} />
-                                </Link>
+                                <div className="mt-4 flex gap-2">
+                                    <Link
+                                        to={`/candidates?job_id=${job.id}`}
+                                        className="flex-1 btn btn-secondary justify-center py-2.5 text-xs font-bold bg-white"
+                                    >
+                                        Candidates <ExternalLink size={14} />
+                                    </Link>
+                                    <button
+                                        onClick={() => handleToggleJobStatus(job.id, job.status)}
+                                        className={`flex-1 btn justify-center py-2.5 text-xs font-bold ${
+                                            job.status === 'closed'
+                                            ? 'bg-emerald-50 border border-emerald-100 text-emerald-600 hover:bg-emerald-600 hover:text-white'
+                                            : 'bg-rose-50 border border-rose-100 text-rose-600 hover:bg-rose-600 hover:text-white'
+                                        }`}
+                                    >
+                                        {job.status === 'closed' ? 'Open Position' : 'Close Position'}
+                                    </button>
+                                </div>
                             </motion.div>
                         ))}
                         {filteredJobs.length === 0 && (
@@ -199,19 +229,36 @@ const Jobs = () => {
                                             </div>
                                         </td>
                                         <td className="px-8 py-6">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                                <span className="text-sm font-bold text-emerald-600">Active</span>
-                                            </div>
+                                            {job.status === 'closed' ? (
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-2 h-2 rounded-full bg-slate-400" />
+                                                    <span className="text-sm font-bold text-slate-500">Closed</span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                                    <span className="text-sm font-bold text-emerald-600">Active</span>
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="px-8 py-6 text-right">
-                                            <div className="flex items-center justify-end gap-2">
+                                            <div className="flex items-center justify-end gap-3">
                                                 <Link 
                                                     to={`/candidates?job_id=${job.id}`} 
-                                                    className="btn btn-secondary px-4 py-2 text-xs font-bold bg-white/50 hover:bg-indigo-600 hover:text-white transition-all"
+                                                    className="btn btn-secondary px-4 py-2 text-xs font-bold bg-white hover:bg-indigo-600 hover:text-white transition-all shadow-sm"
                                                 >
                                                     Candidates <ExternalLink size={14} />
                                                 </Link>
+                                                <button
+                                                    onClick={() => handleToggleJobStatus(job.id, job.status)}
+                                                    className={`btn px-4 py-2 text-xs font-bold transition-all shadow-sm ${
+                                                        job.status === 'closed'
+                                                        ? 'bg-emerald-50 border border-emerald-100 text-emerald-600 hover:bg-emerald-600 hover:text-white'
+                                                        : 'bg-rose-50 border border-rose-100 text-rose-600 hover:bg-rose-600 hover:text-white'
+                                                    }`}
+                                                >
+                                                    {job.status === 'closed' ? 'Open' : 'Close'}
+                                                </button>
                                             </div>
                                         </td>
                                     </motion.tr>
