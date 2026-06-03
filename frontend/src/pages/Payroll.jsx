@@ -41,6 +41,10 @@ const Payroll = () => {
     const [defaultAllowances, setDefaultAllowances] = useState(8000);
     const [defaultBonuses, setDefaultBonuses] = useState(0);
     const [defaultDeductions, setDefaultDeductions] = useState(0);
+    // Salary modal state (replaces browser prompt)
+    const [salaryModalOpen, setSalaryModalOpen] = useState(false);
+    const [salaryInput, setSalaryInput] = useState('');
+    const [salaryTarget, setSalaryTarget] = useState(null);
 
     const fetchPayroll = useCallback(async () => {
         setLoading(true);
@@ -111,32 +115,10 @@ const Payroll = () => {
     }, [allRecords]);
 
     const generateForEmployee = async (employeeId, fallbackSalary = defaultSalary) => {
-        const entered = window.prompt('Enter monthly base salary for this employee', String(fallbackSalary));
-        if (!entered) return;
-        const baseSalary = Number(entered);
-        if (Number.isNaN(baseSalary) || baseSalary < 0) {
-            toast.error('Enter a valid salary amount.');
-            return;
-        }
-
-        setActionLoading(true);
-        try {
-            await api.post('/payroll/generate', {
-                employee_id: employeeId,
-                month,
-                year,
-                base_salary: baseSalary,
-                allowances: Number(defaultAllowances || 0),
-                bonuses: Number(defaultBonuses || 0),
-                deductions: Number(defaultDeductions || 0),
-            });
-            toast.success('Payroll generated.');
-            await fetchPayroll();
-        } catch (error) {
-            toast.error(error?.detail || 'Payroll generation failed.');
-        } finally {
-            setActionLoading(false);
-        }
+        // Open the project-styled salary modal instead of browser prompt
+        setSalaryTarget(employeeId);
+        setSalaryInput(String(fallbackSalary));
+        setSalaryModalOpen(true);
     };
 
     const generateAll = async () => {
@@ -158,6 +140,42 @@ const Payroll = () => {
         } finally {
             setActionLoading(false);
         }
+    };
+
+    const confirmSalaryAndGenerate = async () => {
+        const baseSalary = Number(salaryInput);
+        if (Number.isNaN(baseSalary) || baseSalary < 0) {
+            toast.error('Enter a valid salary amount.');
+            return;
+        }
+
+        setSalaryModalOpen(false);
+        setActionLoading(true);
+        try {
+            await api.post('/payroll/generate', {
+                employee_id: salaryTarget,
+                month,
+                year,
+                base_salary: baseSalary,
+                allowances: Number(defaultAllowances || 0),
+                bonuses: Number(defaultBonuses || 0),
+                deductions: Number(defaultDeductions || 0),
+            });
+            toast.success('Payroll generated.');
+            await fetchPayroll();
+        } catch (error) {
+            toast.error(error?.detail || 'Payroll generation failed.');
+        } finally {
+            setActionLoading(false);
+            setSalaryTarget(null);
+            setSalaryInput('');
+        }
+    };
+
+    const cancelSalaryModal = () => {
+        setSalaryModalOpen(false);
+        setSalaryTarget(null);
+        setSalaryInput('');
     };
 
     const updateStatus = async (record, action) => {
@@ -231,9 +249,9 @@ const Payroll = () => {
     const emptyCompanyRows = employees.filter((employee) => !recordsByEmployee.has(employee.id));
 
     return (
-        <div className="flex bg-[#f8fafc] min-h-screen font-inter">
+        <div className="flex bg-[#f8fafc] min-h-screen font-inter overflow-x-hidden">
             <Sidebar />
-            <main className="flex-1 ml-0 lg:ml-[280px] px-4 py-6 md:p-10">
+            <main className="flex-1 min-w-0 ml-0 lg:ml-[280px] px-4 py-6 md:p-10 overflow-x-hidden">
                 <Topbar title={isEmployee ? 'My Payroll' : 'Payroll Management'} />
 
                 {loading ? (
@@ -279,13 +297,13 @@ const Payroll = () => {
                             </div>
                         )}
 
-                        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                            <section className="xl:col-span-2 bg-white rounded-[1.5rem] border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 min-w-0">
+                            <section className="xl:col-span-2 bg-white rounded-[1.5rem] border border-slate-200 shadow-sm overflow-hidden min-w-0">
                                 <div className="p-6 border-b border-slate-100">
                                     <h2 className="text-2xl font-semibold tracking-tight text-slate-950">{isEmployee ? 'Payslip History' : 'Payroll Register'}</h2>
                                     <p className="text-sm font-medium text-slate-500 mt-1">{summary.ai_summary || 'Attendance-based payroll records for the selected period.'}</p>
                                 </div>
-                                <div className="overflow-x-auto">
+                                <div className="overflow-x-auto w-full">
                                     <table className="min-w-[900px] w-full text-left">
                                         <thead className="bg-slate-50 text-[10px] uppercase tracking-[0.2em] text-slate-400">
                                             <tr>
@@ -368,10 +386,24 @@ const Payroll = () => {
                 {selectedRecord && (
                     <PayslipModal record={selectedRecord} onClose={() => setSelectedRecord(null)} onPrint={() => printPayslip(selectedRecord)} />
                 )}
+                {salaryModalOpen && (
+                    <SalaryModal
+                        open={salaryModalOpen}
+                        initialValue={salaryInput}
+                        onChange={(v) => setSalaryInput(v)}
+                        onConfirm={confirmSalaryAndGenerate}
+                        onCancel={cancelSalaryModal}
+                        employeeName={employees.find((e) => e.id === salaryTarget)?.full_name}
+                    />
+                )}
             </main>
         </div>
     );
 };
+
+    // Salary modal state and handlers
+    // (Placed after the component for simplicity; uses the same styles as PayslipModal)
+
 
 const payslipBox = (label, value, extra = '') => `
     <div class="box ${extra}">
@@ -489,5 +521,27 @@ const Detail = ({ label, value, strong = false }) => (
         <div className="text-base font-semibold break-words">{value}</div>
     </div>
 );
+
+const SalaryModal = ({ open, initialValue, onChange, onConfirm, onCancel, employeeName }) => {
+    if (!open) return null;
+    return (
+        <div className="fixed inset-0 z-[110] bg-slate-950/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white rounded-[1.25rem] border border-slate-200 shadow-2xl w-full max-w-md p-6">
+                <div className="mb-4">
+                    <h3 className="text-lg font-semibold">Generate Payroll</h3>
+                    <p className="text-sm text-slate-500">Enter monthly base salary for {employeeName || 'the employee'}.</p>
+                </div>
+                <div className="mb-6">
+                    <label className="block text-sm font-semibold text-slate-600 mb-2">Base salary (INR)</label>
+                    <input autoFocus value={initialValue} onChange={(e) => onChange(e.target.value)} type="number" className="form-control" />
+                </div>
+                <div className="flex gap-3 justify-end">
+                    <button onClick={onCancel} className="btn btn-secondary px-4 py-2">Cancel</button>
+                    <button onClick={onConfirm} className="btn btn-primary px-4 py-2">Generate</button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export default Payroll;
