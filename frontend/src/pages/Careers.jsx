@@ -82,7 +82,10 @@ const Careers = () => {
             setJobs(Array.isArray(data) ? data : []);
         } catch (error) {
             setJobs([]);
-            toast.error(error.detail || 'Unable to load open roles.');
+            const isMissingPublicEndpoint = error?.status === 404 || error?.detail === 'Not Found';
+            if (!isMissingPublicEndpoint) {
+                toast.error(error.detail || 'Unable to load open roles.');
+            }
         } finally {
             setIsLoading(false);
         }
