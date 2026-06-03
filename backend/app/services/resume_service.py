@@ -17,12 +17,16 @@ async def create_resume(
     job_id: uuid.UUID,
     candidate_name: str,
     file_url: str,
+    email: str | None = None,
+    phone: str | None = None,
 ) -> Resume:
     """Create a new resume entry in the database."""
     resume = Resume(
         job_id=job_id,
         candidate_name=candidate_name,
         file_url=file_url,
+        email=email,
+        phone=phone,
     )
     db.add(resume)
     await db.flush()
@@ -88,5 +92,8 @@ async def list_candidates_with_scores(
             "explanation": ai_score.explanation if ai_score else None,
             "matched_skills": ai_score.matched_skills if ai_score else [],
             "missing_skills": ai_score.missing_skills if ai_score else [],
+            "hiring_status": resume.hiring_status,
+            "email": resume.email,
+            "phone": resume.phone,
         })
     return candidates

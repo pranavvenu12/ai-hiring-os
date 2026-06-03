@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { BadgeDollarSign, BarChart3, CheckCircle2, Download, FileText, Loader2, Receipt, Sparkles, Wallet } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
@@ -260,7 +260,7 @@ const Payroll = () => {
                     </div>
                 ) : (
                     <div className="space-y-8">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                             <MetricCard icon={Wallet} label="Total Payroll Cost" value={currency.format(summary.total_payroll_cost || 0)} />
                             <MetricCard icon={CheckCircle2} label="Employees Paid" value={summary.employees_paid || 0} />
                             <MetricCard icon={Receipt} label="Pending Payroll" value={summary.pending_payroll || 0} />
@@ -269,36 +269,40 @@ const Payroll = () => {
                         </div>
 
                         {canManage && (
-                            <div className="bg-white rounded-[1.5rem] border border-slate-200 shadow-sm p-5 flex flex-col lg:flex-row gap-4 lg:items-end">
-                                <Field label="Month">
-                                    <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="input-field py-3">
-                                        {monthNames.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}
-                                    </select>
-                                </Field>
-                                <Field label="Year">
-                                    <input value={year} onChange={(e) => setYear(Number(e.target.value))} type="number" className="input-field py-3" />
-                                </Field>
-                                <Field label="Default Base Salary">
-                                    <input value={defaultSalary} onChange={(e) => setDefaultSalary(Number(e.target.value))} type="number" className="input-field py-3" />
-                                </Field>
-                                <Field label="Allowances">
-                                    <input value={defaultAllowances} onChange={(e) => setDefaultAllowances(Number(e.target.value))} type="number" className="input-field py-3" />
-                                </Field>
-                                <Field label="Bonuses">
-                                    <input value={defaultBonuses} onChange={(e) => setDefaultBonuses(Number(e.target.value))} type="number" className="input-field py-3" />
-                                </Field>
-                                <Field label="Manual Deductions">
-                                    <input value={defaultDeductions} onChange={(e) => setDefaultDeductions(Number(e.target.value))} type="number" className="input-field py-3" />
-                                </Field>
-                                <button disabled={actionLoading} onClick={generateAll} className="btn btn-primary justify-center py-3.5 px-6 rounded-2xl">
-                                    {actionLoading ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
-                                    Generate Company Payroll
-                                </button>
+                            <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-6 space-y-6">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                                    <Field label="Month">
+                                        <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="input-field py-3">
+                                            {monthNames.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}
+                                        </select>
+                                    </Field>
+                                    <Field label="Year">
+                                        <input value={year} onChange={(e) => setYear(Number(e.target.value))} type="number" className="input-field py-3" />
+                                    </Field>
+                                    <Field label="Default Base Salary">
+                                        <input value={defaultSalary} onChange={(e) => setDefaultSalary(Number(e.target.value))} type="number" className="input-field py-3" />
+                                    </Field>
+                                    <Field label="Allowances">
+                                        <input value={defaultAllowances} onChange={(e) => setDefaultAllowances(Number(e.target.value))} type="number" className="input-field py-3" />
+                                    </Field>
+                                    <Field label="Bonuses">
+                                        <input value={defaultBonuses} onChange={(e) => setDefaultBonuses(Number(e.target.value))} type="number" className="input-field py-3" />
+                                    </Field>
+                                    <Field label="Manual Deductions">
+                                        <input value={defaultDeductions} onChange={(e) => setDefaultDeductions(Number(e.target.value))} type="number" className="input-field py-3" />
+                                    </Field>
+                                </div>
+                                <div className="flex justify-end pt-2 border-t border-slate-100">
+                                    <button disabled={actionLoading} onClick={generateAll} className="btn btn-primary justify-center py-3.5 px-8 rounded-2xl">
+                                        {actionLoading ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
+                                        Generate Company Payroll
+                                    </button>
+                                </div>
                             </div>
                         )}
 
-                        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 min-w-0">
-                            <section className="xl:col-span-2 bg-white rounded-[1.5rem] border border-slate-200 shadow-sm overflow-hidden min-w-0">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 min-w-0">
+                            <section className="lg:col-span-2 bg-white rounded-[1.5rem] border border-slate-200 shadow-sm overflow-hidden min-w-0">
                                 <div className="p-6 border-b border-slate-100">
                                     <h2 className="text-2xl font-semibold tracking-tight text-slate-950">{isEmployee ? 'Payslip History' : 'Payroll Register'}</h2>
                                     <p className="text-sm font-medium text-slate-500 mt-1">{summary.ai_summary || 'Attendance-based payroll records for the selected period.'}</p>
@@ -397,7 +401,7 @@ const Payroll = () => {
                         {canManage && emptyCompanyRows.length > 0 && (
                             <section className="bg-white rounded-[1.5rem] border border-slate-200 shadow-sm p-6">
                                 <h2 className="text-xl font-semibold text-slate-950 mb-4">Employees Without Payroll This Period</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {emptyCompanyRows.map((employee) => (
                                         <div key={employee.id} className="rounded-2xl border border-slate-100 p-4 flex items-center justify-between gap-4">
                                             <div className="min-w-0">

@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 @config "../tailwind.config.js";
 
 @theme {
@@ -110,6 +110,10 @@
   }
 
   .form-control {
+    @apply w-full px-4 py-3 rounded-xl border border-slate-200 bg-white transition-all duration-200 focus:outline-none focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-600/10;
+  }
+
+  .input-field {
     @apply w-full px-4 py-3 rounded-xl border border-slate-200 bg-white transition-all duration-200 focus:outline-none focus:border-indigo-600 focus:bg-white focus:ring-4 focus:ring-indigo-600/10;
   }
 }

@@ -34,6 +34,9 @@ class Resume(Base):
     candidate_name: Mapped[str] = mapped_column(String(255), nullable=False)
     file_url: Mapped[str] = mapped_column(String(1024), nullable=False)
     extracted_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    email: Mapped[str | None] = mapped_column(String(320), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    hiring_status: Mapped[str] = mapped_column(String(50), nullable=False, default="applied", server_default="applied")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

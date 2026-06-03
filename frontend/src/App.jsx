@@ -19,6 +19,7 @@ import Attendance from './pages/Attendance';
 import Performance from './pages/Performance';
 import InterviewAssistant from './pages/InterviewAssistant';
 import Payroll from './pages/Payroll';
+import PublicInterview from './pages/PublicInterview';
 import { Loader2 } from 'lucide-react';
 
 const ProtectedRoute = ({ children, roles }) => {
@@ -73,6 +74,7 @@ function App() {
                         <Route path="/jobs/public/:jobId" element={<Careers />} />
                         <Route path="/apply" element={<Careers />} />
                         <Route path="/apply/:jobId" element={<Careers />} />
+                        <Route path="/public-interview/:sessionId" element={<PublicInterview />} />
                         
                         {/* Role-Based Dashboards */}
                         <Route path="/dashboard/hr" element={

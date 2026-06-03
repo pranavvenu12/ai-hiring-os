@@ -277,3 +277,141 @@ async def get_company_interviews(
     return await interview_service.list_interviews_by_company(
         db, current_user.company_id,
     )
+
+
+# ── Public Unauthenticated Candidate Routes ─────────────────────
+
+@router.get("/public/{session_id}")
+async def get_public_interview(
+    session_id: uuid.UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Get public details of an interview session (for guest candidates)."""
+    from sqlalchemy import select
+    session = await interview_service.get_interview(db, session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Interview session not found.")
+    
+    # Also fetch job details for title and department
+    from app.models.job import Job
+    job_result = await db.execute(select(Job).where(Job.id == session.job_id))
+    job = job_result.scalar_one_or_none()
+
+    from app.models.resume import Resume
+    resume_result = await db.execute(select(Resume).where(Resume.id == session.candidate_id))
+    resume = resume_result.scalar_one_or_none()
+
+    from app.models.company import Company
+    company_result = await db.execute(select(Company).where(Company.id == session.company_id))
+    company = company_result.scalar_one_or_none()
+
+    return {
+        "id": str(session.id),
+        "status": session.status,
+        "interview_type": session.interview_type,
+        "questions": session.questions,
+        "job_title": job.title if job else "Software Engineer",
+        "job_department": job.department if job else "Engineering",
+        "candidate_name": resume.candidate_name if resume else "Candidate",
+        "company_name": company.name if company else "AI Hiring Company",
+        "transcript_length": len(session.transcript or []),
+    }
+
+
+@router.post("/public/{session_id}/answer")
+async def submit_public_answer(
+    session_id: uuid.UUID,
+    payload: InterviewAnswer,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Submit a guest candidate's answer text."""
+    try:
+        session = await interview_service.submit_answer(
+            db, session_id, payload.question_index, payload.answer_text,
+        )
+        await db.commit()
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return {
+        "message": "Answer recorded.",
+        "transcript_length": len(session.transcript or []),
+        "total_questions": len(session.questions or []),
+    }
+
+
+@router.post("/public/{session_id}/voice-answer")
+async def submit_public_voice_answer(
+    session_id: uuid.UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    question_index: int = Form(..., ge=0),
+    audio: UploadFile = File(...),
+):
+    """Upload recorded guest audio and transcribe with AssemblyAI."""
+    content = await audio.read()
+    try:
+        session = await interview_service.submit_voice_answer(
+            db,
+            session_id,
+            question_index,
+            content,
+            filename=audio.filename or "interview-answer.webm",
+            content_type=audio.content_type,
+        )
+        await db.commit()
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"AssemblyAI transcription unavailable: {exc}")
+
+    latest = (session.interview_metrics or {}).get("latest_voice", {})
+    return {
+        "message": "Voice answer transcribed and recorded.",
+        "transcript": session.transcript,
+        "interview_transcript": session.interview_transcript,
+        "interview_metrics": session.interview_metrics,
+        "audio_url": session.audio_url,
+        "voice_metrics": latest,
+    }
+
+
+@router.post("/public/{session_id}/voice-fallback")
+async def submit_public_voice_fallback(
+    session_id: uuid.UUID,
+    payload: BrowserVoiceFallback,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Persist guest browser speech-recognition fallback transcript."""
+    session = await interview_service.submit_browser_voice_fallback(
+        db,
+        session_id,
+        payload.question_index,
+        payload.transcript_text,
+    )
+    await db.commit()
+    return {
+        "message": "Fallback voice transcript recorded.",
+        "transcript": session.transcript,
+        "interview_transcript": session.interview_transcript,
+        "interview_metrics": session.interview_metrics,
+    }
+
+
+@router.post("/public/{session_id}/complete")
+async def complete_public_interview(
+    session_id: uuid.UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Finalize the guest candidate interview and run AI evaluation."""
+    try:
+        session = await interview_service.complete_interview(db, session_id)
+        await db.commit()
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return {
+        "id": str(session.id),
+        "status": session.status,
+        "ai_summary": session.ai_summary,
+        "overall_score": session.overall_score,
+        "recommendation": session.recommendation,
+        "message": "Interview completed and evaluated by AI.",
+    }

@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useState, useEffect, useRef } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
@@ -27,6 +27,7 @@ const Candidates = () => {
     const [activeTab, setActiveTab] = useState('resume'); // 'resume' or 'interview'
     const [candidateInterviews, setCandidateInterviews] = useState([]);
     const [loadingInterviews, setLoadingInterviews] = useState(false);
+    const [shortlisting, setShortlisting] = useState(false);
 
     const fetchJobTitle = useCallback(async () => {
         try {
@@ -103,7 +104,7 @@ const Candidates = () => {
 
     useEffect(() => {
         if (selectedCandidate) {
-            fetchCandidateInterviews(selectedCandidate.id);
+            fetchCandidateInterviews(selectedCandidate.resume_id);
             setActiveTab('resume'); // Default tab when opening
         } else {
             setCandidateInterviews([]);
@@ -127,6 +128,25 @@ const Candidates = () => {
             toast.success('Resume(s) uploaded successfully! Parsing and scoring candidates...');
         } catch (err) { toast.error(err.detail || 'Upload failed'); }
         finally { setIsUploading(false); }
+    };
+
+    const handleShortlist = async () => {
+        if (!selectedCandidate) return;
+        setShortlisting(true);
+        try {
+            const response = await api.post(`/jobs/candidates/${selectedCandidate.resume_id}/shortlist`);
+            toast.success('Candidate shortlisted and AI Interview session generated!');
+            setSelectedCandidate(prev => ({
+                ...prev,
+                hiring_status: response.hiring_status
+            }));
+            fetchCandidates();
+            fetchCandidateInterviews(selectedCandidate.resume_id);
+        } catch (err) {
+            toast.error(err.detail || 'Failed to shortlist candidate.');
+        } finally {
+            setShortlisting(false);
+        }
     };
 
     const filteredCandidates = candidates.filter(c => 
@@ -180,10 +200,10 @@ const Candidates = () => {
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: i * 0.05 }}
-                                key={c.id}
+                                key={c.resume_id}
                                 onClick={() => setSelectedCandidate(c)}
                                 className={`w-full text-left rounded-[1.25rem] border bg-white p-4 shadow-sm transition ${
-                                    selectedCandidate?.id === c.id ? 'border-indigo-200' : 'border-slate-200'
+                                    selectedCandidate?.resume_id === c.resume_id ? 'border-indigo-200' : 'border-slate-200'
                                 }`}
                             >
                                 <div className="flex items-start gap-3">
@@ -253,9 +273,9 @@ const Candidates = () => {
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: i * 0.05 }}
-                                        key={c.id} 
+                                        key={c.resume_id} 
                                         onClick={() => setSelectedCandidate(c)}
-                                        className={`hover:bg-white transition-all duration-300 cursor-pointer group ${selectedCandidate?.id === c.id ? 'bg-white shadow-inner' : ''}`}
+                                        className={`hover:bg-white transition-all duration-300 cursor-pointer group ${selectedCandidate?.resume_id === c.resume_id ? 'bg-white shadow-inner' : ''}`}
                                     >
                                         <td className="px-8 py-6">
                                             <div className="flex items-center gap-4">
@@ -358,7 +378,20 @@ const Candidates = () => {
                                     </div>
                                     <div className="flex gap-2 w-full sm:w-auto">
                                         <button className="btn btn-secondary flex-1 sm:flex-none justify-center px-4 py-2 text-xs font-bold">Download PDF</button>
-                                        <button className="btn btn-primary flex-1 sm:flex-none justify-center px-4 py-2 text-xs font-bold">Shortlist</button>
+                                        {selectedCandidate.hiring_status === 'shortlisted' ? (
+                                            <span className="btn bg-emerald-500 text-white flex-1 sm:flex-none justify-center px-4 py-2 text-xs font-bold shadow-md cursor-default">
+                                                Shortlisted
+                                            </span>
+                                        ) : (
+                                            <button 
+                                                onClick={handleShortlist} 
+                                                disabled={shortlisting} 
+                                                className="btn btn-primary flex-1 sm:flex-none justify-center px-4 py-2 text-xs font-bold"
+                                            >
+                                                {shortlisting && <Loader2 className="animate-spin" size={12} />}
+                                                Shortlist
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
 
@@ -555,22 +588,52 @@ const Candidates = () => {
                                                     </div>
                                                 </div>
                                             ))
+                                        ) : selectedCandidate.hiring_status === 'shortlisted' ? (
+                                            <div className="flex flex-col items-center justify-center py-16 text-center space-y-6">
+                                                <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center animate-pulse shadow-sm">
+                                                    <Mic size={28} />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <h4 className="text-lg font-semibold text-slate-900">AI Interview In Progress</h4>
+                                                    <p className="text-sm font-medium text-slate-400 max-w-xs mx-auto leading-relaxed">
+                                                        The candidate has been shortlisted. Copy the public link below and send it to them to complete the interview.
+                                                    </p>
+                                                </div>
+                                                <div className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl flex flex-col items-center gap-3">
+                                                    <input 
+                                                        readOnly 
+                                                        value={`${window.location.origin}/public-interview/${candidateInterviews[0]?.id || selectedCandidate.resume_id}`} 
+                                                        className="w-full text-center bg-white border border-slate-200 text-xs font-semibold px-3 py-2.5 rounded-xl outline-none select-all" 
+                                                    />
+                                                    <button 
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(`${window.location.origin}/public-interview/${candidateInterviews[0]?.id || selectedCandidate.resume_id}`);
+                                                            toast.success('Interview link copied to clipboard!');
+                                                        }}
+                                                        className="btn btn-primary text-xs font-bold px-4 py-2"
+                                                    >
+                                                        Copy Link
+                                                    </button>
+                                                </div>
+                                            </div>
                                         ) : (
                                             <div className="flex flex-col items-center justify-center py-20 text-center space-y-6">
                                                 <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center text-slate-300">
                                                     <Mic size={28} />
                                                 </div>
                                                 <div>
-                                                    <h4 className="text-lg font-semibold text-slate-900">No Interview Found</h4>
-                                                    <p className="text-sm font-medium text-slate-400 max-w-xs mx-auto mt-2">
-                                                        This candidate hasn't completed an AI evaluation interview session yet.
+                                                    <h4 className="text-lg font-semibold text-slate-900">Interview Pending</h4>
+                                                    <p className="text-sm font-medium text-slate-400 max-w-xs mx-auto mt-2 leading-relaxed">
+                                                        Shortlist this candidate first to generate their AI interview link.
                                                     </p>
                                                 </div>
                                                 <button 
-                                                    onClick={() => navigate(`/interviews?candidate_id=${selectedCandidate.id}&job_id=${selectedCandidate.job_id || jobId}`)}
+                                                    onClick={handleShortlist}
+                                                    disabled={shortlisting}
                                                     className="btn btn-primary px-6 py-3 font-bold text-xs"
                                                 >
-                                                    Start AI Interview
+                                                    {shortlisting && <Loader2 className="animate-spin" size={12} />}
+                                                    Shortlist Candidate
                                                 </button>
                                             </div>
                                         )}

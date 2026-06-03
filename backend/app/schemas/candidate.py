@@ -30,6 +30,9 @@ class CandidateOut(BaseModel):
     explanation: Optional[str] = None
     matched_skills: List[str] = []
     missing_skills: List[str] = []
+    hiring_status: str = "applied"
+    email: Optional[str] = None
+    phone: Optional[str] = None
 
     class Config:
         from_attributes = True

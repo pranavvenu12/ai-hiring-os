@@ -191,7 +191,7 @@ async def apply_to_public_job(
         )
 
     file_url = await storage_service.upload_resume(content, resume.filename, job.company_id)
-    resume_row = await resume_service.create_resume(db, job_id, name.strip(), file_url)
+    resume_row = await resume_service.create_resume(db, job_id, name.strip(), file_url, email=email.strip(), phone=phone.strip())
     await realtime_service.publish_event(job.company_id, "resume.uploaded", {
         "resume_id": str(resume_row.id),
         "job_id": str(job.id),
@@ -341,3 +341,69 @@ async def list_job_candidates(
         )
 
     return await resume_service.list_candidates_with_scores(db, job_id)
+
+
+@router.post(
+    "/candidates/{resume_id}/shortlist",
+    dependencies=[Depends(require_roles(Role.ADMIN, Role.HR, Role.MANAGER))],
+)
+async def shortlist_candidate(
+    resume_id: uuid.UUID,
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """
+    Shortlist a candidate and automatically initialize their AI Interview session if not already done.
+    
+    Allowed roles: ADMIN, HR, MANAGER
+    """
+    from app.models.resume import Resume
+    # Fetch candidate (resume)
+    result = await db.execute(select(Resume).where(Resume.id == resume_id))
+    resume = result.scalar_one_or_none()
+    if not resume:
+        raise HTTPException(status_code=404, detail="Candidate not found.")
+
+    # Check job ownership
+    job = await job_service.get_job_by_id(db, resume.job_id)
+    if not job or job.company_id != current_user.company_id:
+        raise HTTPException(status_code=404, detail="Job not found in your organization.")
+
+    # Update candidate hiring status to shortlisted
+    resume.hiring_status = "shortlisted"
+    await db.commit()
+    await db.refresh(resume)
+
+    # Check if an InterviewSession already exists for this resume
+    from app.models.interview import InterviewSession
+    session_result = await db.execute(
+        select(InterviewSession).where(InterviewSession.candidate_id == resume_id)
+    )
+    session = session_result.scalar_one_or_none()
+
+    if not session:
+        # Generate interview session automatically
+        from app.services import interview_service
+        session = await interview_service.start_interview(
+            db,
+            candidate_id=resume.id,
+            job_id=job.id,
+            company_id=current_user.company_id,
+            interview_type="technical",
+        )
+        # Notify recruiters via realtime
+        await realtime_service.publish_event(current_user.company_id, "interview.started", {
+            "session_id": str(session.id),
+            "candidate_id": str(resume.id),
+            "job_id": str(job.id),
+        })
+
+    # Return info
+    return {
+        "message": "Candidate shortlisted and AI Interview session initialized.",
+        "hiring_status": resume.hiring_status,
+        "session_id": str(session.id),
+        "candidate_name": resume.candidate_name,
+        "email": resume.email,
+        "interview_url": f"/public-interview/{session.id}",
+    }
