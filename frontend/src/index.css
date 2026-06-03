@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 @config "../tailwind.config.js";
 
 @theme {
@@ -344,3 +344,26 @@
 .dark .dashboard-ai-answer p {
   color: #d4d4d8 !important;
 }
+
+  /* Gradient overrides for dark mode - gradients can't be overridden via class-based rules */
+  .dark [class*='from-white'],
+  .dark [class*='from-indigo-50'] {
+    --tw-gradient-from: transparent;
+    --tw-gradient-stops: var(--tw-gradient-from), transparent;
+  }
+
+  .dark [class*='bg-gradient-to-br'],
+  .dark [class*='bg-gradient-to-r'],
+  .dark [class*='bg-gradient-to-b'] {
+    background-image: none !important;
+  }
+
+  /* Payroll history inner bg */
+  .dark .bg-slate-50.rounded-2xl {
+    background-color: #18181b !important;
+  }
+
+  /* InfoRow icon wrapper */
+  .dark .hover\:border-indigo-100 {
+    border-color: #27272a !important;
+  }

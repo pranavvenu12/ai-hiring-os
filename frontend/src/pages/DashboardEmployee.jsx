@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from 'react';
+ï»¿import React, { useCallback, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
@@ -246,7 +246,7 @@ const DashboardEmployee = () => {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                                <div className="md:col-span-1 bg-gradient-to-br from-indigo-50 to-indigo-100/30 rounded-2xl p-6 flex flex-col justify-center items-center text-center border border-indigo-100">
+                                <div className="md:col-span-1 rounded-2xl p-6 flex flex-col justify-center items-center text-center border border-indigo-100 dark:border-zinc-800 bg-indigo-50 dark:bg-zinc-900">
                                     <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400 mb-2">Average Rating</span>
                                     <span className="text-4xl font-semibold text-indigo-600 mb-2">{performanceData.avg_rating || 'â€”'}</span>
                                     <div className="flex gap-1">
@@ -306,7 +306,7 @@ const DashboardEmployee = () => {
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                         <DetailCard label="Basic Salary" value={`?${Math.round(latestPayslip.basic_salary ?? latestPayslip.base_salary).toLocaleString('en-IN')}`} />
                                         <DetailCard label="Allowances + Bonus" value={`?${Math.round((latestPayslip.allowances || 0) + (latestPayslip.bonuses || 0)).toLocaleString('en-IN')}`} />
-                                        <DetailCard label="Net Salary" value={`?${Math.round(latestPayslip.net_salary).toLocaleString('en-IN')} · ${latestPayslip.status}`} />
+                                        <DetailCard label="Net Salary" value={`?${Math.round(latestPayslip.net_salary).toLocaleString('en-IN')} ï¿½ ${latestPayslip.status}`} />
                                     </div>
                                     <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
                                         <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400 mb-3">Payroll History</div>
@@ -314,7 +314,7 @@ const DashboardEmployee = () => {
                                             {payrollData.records.slice(0, 3).map((record) => (
                                                 <div key={record.id} className="flex items-center justify-between text-xs font-semibold text-slate-600">
                                                     <span>{record.month}/{record.year}</span>
-                                                    <span>?{Math.round(record.net_salary).toLocaleString('en-IN')} · {record.status}</span>
+                                                    <span>?{Math.round(record.net_salary).toLocaleString('en-IN')} ï¿½ {record.status}</span>
                                                 </div>
                                             ))}
                                         </div>
@@ -326,7 +326,7 @@ const DashboardEmployee = () => {
                         </div>
 
                         {/* Company Details Section */}
-                        <div className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm bg-gradient-to-br from-white to-indigo-50/30">
+                        <div className="bg-white dark:bg-zinc-900/80 rounded-[1.5rem] p-6 border border-slate-200 shadow-sm">
                             <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-3">
                                 <Shield size={18} className="text-indigo-600" /> Company Profile
                             </h3>
@@ -360,18 +360,18 @@ const InfoRow = ({ icon: Icon, label, value }) => (
 );
 
 const DetailCard = ({ label, value }) => (
-    <div className="rounded-2xl border border-slate-100 bg-white p-4">
+    <div className="rounded-2xl border border-slate-100 dark:border-zinc-800 bg-white dark:bg-zinc-800/60 p-4">
         <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400 mb-1">{label}</div>
-        <div className="text-xs font-bold text-slate-700 truncate">{value}</div>
+        <div className="text-xs font-bold text-slate-700 dark:text-zinc-100 truncate">{value}</div>
     </div>
 );
 
 const StatMiniCard = ({ label, value, color }) => {
     const colors = {
-        emerald: 'bg-emerald-50 border-emerald-100 text-emerald-600',
-        amber: 'bg-amber-50 border-amber-100 text-amber-600',
-        rose: 'bg-rose-50 border-rose-100 text-rose-600',
-        indigo: 'bg-indigo-50 border-indigo-100 text-indigo-600',
+        emerald: 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-100 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400',
+        amber: 'bg-amber-50 dark:bg-amber-950/40 border-amber-100 dark:border-amber-900/50 text-amber-600 dark:text-amber-400',
+        rose: 'bg-rose-50 dark:bg-rose-950/40 border-rose-100 dark:border-rose-900/50 text-rose-600 dark:text-rose-400',
+        indigo: 'bg-indigo-50 dark:bg-zinc-800 border-indigo-100 dark:border-zinc-700 text-indigo-600 dark:text-zinc-200',
     };
 
     return (
@@ -383,5 +383,6 @@ const StatMiniCard = ({ label, value, color }) => {
 };
 
 export default DashboardEmployee;
+
 
 
