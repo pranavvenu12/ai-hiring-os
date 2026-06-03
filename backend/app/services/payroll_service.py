@@ -148,7 +148,15 @@ Net salary: {record_data["net_salary"]}
                 "https://generativelanguage.googleapis.com/v1beta/models/"
                 f"gemini-2.5-flash:generateContent?key={settings.AI_GEMINI_KEY}"
             )
-            payload = {"contents": [{"parts": [{"text": prompt}]}]}
+            payload = {
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {
+                    "maxOutputTokens": 512,
+                    "thinkingConfig": {
+                        "thinkingBudget": 0
+                    }
+                }
+            }
             async with httpx.AsyncClient(timeout=20.0) as client:
                 response = await client.post(url, json=payload)
                 response.raise_for_status()

@@ -167,6 +167,10 @@ async def _call_gemini(prompt: str) -> Any:
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
             "responseMimeType": "application/json",
+            "maxOutputTokens": 2048,
+            "thinkingConfig": {
+                "thinkingBudget": 0
+            }
         },
     }
     async with httpx.AsyncClient(timeout=30.0) as client:

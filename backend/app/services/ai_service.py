@@ -109,7 +109,10 @@ async def _call_gemini(prompt: str) -> Dict[str, Any]:
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
             "temperature": 0.1,
-            "maxOutputTokens": 1024,
+            "maxOutputTokens": 2048,
+            "thinkingConfig": {
+                "thinkingBudget": 0
+            }
         },
     }
     async with httpx.AsyncClient(timeout=45.0) as client:
@@ -232,7 +235,14 @@ JSON format:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={settings.AI_GEMINI_KEY}"
             payload = {
                 "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {"temperature": 0.1, "maxOutputTokens": 512, "responseMimeType": "application/json"}
+                "generationConfig": {
+                    "temperature": 0.1,
+                    "maxOutputTokens": 1024,
+                    "responseMimeType": "application/json",
+                    "thinkingConfig": {
+                        "thinkingBudget": 0
+                    }
+                }
             }
             async with httpx.AsyncClient(timeout=30.0) as client:
                 r = await client.post(url, json=payload)

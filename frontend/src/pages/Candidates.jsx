@@ -293,13 +293,13 @@ const Candidates = () => {
                                         </td>
                                         <td className="px-8 py-6">
                                             <div className="flex items-center gap-4">
-                                                <div className="text-lg font-semibold text-indigo-600 w-10">{c.score}%</div>
+                                                <div className="text-lg font-semibold text-indigo-600 min-w-[4.5rem] whitespace-nowrap">{c.score}%</div>
                                                 <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden max-w-[120px]">
                                                     <motion.div 
                                                         initial={{ width: 0 }}
                                                         animate={{ width: `${c.score}%` }}
                                                         transition={{ duration: 1, delay: i * 0.1 }}
-                                                        className={`h-full rounded-full ${c.score > 80 ? 'bg-emerald-500' : c.score > 50 ? 'bg-indigo-50' : 'bg-rose-500'}`} 
+                                                        className={`h-full rounded-full ${c.score > 80 ? 'bg-emerald-500' : c.score > 50 ? 'bg-indigo-600' : 'bg-rose-500'}`} 
                                                     />
                                                 </div>
                                             </div>
