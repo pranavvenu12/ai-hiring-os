@@ -12,6 +12,7 @@ const Signup = () => {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [companyName, setCompanyName] = useState('');
+    const [designation, setDesignation] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const { signup, user } = useAuth();
     const { toast } = useToast();
@@ -32,7 +33,7 @@ const Signup = () => {
         if (!role) { toast.warning('Please select a role'); return; }
         setIsLoading(true);
         try {
-            await signup({ name, email, password, role, company_name: companyName });
+            await signup({ name, email, password, role, company_name: companyName, designation });
             const user = JSON.parse(localStorage.getItem('user'));
             navigate(`/dashboard/${user.role.toLowerCase()}`);
             toast.success('Account created successfully!');
@@ -114,6 +115,15 @@ const Signup = () => {
                                     <UserPlus size={18} />
                                 </div>
                                 <input type="text" className="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-12 pr-4 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 transition-all font-medium" placeholder="John Doe" value={name} onChange={e => setName(e.target.value)} required />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Designation</label>
+                            <div className="relative group">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+                                    <Briefcase size={18} />
+                                </div>
+                                <input type="text" className="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-12 pr-4 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 transition-all font-medium" placeholder="Product Manager" value={designation} onChange={e => setDesignation(e.target.value)} required />
                             </div>
                         </div>
                         <div className="space-y-2">

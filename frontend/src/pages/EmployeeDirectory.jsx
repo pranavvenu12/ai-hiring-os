@@ -6,6 +6,7 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Search, Plus, User, Mail, Phone, Building, Calendar, ChevronRight, ArrowLeft, X, Briefcase, Filter } from 'lucide-react';
+import { formatShortDate } from '../utils/date';
 
 const EmployeeDirectory = () => {
     const { user } = useAuth();
@@ -23,7 +24,7 @@ const EmployeeDirectory = () => {
 
     const [newEmployee, setNewEmployee] = useState({
         full_name: '', email: '', phone: '', department: '', designation: '',
-        employment_type: 'full_time', joining_date: '',
+        manager_id: '', joining_date: '', employment_type: 'full_time',
     });
 
     useEffect(() => {
@@ -58,9 +59,14 @@ const EmployeeDirectory = () => {
     const handleAddEmployee = async (e) => {
         e.preventDefault();
         try {
-            await api.post('/employees', newEmployee);
+            const payload = {
+                ...newEmployee,
+                manager_id: newEmployee.manager_id || null,
+                joining_date: newEmployee.joining_date || null,
+            };
+            await api.post('/employees', payload);
             setShowAddModal(false);
-            setNewEmployee({ full_name: '', email: '', phone: '', department: '', designation: '', employment_type: 'full_time', joining_date: '' });
+            setNewEmployee({ full_name: '', email: '', phone: '', department: '', designation: '', manager_id: '', joining_date: '', employment_type: 'full_time' });
             fetchEmployees();
             fetchDepartments();
             toast.success('Employee added successfully!');
@@ -69,6 +75,10 @@ const EmployeeDirectory = () => {
 
     const isHROrAdmin = user && ['admin', 'hr'].includes(user.role.toLowerCase());
     const totalPages = Math.ceil(total / limit);
+    const getManagerName = (managerId) => {
+        if (!managerId) return 'Not assigned';
+        return employees.find((employee) => employee.id === managerId)?.full_name || 'Assigned manager';
+    };
 
     return (
         <div className="flex bg-[#f8fafc] min-h-screen font-inter">
@@ -142,6 +152,12 @@ const EmployeeDirectory = () => {
                                             <span className="text-slate-500 font-medium">{emp.department}</span>
                                         </div>
                                     )}
+                                    {emp.manager_id && (
+                                        <div className="flex items-center gap-3 text-sm">
+                                            <User size={14} className="text-slate-300" />
+                                            <span className="text-slate-500 font-medium truncate">Reports to {getManagerName(emp.manager_id)}</span>
+                                        </div>
+                                    )}
                                     <div className="flex items-center gap-3 text-sm">
                                         <Briefcase size={14} className="text-slate-300" />
                                         <span className="text-slate-500 font-medium capitalize">{emp.employment_type.replace('_', ' ')}</span>
@@ -200,9 +216,11 @@ const EmployeeDirectory = () => {
                                 <div className="space-y-4">
                                     <ProfileField icon={Mail} label="Email" value={selectedEmployee.email} />
                                     <ProfileField icon={Phone} label="Phone" value={selectedEmployee.phone || 'Not provided'} />
+                                    <ProfileField icon={Briefcase} label="Designation" value={selectedEmployee.designation || 'Not assigned'} />
                                     <ProfileField icon={Building} label="Department" value={selectedEmployee.department || 'Not assigned'} />
+                                    <ProfileField icon={User} label="Reporting Manager" value={getManagerName(selectedEmployee.manager_id)} />
                                     <ProfileField icon={Briefcase} label="Employment Type" value={selectedEmployee.employment_type?.replace('_', ' ')} />
-                                    <ProfileField icon={Calendar} label="Joining Date" value={selectedEmployee.joining_date || 'Not set'} />
+                                    <ProfileField icon={Calendar} label="Date Joined" value={selectedEmployee.joining_date ? formatShortDate(selectedEmployee.joining_date) : 'Not set'} />
                                     <ProfileField icon={User} label="Status" value={selectedEmployee.status} />
                                 </div>
                             </div>
@@ -223,11 +241,23 @@ const EmployeeDirectory = () => {
                                     <button onClick={() => setShowAddModal(false)} className="w-10 h-10 rounded-xl hover:bg-slate-50 flex items-center justify-center text-slate-400"><X size={20} /></button>
                                 </div>
                                 <form onSubmit={handleAddEmployee} className="space-y-4">
-                                    <FormField label="Full Name" value={newEmployee.full_name} onChange={v => setNewEmployee({...newEmployee, full_name: v})} required />
-                                    <FormField label="Email" type="email" value={newEmployee.email} onChange={v => setNewEmployee({...newEmployee, email: v})} required />
-                                    <FormField label="Phone" value={newEmployee.phone} onChange={v => setNewEmployee({...newEmployee, phone: v})} />
-                                    <FormField label="Department" value={newEmployee.department} onChange={v => setNewEmployee({...newEmployee, department: v})} />
-                                    <FormField label="Designation" value={newEmployee.designation} onChange={v => setNewEmployee({...newEmployee, designation: v})} />
+                                    <FormField label="Full Name" placeholder="Aarav Sharma" value={newEmployee.full_name} onChange={v => setNewEmployee({...newEmployee, full_name: v})} required />
+                                    <FormField label="Email" type="email" placeholder="aarav.sharma@journeysync.com" value={newEmployee.email} onChange={v => setNewEmployee({...newEmployee, email: v})} required />
+                                    <FormField label="Phone" placeholder="+91 98765 43210" value={newEmployee.phone} onChange={v => setNewEmployee({...newEmployee, phone: v})} />
+                                    <FormField label="Designation" placeholder="AI/ML Engineer" value={newEmployee.designation} onChange={v => setNewEmployee({...newEmployee, designation: v})} required />
+                                    <FormField label="Department" placeholder="Engineering" value={newEmployee.department} onChange={v => setNewEmployee({...newEmployee, department: v})} required />
+                                    <div>
+                                        <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 block">Reporting Manager</label>
+                                        <select value={newEmployee.manager_id} onChange={e => setNewEmployee({...newEmployee, manager_id: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-4 text-sm font-medium outline-none focus:border-indigo-600">
+                                            <option value="">No manager assigned</option>
+                                            {employees.map((employee) => (
+                                                <option key={employee.id} value={employee.id}>
+                                                    {employee.full_name} {employee.designation ? `- ${employee.designation}` : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <FormField label="Date Joined" type="date" value={newEmployee.joining_date} onChange={v => setNewEmployee({...newEmployee, joining_date: v})} />
                                     <div>
                                         <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 block">Employment Type</label>
                                         <select value={newEmployee.employment_type} onChange={e => setNewEmployee({...newEmployee, employment_type: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-4 text-sm font-medium outline-none focus:border-indigo-600">
@@ -237,7 +267,6 @@ const EmployeeDirectory = () => {
                                             <option value="intern">Intern</option>
                                         </select>
                                     </div>
-                                    <FormField label="Joining Date" type="date" value={newEmployee.joining_date} onChange={v => setNewEmployee({...newEmployee, joining_date: v})} />
                                     <button type="submit" className="btn btn-primary w-full justify-center py-3 mt-4 font-bold shadow-sm">Add Employee</button>
                                 </form>
                             </div>
@@ -261,10 +290,10 @@ const ProfileField = ({ icon: Icon, label, value }) => (
     </div>
 );
 
-const FormField = ({ label, value, onChange, type = 'text', required = false }) => (
+const FormField = ({ label, value, onChange, type = 'text', placeholder = '', required = false }) => (
     <div>
         <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 block">{label}</label>
-        <input type={type} value={value} onChange={e => onChange(e.target.value)} required={required}
+        <input type={type} value={value} onChange={e => onChange(e.target.value)} required={required} placeholder={placeholder}
             className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 px-4 text-sm font-medium outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 transition-all"
         />
     </div>

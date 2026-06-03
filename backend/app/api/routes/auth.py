@@ -41,6 +41,7 @@ class SignupRequest(BaseModel):
     password: str
     role: Role
     company_name: str | None = None
+    designation: str | None = None
 
 
 def _get_supabase_user_by_email(client, email: str):
@@ -108,6 +109,7 @@ async def signup(
     # 0. Check if user already exists in local DB
     existing_user = await user_service.get_user_by_email(db, payload.email)
     company_name = (payload.company_name or "").strip()
+    designation = (payload.designation or "").strip()
 
     # Employees and managers can only join companies that HR/Admin has already
     # registered. Validate this before calling Supabase so the UI gets a clear
@@ -217,6 +219,8 @@ async def signup(
         if employee:
             # Link pre-created employee record to this new user account
             employee.user_id = user.id
+            if designation:
+                employee.designation = designation
         else:
             # Auto-create employee record so the user profile exists immediately
             from app.services.employee_service import _generate_employee_code
@@ -228,7 +232,7 @@ async def signup(
                 full_name=payload.name,
                 email=payload.email,
                 department="Management" if payload.role.value == "manager" else "General",
-                designation="Manager" if payload.role.value == "manager" else "Employee",
+                designation=designation or ("Manager" if payload.role.value == "manager" else "Employee"),
                 joining_date=date.today(),
                 employment_type="full_time"
             )

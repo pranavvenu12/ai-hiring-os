@@ -4,7 +4,7 @@ import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
 import { useToast } from '../context/ToastContext';
-import { Plus, Briefcase, ExternalLink, Loader2, Search, Filter, MoreHorizontal, X, FileText } from 'lucide-react';
+import { Plus, Briefcase, ExternalLink, Loader2, Search, Filter, X, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatShortDate } from '../utils/date';
 
@@ -212,9 +212,6 @@ const Jobs = () => {
                                                 >
                                                     Candidates <ExternalLink size={14} />
                                                 </Link>
-                                                <button className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-50 transition-colors">
-                                                    <MoreHorizontal size={18} />
-                                                </button>
                                             </div>
                                         </td>
                                     </motion.tr>

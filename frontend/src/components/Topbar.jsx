@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { Bell, Search, ChevronRight, Briefcase, Users, UserPlus, X, Settings, LogOut, Sparkles, Loader2, Sun, Moon } from 'lucide-react';
+import { Bell, Search, ChevronRight, Briefcase, Users, UserPlus, X, Settings, LogOut, Sparkles, Loader2, Sun, Moon, CheckCheck } from 'lucide-react';
 import { formatRelativeTime } from '../utils/date';
 import { useTheme } from '../context/ThemeContext';
 
@@ -19,6 +19,11 @@ const Topbar = ({ title }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [aiAnswer, setAiAnswer] = useState(null);
     const [isAiLoading, setIsAiLoading] = useState(false);
+
+    const readNotificationsKey = useMemo(
+        () => user ? `ai-hiring-os:read-notifications:${user.id || user.email}` : null,
+        [user],
+    );
 
     const searchItems = useMemo(() => {
         if (!user) return [];
@@ -96,6 +101,9 @@ const Topbar = ({ title }) => {
     const fetchNotifications = async () => {
         setIsLoading(true);
         try {
+            const readIds = new Set(
+                readNotificationsKey ? JSON.parse(localStorage.getItem(readNotificationsKey) || '[]') : [],
+            );
             const jobs = await api.get('/jobs');
             const recentJobs = jobs
                 .slice()
@@ -150,7 +158,7 @@ const Topbar = ({ title }) => {
             } else {
                 setNotifications(combined.map((notification, index) => ({
                     ...notification,
-                    read: index > 0,
+                    read: readIds.has(notification.id) || index > 0,
                 })));
             }
         } catch (error) {
@@ -177,6 +185,23 @@ const Topbar = ({ title }) => {
         } catch {
             return fallback;
         }
+    };
+
+    const handleMarkAllNotificationsRead = () => {
+        const currentIds = notifications.map((notification) => notification.id);
+        const readIds = new Set([
+            ...(readNotificationsKey ? JSON.parse(localStorage.getItem(readNotificationsKey) || '[]') : []),
+            ...currentIds,
+        ]);
+
+        if (readNotificationsKey) {
+            localStorage.setItem(readNotificationsKey, JSON.stringify([...readIds]));
+        }
+
+        setNotifications((current) => current.map((notification) => ({
+            ...notification,
+            read: true,
+        })));
     };
 
     const handleAskAI = async () => {
@@ -480,9 +505,20 @@ const Topbar = ({ title }) => {
                                     <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Notifications</h3>
                                     <p className="text-xs font-medium text-slate-400">Live tenant activity</p>
                                 </div>
-                                <button type="button" onClick={() => setIsOpen(false)} className="w-9 h-9 rounded-full hover:bg-white flex items-center justify-center text-slate-400 hover:text-slate-900 transition-colors">
-                                    <X size={18} />
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={handleMarkAllNotificationsRead}
+                                        disabled={unreadCount === 0}
+                                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-white disabled:cursor-not-allowed disabled:text-slate-300 transition-colors"
+                                    >
+                                        <CheckCheck size={15} />
+                                        Mark as read
+                                    </button>
+                                    <button type="button" onClick={() => setIsOpen(false)} className="w-9 h-9 rounded-full hover:bg-white flex items-center justify-center text-slate-400 hover:text-slate-900 transition-colors">
+                                        <X size={18} />
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="max-h-[420px] overflow-y-auto">
