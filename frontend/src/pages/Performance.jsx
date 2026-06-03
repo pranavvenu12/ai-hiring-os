@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { Star, TrendingUp, Users, BarChart3, Send, Award, ArrowUpRight } from 'lucide-react';
+import { Star, TrendingUp, Users, BarChart3, Send, Award } from 'lucide-react';
 
 const Performance = () => {
     const { user } = useAuth();
@@ -24,12 +24,7 @@ const Performance = () => {
     const isManager = user && user.role.toLowerCase() === 'manager';
     const canReview = isManager || isHROrAdmin;
 
-    useEffect(() => {
-        document.title = 'AI Hiring OS - Performance';
-        fetchData();
-    }, []);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             const myData = await api.get('/performance/me');
             setMyPerformance(myData);
@@ -50,7 +45,12 @@ const Performance = () => {
                 setCompanyPerformance(compData);
             }
         } catch (err) { console.error(err); }
-    };
+    }, [canReview, isHROrAdmin]);
+
+    useEffect(() => {
+        document.title = 'AI Hiring OS - Performance';
+        fetchData();
+    }, [fetchData]);
 
     const handleSubmitReview = async (e) => {
         e.preventDefault();

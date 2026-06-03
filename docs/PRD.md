@@ -95,3 +95,16 @@ The implemented product targets four roles: Admin, HR, Manager, and Employee. Th
 | Attendance adoption | Daily clock-in/out completion rate |
 | Payroll readiness | Percentage of employees with generated and approved payroll |
 | HR efficiency | Jobs, candidates, employees, payroll handled from one dashboard |
+# Enterprise Readiness Addendum
+
+## Voice AI Interviews
+
+The interview workflow now supports recorded candidate audio uploaded to AssemblyAI. The platform stores the generated transcript, voice analytics, and AssemblyAI audio URL with the interview session. Browser speech recognition remains as a fallback when AssemblyAI or device recording is unavailable.
+
+## Real-Time Processing
+
+Tenant-scoped FastAPI WebSockets publish live events for resume uploads, resume processing, AI score generation, interview completion, payroll generation, and payroll status updates. Candidate, interview, payroll, and notification views can update without page refresh while retaining polling fallback.
+
+## Advanced Payroll
+
+Payroll generation now persists salary components: basic salary, allowances, bonuses, manual deductions, and attendance deductions. Gross and net salary are generated from these components and shown in payroll register, payslip detail, analytics, and employee dashboard history.

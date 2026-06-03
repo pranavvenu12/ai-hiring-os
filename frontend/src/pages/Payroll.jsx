@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { BadgeDollarSign, BarChart3, CheckCircle2, Download, FileText, Loader2, Receipt, Sparkles, Wallet } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
@@ -6,6 +6,7 @@ import Topbar from '../components/Topbar';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useRealtime } from '../hooks/useRealtime';
 
 const currency = new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -37,13 +38,11 @@ const Payroll = () => {
     const [month, setMonth] = useState(currentDate.getMonth() + 1);
     const [year, setYear] = useState(currentDate.getFullYear());
     const [defaultSalary, setDefaultSalary] = useState(60000);
+    const [defaultAllowances, setDefaultAllowances] = useState(8000);
+    const [defaultBonuses, setDefaultBonuses] = useState(0);
+    const [defaultDeductions, setDefaultDeductions] = useState(0);
 
-    useEffect(() => {
-        document.title = 'AI Hiring OS - Payroll';
-        fetchPayroll();
-    }, [month, year, user?.role]);
-
-    const fetchPayroll = async () => {
+    const fetchPayroll = useCallback(async () => {
         setLoading(true);
         try {
             if (isEmployee) {
@@ -67,7 +66,20 @@ const Payroll = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [canReadCompany, isEmployee, month, toast, year]);
+
+    useEffect(() => {
+        document.title = 'AI Hiring OS - Payroll';
+        fetchPayroll();
+    }, [fetchPayroll]);
+
+    const handleRealtimeEvent = useCallback((event) => {
+        if (event.type === 'payroll.generated' || event.type === 'payroll.status_updated') {
+            fetchPayroll();
+        }
+    }, [fetchPayroll]);
+
+    useRealtime(handleRealtimeEvent, canReadCompany || isEmployee);
 
     const recordsByEmployee = useMemo(() => {
         const map = new Map();
@@ -109,7 +121,15 @@ const Payroll = () => {
 
         setActionLoading(true);
         try {
-            await api.post('/payroll/generate', { employee_id: employeeId, month, year, base_salary: baseSalary });
+            await api.post('/payroll/generate', {
+                employee_id: employeeId,
+                month,
+                year,
+                base_salary: baseSalary,
+                allowances: Number(defaultAllowances || 0),
+                bonuses: Number(defaultBonuses || 0),
+                deductions: Number(defaultDeductions || 0),
+            });
             toast.success('Payroll generated.');
             await fetchPayroll();
         } catch (error) {
@@ -127,6 +147,9 @@ const Payroll = () => {
                 year,
                 default_base_salary: Number(defaultSalary || 0),
                 employee_salaries: {},
+                default_allowances: Number(defaultAllowances || 0),
+                default_bonuses: Number(defaultBonuses || 0),
+                default_deductions: Number(defaultDeductions || 0),
             });
             toast.success('Company payroll generated.');
             await fetchPayroll();
@@ -240,6 +263,15 @@ const Payroll = () => {
                                 <Field label="Default Base Salary">
                                     <input value={defaultSalary} onChange={(e) => setDefaultSalary(Number(e.target.value))} type="number" className="input-field py-3" />
                                 </Field>
+                                <Field label="Allowances">
+                                    <input value={defaultAllowances} onChange={(e) => setDefaultAllowances(Number(e.target.value))} type="number" className="input-field py-3" />
+                                </Field>
+                                <Field label="Bonuses">
+                                    <input value={defaultBonuses} onChange={(e) => setDefaultBonuses(Number(e.target.value))} type="number" className="input-field py-3" />
+                                </Field>
+                                <Field label="Manual Deductions">
+                                    <input value={defaultDeductions} onChange={(e) => setDefaultDeductions(Number(e.target.value))} type="number" className="input-field py-3" />
+                                </Field>
                                 <button disabled={actionLoading} onClick={generateAll} className="btn btn-primary justify-center py-3.5 px-6 rounded-2xl">
                                     {actionLoading ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
                                     Generate Company Payroll
@@ -259,7 +291,7 @@ const Payroll = () => {
                                             <tr>
                                                 <th className="px-6 py-4">Employee</th>
                                                 <th className="px-6 py-4">Department</th>
-                                                <th className="px-6 py-4">Base</th>
+                                                <th className="px-6 py-4">Components</th>
                                                 <th className="px-6 py-4">Present</th>
                                                 <th className="px-6 py-4">Absent</th>
                                                 <th className="px-6 py-4">Deductions</th>
@@ -273,7 +305,9 @@ const Payroll = () => {
                                                 <tr key={record.id} className="text-sm">
                                                     <td className="px-6 py-5 font-semibold text-slate-900">{record.employee_name || 'Employee'}</td>
                                                     <td className="px-6 py-5 text-slate-500">{record.department || 'Unassigned'}</td>
-                                                    <td className="px-6 py-5 font-semibold">{currency.format(record.base_salary)}</td>
+                                                    <td className="px-6 py-5">
+                                                        <PayrollBreakdownMini record={record} />
+                                                    </td>
                                                     <td className="px-6 py-5">{record.present_days}</td>
                                                     <td className="px-6 py-5">{record.absent_days}</td>
                                                     <td className="px-6 py-5 text-rose-600 font-semibold">{currency.format(record.deductions)}</td>
@@ -373,6 +407,18 @@ const StatusBadge = ({ status }) => {
     return <span className={`inline-flex px-3 py-1 rounded-full border text-[10px] font-bold uppercase tracking-widest ${styles[status] || styles.draft}`}>{status}</span>;
 };
 
+const PayrollBreakdownMini = ({ record }) => (
+    <div className="space-y-1 text-xs">
+        <div className="font-semibold text-slate-900">{currency.format(record.basic_salary ?? record.base_salary)}</div>
+        <div className="text-slate-400">
+            + {currency.format(record.allowances || 0)} allowances, + {currency.format(record.bonuses || 0)} bonus
+        </div>
+        <div className="text-rose-500">
+            - {currency.format(record.attendance_deductions || 0)} attendance, - {currency.format(record.manual_deductions || 0)} manual
+        </div>
+    </div>
+);
+
 const AnalyticsCard = ({ title, data, money = false }) => {
     const max = Math.max(...data.map((item) => Number(item.value || item.count || 0)), 1);
     return (
@@ -417,7 +463,11 @@ const PayslipModal = ({ record, onClose, onPrint }) => (
                     <Detail label="Employee" value={record.employee_name || '-'} />
                     <Detail label="Department" value={record.department || 'Unassigned'} />
                     <Detail label="Status" value={record.status} />
-                    <Detail label="Base Salary" value={currency.format(record.base_salary)} />
+                    <Detail label="Basic Salary" value={currency.format(record.basic_salary ?? record.base_salary)} />
+                    <Detail label="Allowances" value={currency.format(record.allowances || 0)} />
+                    <Detail label="Bonuses" value={currency.format(record.bonuses || 0)} />
+                    <Detail label="Attendance Deductions" value={currency.format(record.attendance_deductions || 0)} />
+                    <Detail label="Other Deductions" value={currency.format(record.manual_deductions || 0)} />
                     <Detail label="Gross Salary" value={currency.format(record.gross_salary)} />
                     <Detail label="Attendance" value={`${record.present_days} present, ${record.half_days} half, ${record.absent_days} absent`} />
                     <Detail label="Deductions" value={currency.format(record.deductions)} />

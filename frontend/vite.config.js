@@ -11,6 +11,15 @@ export default defineConfig({
   base: '/',
   build: {
     outDir: 'dist',
-    sourcemap: true
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          animation: ['framer-motion'],
+          icons: ['lucide-react'],
+        },
+      },
+    },
   }
 })

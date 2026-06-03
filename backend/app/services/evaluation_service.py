@@ -14,6 +14,7 @@ from app.models.ai_score import AIScoreStatus
 from app.services import (
     ai_service,
     ai_score_service,
+    realtime_service,
     scoring_service,
 )
 
@@ -77,6 +78,13 @@ async def run_full_evaluation(resume_id: uuid.UUID):
                 missing_skills=ai_insights.get("missing_skills") or deterministic_results["missing_skills"],
                 status=AIScoreStatus.COMPLETED
             )
+            await realtime_service.publish_event(job.company_id, "ai_score.generated", {
+                "resume_id": str(resume_id),
+                "job_id": str(job.id),
+                "candidate_name": resume.candidate_name,
+                "score": deterministic_results["score"],
+                "status": AIScoreStatus.COMPLETED.value,
+            })
             logger.info(f"Evaluation completed for resume {resume_id}")
 
         except Exception as exc:

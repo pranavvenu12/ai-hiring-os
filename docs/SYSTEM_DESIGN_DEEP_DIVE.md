@@ -201,3 +201,16 @@ graph LR
     EC2 --> Supabase[(Supabase DB/Auth/Storage)]
     EC2 --> AI[Gemini/HF]
 ```
+# Enterprise Readiness Addendum
+
+## Voice Interview Architecture
+
+Candidate audio is captured in the React interview assistant with `MediaRecorder`, uploaded to FastAPI, sent to AssemblyAI for transcription, and stored on the interview session with word-derived voice metrics. If media recording or AssemblyAI fails, the browser speech-recognition transcript is stored through the fallback endpoint.
+
+## Realtime Architecture
+
+The backend exposes a tenant-scoped WebSocket endpoint. The socket authenticates with the same Supabase JWT used by REST APIs, maps the token to a local user, and subscribes that connection to the user's company. Services publish events after successful DB state changes.
+
+## Load Testing
+
+Locust scenarios live in `load_tests/`. They cover login, candidate listing, resume upload, and payroll retrieval. See `docs/SCALABILITY_REPORT.md` for the staged 100/250/500-user validation plan.

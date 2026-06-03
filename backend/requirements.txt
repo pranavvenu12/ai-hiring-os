@@ -12,3 +12,4 @@ supabase==2.15.1
 alembic==1.15.2
 pymupdf==1.25.3
 python-multipart==0.0.9
+locust==2.32.5

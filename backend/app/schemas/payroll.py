@@ -20,6 +20,9 @@ class PayrollGenerateRequest(BaseModel):
     month: int = Field(..., ge=1, le=12)
     year: int = Field(..., ge=2000, le=2100)
     base_salary: float = Field(..., ge=0)
+    allowances: float = Field(default=0, ge=0)
+    bonuses: float = Field(default=0, ge=0)
+    deductions: float = Field(default=0, ge=0)
 
 
 class PayrollGenerateAllRequest(BaseModel):
@@ -27,6 +30,9 @@ class PayrollGenerateAllRequest(BaseModel):
     year: int = Field(..., ge=2000, le=2100)
     default_base_salary: float = Field(..., ge=0)
     employee_salaries: dict[str, float] = Field(default_factory=dict)
+    default_allowances: float = Field(default=0, ge=0)
+    default_bonuses: float = Field(default=0, ge=0)
+    default_deductions: float = Field(default=0, ge=0)
 
 
 class PayrollOut(BaseModel):
@@ -40,6 +46,11 @@ class PayrollOut(BaseModel):
     month: int
     year: int
     base_salary: float
+    basic_salary: float
+    allowances: float
+    bonuses: float
+    manual_deductions: float
+    attendance_deductions: float
     present_days: float
     half_days: float
     absent_days: float

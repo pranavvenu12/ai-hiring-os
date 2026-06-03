@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
@@ -14,7 +14,6 @@ const Attendance = () => {
     const [myAttendance, setMyAttendance] = useState({ today: {}, records: [] });
     const [teamAttendance, setTeamAttendance] = useState({ records: [] });
     const [companyAttendance, setCompanyAttendance] = useState(null);
-    const [loading, setLoading] = useState(true);
     const [clockingIn, setClockingIn] = useState(false);
     const [clockingOut, setClockingOut] = useState(false);
     const [now, setNow] = useState(Date.now());
@@ -22,19 +21,8 @@ const Attendance = () => {
     const isHROrAdmin = user && ['admin', 'hr'].includes(user.role.toLowerCase());
     const isManager = user && user.role.toLowerCase() === 'manager';
 
-    useEffect(() => {
-        document.title = 'AI Hiring OS - Attendance';
-        fetchData();
-    }, []);
-
-    useEffect(() => {
-        const timer = window.setInterval(() => setNow(Date.now()), 1000);
-        return () => window.clearInterval(timer);
-    }, []);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
-            setLoading(true);
             const myData = await api.get('/attendance/me');
             setMyAttendance(myData);
 
@@ -48,8 +36,17 @@ const Attendance = () => {
                 setCompanyAttendance(compData);
             }
         } catch (err) { console.error(err); }
-        finally { setLoading(false); }
-    };
+    }, [isHROrAdmin, isManager]);
+
+    useEffect(() => {
+        document.title = 'AI Hiring OS - Attendance';
+        fetchData();
+    }, [fetchData]);
+
+    useEffect(() => {
+        const timer = window.setInterval(() => setNow(Date.now()), 1000);
+        return () => window.clearInterval(timer);
+    }, []);
 
     const handleClockIn = async () => {
         setClockingIn(true);

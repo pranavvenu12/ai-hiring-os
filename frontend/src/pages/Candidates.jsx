@@ -1,12 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
 import { useToast } from '../context/ToastContext';
-import { Upload, ChevronRight, Brain, Loader2, CheckCircle2, FileText, Search, User, Users, SlidersHorizontal, ArrowLeft, Mic, Award, AwardIcon, Star } from 'lucide-react';
+import { Upload, ChevronRight, Brain, Loader2, CheckCircle2, FileText, Search, User, Users, SlidersHorizontal, ArrowLeft, Mic } from 'lucide-react';
 import { formatRelativeTime } from '../utils/date';
+import { useRealtime } from '../hooks/useRealtime';
 
 const Candidates = () => {
     const [searchParams] = useSearchParams();
@@ -19,6 +20,7 @@ const Candidates = () => {
     const [isUploading, setIsUploading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const fileInputRef = useRef(null);
+    const fetchCandidatesRef = useRef(null);
     const { toast } = useToast();
     
     // Drawer tabs
@@ -26,30 +28,15 @@ const Candidates = () => {
     const [candidateInterviews, setCandidateInterviews] = useState([]);
     const [loadingInterviews, setLoadingInterviews] = useState(false);
 
-    useEffect(() => {
-        document.title = 'AI Hiring OS - Talent Pool';
-        fetchCandidates();
-        if (jobId) fetchJobTitle();
-    }, [jobId]);
-
-    useEffect(() => {
-        if (selectedCandidate) {
-            fetchCandidateInterviews(selectedCandidate.id);
-            setActiveTab('resume'); // Default tab when opening
-        } else {
-            setCandidateInterviews([]);
-        }
-    }, [selectedCandidate]);
-
-    const fetchJobTitle = async () => {
+    const fetchJobTitle = useCallback(async () => {
         try {
             const jobs = await api.get('/jobs');
             const job = jobs.find(j => j.id === jobId);
             if (job) setJobTitle(`Candidates for ${job.title}`);
         } catch (err) { console.error(err); }
-    };
+    }, [jobId]);
 
-    const fetchCandidates = async () => {
+    const fetchCandidates = useCallback(async () => {
         try {
             let data = [];
             if (jobId) {
@@ -64,12 +51,12 @@ const Candidates = () => {
             setCandidates(data);
             
             if (data.some(c => ['pending', 'processing'].includes(c.status))) {
-                setTimeout(fetchCandidates, 3000);
+                setTimeout(() => fetchCandidatesRef.current?.(), 3000);
             }
         } catch (err) { console.error(err); }
-    };
+    }, [jobId]);
 
-    const fetchCandidateInterviews = async (candId) => {
+    const fetchCandidateInterviews = useCallback(async (candId) => {
         setLoadingInterviews(true);
         try {
             const response = await api.get(`/interviews/candidate/${candId}`);
@@ -80,7 +67,48 @@ const Candidates = () => {
         } finally {
             setLoadingInterviews(false);
         }
-    };
+    }, []);
+
+    const handleRealtimeEvent = useCallback((event) => {
+        if (!['resume.uploaded', 'resume.processed', 'ai_score.generated'].includes(event.type)) return;
+        const payload = event.payload || {};
+        if (jobId && payload.job_id !== jobId) return;
+
+        if (event.type === 'resume.uploaded') {
+            fetchCandidates();
+            return;
+        }
+
+        setCandidates((current) => current.map((candidate) => {
+            if (candidate.resume_id !== payload.resume_id) return candidate;
+            return {
+                ...candidate,
+                status: event.type === 'resume.processed' ? 'processing' : payload.status || 'completed',
+                score: payload.score ?? candidate.score,
+            };
+        }));
+    }, [fetchCandidates, jobId]);
+
+    useRealtime(handleRealtimeEvent);
+
+    useEffect(() => {
+        fetchCandidatesRef.current = fetchCandidates;
+    }, [fetchCandidates]);
+
+    useEffect(() => {
+        document.title = 'AI Hiring OS - Talent Pool';
+        fetchCandidates();
+        if (jobId) fetchJobTitle();
+    }, [fetchCandidates, fetchJobTitle, jobId]);
+
+    useEffect(() => {
+        if (selectedCandidate) {
+            fetchCandidateInterviews(selectedCandidate.id);
+            setActiveTab('resume'); // Default tab when opening
+        } else {
+            setCandidateInterviews([]);
+        }
+    }, [fetchCandidateInterviews, selectedCandidate]);
 
     const handleUpload = async (e) => {
         const files = e.target.files;
@@ -467,11 +495,49 @@ const Candidates = () => {
                                                         </div>
                                                     </div>
 
+                                                    {session.interview_metrics?.aggregate && (
+                                                        <div className="space-y-4">
+                                                            <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                                                <Mic size={14} /> Voice Analytics
+                                                            </h4>
+                                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                                <MetricTile label="Fluency" value={`${session.interview_metrics.aggregate.fluency_score || 0}%`} />
+                                                                <MetricTile label="Pace" value={`${session.interview_metrics.aggregate.speaking_pace_wpm || 0} WPM`} />
+                                                                <MetricTile label="Fillers" value={session.interview_metrics.aggregate.filler_word_count || 0} />
+                                                                <MetricTile label="Confidence" value={`${session.interview_metrics.aggregate.confidence_score || 0}%`} />
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {session.interview_metrics?.voice_answers?.length > 0 && (
+                                                        <div className="space-y-4">
+                                                            <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-widest">Interview Timeline</h4>
+                                                            <div className="space-y-3">
+                                                                {session.interview_metrics.voice_answers.map((answer) => (
+                                                                    <div key={`${session.id}-${answer.question_index}`} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                                                                        <div className="text-xs font-semibold text-indigo-600">Question {answer.question_index + 1}</div>
+                                                                        <p className="mt-2 text-sm text-slate-600 leading-relaxed">{answer.text}</p>
+                                                                        <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                                                                            <span>{answer.metrics?.speaking_pace_wpm || 0} WPM</span>
+                                                                            <span>{answer.metrics?.filler_word_count || 0} fillers</span>
+                                                                            <span>{answer.source || 'AssemblyAI'}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
                                                     {/* Transcript Segment */}
                                                     <div className="space-y-4">
                                                         <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                                                             <FileText size={14} /> Full Transcript
                                                         </h4>
+                                                        {session.interview_transcript && (
+                                                            <div className="rounded-2xl border border-slate-100 bg-white p-4 text-sm leading-7 text-slate-600 whitespace-pre-wrap">
+                                                                {session.interview_transcript}
+                                                            </div>
+                                                        )}
                                                         <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 divide-y divide-slate-100">
                                                             {session.transcript && session.transcript.length > 0 ? (
                                                                 session.transcript.map((qa, index) => (
@@ -555,6 +621,13 @@ const ScoreSummaryCard = ({ label, score }) => (
     <div className="text-center">
         <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">{label}</div>
         <div className="text-xl font-semibold text-white">{score}%</div>
+    </div>
+);
+
+const MetricTile = ({ label, value }) => (
+    <div className="rounded-2xl border border-slate-100 bg-white p-4">
+        <div className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{label}</div>
+        <div className="mt-1 text-lg font-semibold text-slate-900">{value}</div>
     </div>
 );
 

@@ -92,3 +92,20 @@ Companies often use separate tools for ATS, resume screening, interviews, attend
 | Why are migrations missing? | The current demo uses SQLAlchemy auto-create. Production should use Alembic migration scripts. |
 | Is browser speech recognition enough? | It is enough for an MVP voice interaction. Production may need provider-backed speech-to-text for consistency. |
 | Does payroll comply with real payroll law? | No. It is an HRMS payroll calculation/workflow MVP, not tax/statutory compliance software. |
+# Enterprise Upgrade Talking Points
+
+## Voice AI
+
+The project now records candidate audio, sends it to AssemblyAI, stores the transcript and voice metrics, and uses those metrics in interview analytics. Browser speech recognition remains as a graceful fallback.
+
+## Real-Time Processing
+
+Realtime is implemented with authenticated FastAPI WebSockets scoped by company. Resume, scoring, interview, and payroll events update frontend views without a manual refresh.
+
+## Scalability
+
+The project includes Locust tests for login, candidate listing, resume upload, and payroll retrieval. The honest claim is a validated concurrency baseline and scalable architecture, not a completed 5000-user benchmark.
+
+## Payroll
+
+Payroll now supports explicit components: basic salary, allowances, bonuses, manual deductions, and attendance deductions. Gross and net salary are generated from real persisted component data.

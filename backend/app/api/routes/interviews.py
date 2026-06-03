@@ -9,13 +9,13 @@ from __future__ import annotations
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import CurrentUser, require_roles
 from app.core.security import Role
 from app.db.session import get_db
-from app.schemas.interview import InterviewAnswer, InterviewStart
+from app.schemas.interview import BrowserVoiceFallback, InterviewAnswer, InterviewStart
 from app.services import interview_service
 
 router = APIRouter(prefix="/interviews", tags=["AI Interviews"])
@@ -88,6 +88,75 @@ async def submit_answer(
 
 
 @router.post(
+    "/{session_id}/voice-answer",
+    dependencies=[Depends(require_roles(Role.ADMIN, Role.HR))],
+)
+async def submit_voice_answer(
+    session_id: uuid.UUID,
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    question_index: int = Form(..., ge=0),
+    audio: UploadFile = File(...),
+):
+    """Upload recorded candidate audio, transcribe with AssemblyAI, and store voice analytics."""
+    session = await interview_service.get_interview(db, session_id)
+    if not session or session.company_id != current_user.company_id:
+        raise HTTPException(status_code=404, detail="Interview session not found.")
+
+    content = await audio.read()
+    try:
+        session = await interview_service.submit_voice_answer(
+            db,
+            session_id,
+            question_index,
+            content,
+            filename=audio.filename or "interview-answer.webm",
+            content_type=audio.content_type,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"AssemblyAI transcription unavailable: {exc}")
+
+    latest = (session.interview_metrics or {}).get("latest_voice", {})
+    return {
+        "message": "Voice answer transcribed and recorded.",
+        "transcript": session.transcript,
+        "interview_transcript": session.interview_transcript,
+        "interview_metrics": session.interview_metrics,
+        "audio_url": session.audio_url,
+        "voice_metrics": latest,
+    }
+
+
+@router.post(
+    "/{session_id}/voice-fallback",
+    dependencies=[Depends(require_roles(Role.ADMIN, Role.HR))],
+)
+async def submit_voice_fallback(
+    session_id: uuid.UUID,
+    payload: BrowserVoiceFallback,
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Persist browser speech-recognition fallback transcript and voice metrics."""
+    session = await interview_service.get_interview(db, session_id)
+    if not session or session.company_id != current_user.company_id:
+        raise HTTPException(status_code=404, detail="Interview session not found.")
+
+    session = await interview_service.submit_browser_voice_fallback(
+        db,
+        session_id,
+        payload.question_index,
+        payload.transcript_text,
+    )
+    return {
+        "message": "Fallback voice transcript recorded.",
+        "transcript": session.transcript,
+        "interview_transcript": session.interview_transcript,
+        "interview_metrics": session.interview_metrics,
+    }
+
+
+@router.post(
     "/{session_id}/complete",
     dependencies=[Depends(require_roles(Role.ADMIN, Role.HR))],
 )
@@ -118,8 +187,12 @@ async def complete_interview(
         "technical_score": session.technical_score,
         "communication_score": session.communication_score,
         "confidence_score": session.confidence_score,
+        "fluency_score": session.fluency_score,
         "overall_score": session.overall_score,
         "recommendation": session.recommendation,
+        "interview_metrics": session.interview_metrics,
+        "interview_transcript": session.interview_transcript,
+        "audio_url": session.audio_url,
         "message": "Interview completed and evaluated by AI.",
     }
 
@@ -152,10 +225,14 @@ async def get_interview(
         "status": session.status,
         "questions": session.questions,
         "transcript": session.transcript,
+        "interview_transcript": session.interview_transcript,
+        "interview_metrics": session.interview_metrics,
+        "audio_url": session.audio_url,
         "ai_summary": session.ai_summary,
         "technical_score": session.technical_score,
         "communication_score": session.communication_score,
         "confidence_score": session.confidence_score,
+        "fluency_score": session.fluency_score,
         "overall_score": session.overall_score,
         "recommendation": session.recommendation,
         "created_at": session.created_at.isoformat(),

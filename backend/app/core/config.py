@@ -53,6 +53,7 @@ class Settings(BaseSettings):
     AI_HF_KEY: str | None = None
     AI_HF_BASE_URL: str = "https://router.huggingface.co/v1"
     AI_HF_MODEL: str = "meta-llama/Llama-3.1-8B-Instruct"
+    ASSEMBLYAI_API_KEY: str | None = None
 
     # ── CORS ─────────────────────────────────────────────────────
     CORS_ORIGINS: str = "http://localhost:3000"

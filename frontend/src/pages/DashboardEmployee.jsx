@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
-import { Mail, Building, Users, Shield, Calendar, MapPin, ExternalLink, Globe, Layers3, UserCheck, Clock, Star, AlertCircle, FileText, ChevronRight, Wallet } from 'lucide-react';
+import { Mail, Building, Shield, Calendar, MapPin, Layers3, Clock, Star, FileText, ChevronRight, Wallet } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { formatAttendanceDuration } from '../utils/date';
@@ -33,16 +33,7 @@ const DashboardEmployee = () => {
     const [attendanceData, setAttendanceData] = useState({ today: {}, records: [] });
     const [performanceData, setPerformanceData] = useState({ reviews: [], avg_rating: 0 });
     const [payrollData, setPayrollData] = useState({ records: [] });
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [now, setNow] = useState(Date.now());
-
-    useEffect(() => {
-        document.title = 'AI Hiring OS - Employee Dashboard';
-        if (user) {
-            fetchData();
-        }
-    }, [user]);
 
     useEffect(() => {
         if (user?.company_id) {
@@ -58,9 +49,8 @@ const DashboardEmployee = () => {
         return () => window.clearInterval(timer);
     }, []);
 
-    const fetchData = async () => {
-        setLoading(true);
-        setError(null);
+    const fetchData = useCallback(async () => {
+        if (!user) return;
         try {
             // Fetch company details
             const co = await api.get(`/companies/${user.company_id}`);
@@ -98,11 +88,13 @@ const DashboardEmployee = () => {
 
         } catch (error) {
             console.error("Error loading dashboard data:", error);
-            setError("Failed to load dashboard metrics.");
-        } finally {
-            setLoading(false);
         }
-    };
+    }, [user]);
+
+    useEffect(() => {
+        document.title = 'AI Hiring OS - Employee Dashboard';
+        fetchData();
+    }, [fetchData]);
 
     // Calculate attendance statistics
     const calculateAttendanceStats = () => {
@@ -310,10 +302,23 @@ const DashboardEmployee = () => {
                                 </button>
                             </div>
                             {latestPayslip ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                    <DetailCard label="Gross Salary" value={`₹${Math.round(latestPayslip.gross_salary).toLocaleString('en-IN')}`} />
-                                    <DetailCard label="Deductions" value={`₹${Math.round(latestPayslip.deductions).toLocaleString('en-IN')}`} />
-                                    <DetailCard label="Net Salary" value={`₹${Math.round(latestPayslip.net_salary).toLocaleString('en-IN')} · ${latestPayslip.status}`} />
+                                <div className="space-y-5">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <DetailCard label="Basic Salary" value={`?${Math.round(latestPayslip.basic_salary ?? latestPayslip.base_salary).toLocaleString('en-IN')}`} />
+                                        <DetailCard label="Allowances + Bonus" value={`?${Math.round((latestPayslip.allowances || 0) + (latestPayslip.bonuses || 0)).toLocaleString('en-IN')}`} />
+                                        <DetailCard label="Net Salary" value={`?${Math.round(latestPayslip.net_salary).toLocaleString('en-IN')} � ${latestPayslip.status}`} />
+                                    </div>
+                                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                                        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400 mb-3">Payroll History</div>
+                                        <div className="space-y-2">
+                                            {payrollData.records.slice(0, 3).map((record) => (
+                                                <div key={record.id} className="flex items-center justify-between text-xs font-semibold text-slate-600">
+                                                    <span>{record.month}/{record.year}</span>
+                                                    <span>?{Math.round(record.net_salary).toLocaleString('en-IN')} � {record.status}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
                             ) : (
                                 <p className="text-sm font-medium text-slate-400">No payslip has been generated yet.</p>

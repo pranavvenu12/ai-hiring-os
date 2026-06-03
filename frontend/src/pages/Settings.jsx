@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Building2, Globe, Mail, MapPin, Layers3, Users, Lock, ShieldCheck, Save } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
@@ -49,6 +49,37 @@ const Settings = () => {
     const visibleTeamSize = company?.employee_count_range || (companyUsers.length ? `${companyUsers.length} team member${companyUsers.length === 1 ? '' : 's'}` : '');
     const visibleContactEmail = company?.contact_email || hrContact?.email || '';
 
+    const fetchCompany = useCallback(async () => {
+        if (!user?.company_id) return;
+        try {
+            const data = await api.get(`/companies/${user.company_id}`);
+            setCompany(data);
+            setForm({
+                name: data.name || '',
+                industry: data.industry || '',
+                website: data.website || '',
+                location: data.location || '',
+                employee_count_range: data.employee_count_range || '',
+                contact_email: data.contact_email || '',
+                description: data.description || '',
+            });
+            localStorage.setItem(`company_${user.company_id}`, JSON.stringify(data));
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [user?.company_id]);
+
+    const fetchCompanyUsers = useCallback(async () => {
+        try {
+            const users = await api.get('/users?limit=500');
+            setCompanyUsers(Array.isArray(users) ? users : []);
+        } catch (error) {
+            console.error(error);
+        }
+    }, []);
+
     useEffect(() => {
         document.title = 'AI Hiring OS - Settings';
         if (user?.company_id) {
@@ -70,37 +101,7 @@ const Settings = () => {
             fetchCompany();
             fetchCompanyUsers();
         }
-    }, [user]);
-
-    const fetchCompany = async () => {
-        try {
-            const data = await api.get(`/companies/${user.company_id}`);
-            setCompany(data);
-            setForm({
-                name: data.name || '',
-                industry: data.industry || '',
-                website: data.website || '',
-                location: data.location || '',
-                employee_count_range: data.employee_count_range || '',
-                contact_email: data.contact_email || '',
-                description: data.description || '',
-            });
-            localStorage.setItem(`company_${user.company_id}`, JSON.stringify(data));
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const fetchCompanyUsers = async () => {
-        try {
-            const users = await api.get('/users?limit=500');
-            setCompanyUsers(Array.isArray(users) ? users : []);
-        } catch (error) {
-            console.error(error);
-        }
-    };
+    }, [fetchCompany, fetchCompanyUsers, user?.company_id]);
 
     const handleChange = (field, value) => {
         setForm((current) => ({ ...current, [field]: value }));

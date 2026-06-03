@@ -21,6 +21,7 @@ from app.models.attendance import AttendanceRecord, AttendanceStatus
 from app.models.company import Company
 from app.models.employee import Employee
 from app.models.payroll import PayrollRecord, PayrollStatus
+from app.services import realtime_service
 
 settings = get_settings()
 
@@ -85,16 +86,29 @@ async def _attendance_counts(
     }
 
 
-def _calculate_salary(base_salary: float, counts: dict[str, float]) -> dict[str, float]:
+def _calculate_salary(
+    base_salary: float,
+    counts: dict[str, float],
+    *,
+    allowances: float = 0.0,
+    bonuses: float = 0.0,
+    manual_deductions: float = 0.0,
+) -> dict[str, float]:
     working_days = max(counts["working_days"], 1.0)
     daily_salary = base_salary / working_days
     absence_penalty = daily_salary * counts["absent_days"]
     half_day_penalty = (daily_salary * 0.5) * counts["half_days"]
-    deductions = _round_money(absence_penalty + half_day_penalty)
-    gross_salary = _round_money(base_salary)
+    attendance_deductions = _round_money(absence_penalty + half_day_penalty)
+    deductions = _round_money(attendance_deductions + manual_deductions)
+    gross_salary = _round_money(base_salary + allowances + bonuses)
     net_salary = _round_money(gross_salary - deductions)
 
     return {
+        "basic_salary": _round_money(base_salary),
+        "allowances": _round_money(allowances),
+        "bonuses": _round_money(bonuses),
+        "manual_deductions": _round_money(manual_deductions),
+        "attendance_deductions": attendance_deductions,
         "gross_salary": gross_salary,
         "deductions": deductions,
         "net_salary": net_salary,
@@ -178,6 +192,11 @@ def _serialize(record: PayrollRecord, employee: Employee | None = None, company:
         "month": record.month,
         "year": record.year,
         "base_salary": record.base_salary,
+        "basic_salary": record.basic_salary,
+        "allowances": record.allowances,
+        "bonuses": record.bonuses,
+        "manual_deductions": record.manual_deductions,
+        "attendance_deductions": record.attendance_deductions,
         "present_days": record.present_days,
         "half_days": record.half_days,
         "absent_days": record.absent_days,
@@ -202,6 +221,9 @@ async def generate_payroll(
     month: int,
     year: int,
     base_salary: float,
+    allowances: float = 0.0,
+    bonuses: float = 0.0,
+    deductions: float = 0.0,
 ) -> dict[str, Any]:
     employee_result = await db.execute(
         select(Employee).where(Employee.id == employee_id, Employee.company_id == company_id)
@@ -211,7 +233,13 @@ async def generate_payroll(
         raise ValueError("Employee not found in your company.")
 
     counts = await _attendance_counts(db, employee_id, company_id, month, year)
-    salary = _calculate_salary(base_salary, counts)
+    salary = _calculate_salary(
+        base_salary,
+        counts,
+        allowances=allowances,
+        bonuses=bonuses,
+        manual_deductions=deductions,
+    )
     record_data = {
         "month": month,
         "year": year,
@@ -249,7 +277,17 @@ async def generate_payroll(
     await db.refresh(record)
 
     company = await db.get(Company, company_id)
-    return _serialize(record, employee, company)
+    serialized = _serialize(record, employee, company)
+    await realtime_service.publish_event(company_id, "payroll.generated", {
+        "payroll_id": str(record.id),
+        "employee_id": str(employee.id),
+        "employee_name": employee.full_name,
+        "month": month,
+        "year": year,
+        "net_salary": record.net_salary,
+        "status": record.status,
+    })
+    return serialized
 
 
 async def generate_company_payroll(
@@ -260,6 +298,9 @@ async def generate_company_payroll(
     year: int,
     default_base_salary: float,
     employee_salaries: dict[str, float],
+    default_allowances: float = 0.0,
+    default_bonuses: float = 0.0,
+    default_deductions: float = 0.0,
 ) -> list[dict[str, Any]]:
     result = await db.execute(
         select(Employee)
@@ -279,6 +320,9 @@ async def generate_company_payroll(
                 month=month,
                 year=year,
                 base_salary=salary,
+                allowances=default_allowances,
+                bonuses=default_bonuses,
+                deductions=default_deductions,
             )
         )
     return records
@@ -377,7 +421,14 @@ async def update_status(
     record.updated_at = datetime.now(timezone.utc)
     await db.flush()
     await db.refresh(record)
-    return _serialize(record, employee, company)
+    serialized = _serialize(record, employee, company)
+    await realtime_service.publish_event(company_id, "payroll.status_updated", {
+        "payroll_id": str(record.id),
+        "employee_id": str(employee.id),
+        "employee_name": employee.full_name,
+        "status": record.status,
+    })
+    return serialized
 
 
 def _build_summary(records: list[dict[str, Any]]) -> dict[str, Any]:

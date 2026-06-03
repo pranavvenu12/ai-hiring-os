@@ -120,3 +120,16 @@ Implemented AI paths:
 | Schema drift | SQLAlchemy auto-create tables | Add Alembic migrations |
 | Large frontend bundle | Vite production build works but warns on chunk size | Add route-level code splitting |
 | Secrets exposure | `.env` based config | Rotate exposed keys and use secret manager in production |
+# Enterprise Architecture Addendum
+
+## AssemblyAI Integration
+
+`POST /interviews/{session_id}/voice-answer` accepts multipart audio, uploads it to AssemblyAI, polls transcription completion, stores `interview_transcript`, `interview_metrics`, `audio_url`, and merges voice-derived communication/confidence/fluency metrics with existing AI evaluation.
+
+## WebSocket Integration
+
+`/ws?token=<jwt>` authenticates the Supabase JWT, resolves the local user, and subscribes the socket to that user's company. Backend services publish only tenant-scoped events through `realtime_service`.
+
+## Payroll Components
+
+Payroll records now persist explicit component fields and derive gross/net from basic salary, allowances, bonuses, manual deductions, and attendance deductions.

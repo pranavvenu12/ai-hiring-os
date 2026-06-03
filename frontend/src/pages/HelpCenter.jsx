@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LifeBuoy, Mail, MessageCircle, BookOpen, Settings, Users, Briefcase, ShieldCheck } from 'lucide-react';
+import { LifeBuoy, Settings, Users, Briefcase, ShieldCheck } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 

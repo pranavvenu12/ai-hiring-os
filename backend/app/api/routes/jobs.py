@@ -33,6 +33,7 @@ from app.services import (
     extraction_service,
     job_service,
     resume_service,
+    realtime_service,
     storage_service,
     evaluation_service,
 )
@@ -191,6 +192,12 @@ async def apply_to_public_job(
 
     file_url = await storage_service.upload_resume(content, resume.filename, job.company_id)
     resume_row = await resume_service.create_resume(db, job_id, name.strip(), file_url)
+    await realtime_service.publish_event(job.company_id, "resume.uploaded", {
+        "resume_id": str(resume_row.id),
+        "job_id": str(job.id),
+        "candidate_name": resume_row.candidate_name,
+        "source": "public_apply",
+    })
 
     candidate_metadata = {
         "name": name.strip(),
@@ -249,6 +256,12 @@ async def upload_resumes(
         resume = await resume_service.create_resume(
             db, job_id, file.filename, file_url
         )
+        await realtime_service.publish_event(current_user.company_id, "resume.uploaded", {
+            "resume_id": str(resume.id),
+            "job_id": str(job_id),
+            "candidate_name": resume.candidate_name,
+            "source": "bulk_upload",
+        })
 
         # 3. Schedule background text extraction
         background_tasks.add_task(_process_resume_extraction, resume.id, content)
@@ -283,7 +296,17 @@ async def _process_resume_extraction(
             text = "\n".join(profile_lines) + "\n\nResume Content:\n" + text
 
         async with AsyncSessionLocal() as db:
-            await resume_service.update_resume_text(db, resume_id, text)
+            resume = await resume_service.update_resume_text(db, resume_id, text)
+            job = await job_service.get_job_by_id(db, resume.job_id) if resume else None
+            company_id = job.company_id if job else None
+            job_id = resume.job_id if resume else None
+            candidate_name = resume.candidate_name if resume else None
+            if company_id:
+                await realtime_service.publish_event(company_id, "resume.processed", {
+                    "resume_id": str(resume_id),
+                    "job_id": str(job_id),
+                    "candidate_name": candidate_name,
+                })
         
         # Phase 3: Trigger full AI evaluation
         await evaluation_service.run_full_evaluation(resume_id)

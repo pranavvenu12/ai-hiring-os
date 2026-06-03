@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -54,9 +54,38 @@ const Careers = () => {
         document.title = jobId ? 'AI Hiring OS - Apply' : 'AI Hiring OS - Careers';
     }, [jobId]);
 
+    const fetchJobs = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const data = await api.get('/jobs/public');
+            setJobs(Array.isArray(data) ? data : []);
+        } catch (error) {
+            setJobs([]);
+            const isMissingPublicEndpoint = error?.status === 404 || error?.detail === 'Not Found';
+            if (!isMissingPublicEndpoint) {
+                toast.error(error.detail || 'Unable to load open roles.');
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    }, [toast]);
+
+    const fetchJobDetail = useCallback(async (id) => {
+        setIsDetailLoading(true);
+        try {
+            const data = await api.get(`/jobs/public/${id}`);
+            setSelectedJob(data);
+        } catch (error) {
+            toast.error(error.detail || 'Unable to load this job.');
+            navigate('/careers', { replace: true });
+        } finally {
+            setIsDetailLoading(false);
+        }
+    }, [navigate, toast]);
+
     useEffect(() => {
         fetchJobs();
-    }, []);
+    }, [fetchJobs]);
 
     useEffect(() => {
         if (!jobId) {
@@ -73,36 +102,7 @@ const Careers = () => {
         }
 
         fetchJobDetail(jobId);
-    }, [jobId, jobs]);
-
-    const fetchJobs = async () => {
-        setIsLoading(true);
-        try {
-            const data = await api.get('/jobs/public');
-            setJobs(Array.isArray(data) ? data : []);
-        } catch (error) {
-            setJobs([]);
-            const isMissingPublicEndpoint = error?.status === 404 || error?.detail === 'Not Found';
-            if (!isMissingPublicEndpoint) {
-                toast.error(error.detail || 'Unable to load open roles.');
-            }
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const fetchJobDetail = async (id) => {
-        setIsDetailLoading(true);
-        try {
-            const data = await api.get(`/jobs/public/${id}`);
-            setSelectedJob(data);
-        } catch (error) {
-            toast.error(error.detail || 'Unable to load this job.');
-            navigate('/careers', { replace: true });
-        } finally {
-            setIsDetailLoading(false);
-        }
-    };
+    }, [fetchJobDetail, jobId, jobs]);
 
     const filteredJobs = useMemo(() => {
         const query = searchQuery.trim().toLowerCase();

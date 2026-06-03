@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { Search, Plus, User, Mail, Phone, Building, Calendar, ChevronRight, ArrowLeft, X, Briefcase, Filter } from 'lucide-react';
+import { Search, Plus, User, Mail, Phone, Building, Calendar, ArrowLeft, X, Briefcase, Filter } from 'lucide-react';
 import { formatShortDate } from '../utils/date';
 
 const EmployeeDirectory = () => {
@@ -27,13 +27,7 @@ const EmployeeDirectory = () => {
         manager_id: '', joining_date: '', employment_type: 'full_time',
     });
 
-    useEffect(() => {
-        document.title = 'AI Hiring OS - Employee Directory';
-        fetchEmployees();
-        fetchDepartments();
-    }, [searchQuery, departmentFilter, page]);
-
-    const fetchEmployees = async () => {
+    const fetchEmployees = useCallback(async () => {
         try {
             setLoading(true);
             const params = new URLSearchParams();
@@ -47,14 +41,20 @@ const EmployeeDirectory = () => {
             setTotal(data.total || 0);
         } catch (err) { console.error(err); }
         finally { setLoading(false); }
-    };
+    }, [departmentFilter, page, searchQuery]);
 
-    const fetchDepartments = async () => {
+    const fetchDepartments = useCallback(async () => {
         try {
             const data = await api.get('/employees/departments');
             setDepartments(data.departments || []);
         } catch (err) { console.error(err); }
-    };
+    }, []);
+
+    useEffect(() => {
+        document.title = 'AI Hiring OS - Employee Directory';
+        fetchEmployees();
+        fetchDepartments();
+    }, [fetchDepartments, fetchEmployees]);
 
     const handleAddEmployee = async (e) => {
         e.preventDefault();

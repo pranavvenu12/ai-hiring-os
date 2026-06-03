@@ -62,7 +62,7 @@ def verify_jwt(token: str) -> TokenPayload:
 
 
 def sign_up_with_email(email: str, password: str) -> dict:
-    """Register a new user via Supabase Auth and auto-confirm."""
+    """Register a new user via Supabase Auth using service-role admin access."""
     client = get_supabase_client()
     try:
         response = client.auth.admin.create_user({
@@ -71,29 +71,14 @@ def sign_up_with_email(email: str, password: str) -> dict:
             "email_confirm": True
         })
         return {"user": response.user, "session": None}
-    except Exception as admin_exc:
-        err_str = str(admin_exc).lower()
-        # If admin endpoint is restricted ("not allowed", "unauthorized"),
-        # fall back to the public sign-up API which auto-confirms via service key.
-        if any(kw in err_str for kw in ["not allowed", "unauthorized", "forbidden"]):
-            try:
-                fallback = client.auth.sign_up({
-                    "email": email,
-                    "password": password,
-                })
-                if fallback.user:
-                    # Auto-confirm the user using admin update
-                    try:
-                        client.auth.admin.update_user_by_id(
-                            str(fallback.user.id),
-                            {"email_confirm": True},
-                        )
-                    except Exception:
-                        pass  # Confirmation email was sent; proceed
-                    return {"user": fallback.user, "session": fallback.session}
-            except Exception:
-                pass
-        raise admin_exc
+    except Exception as exc:
+        err_str = str(exc).lower()
+        if any(keyword in err_str for keyword in ["not allowed", "unauthorized", "forbidden"]):
+            raise RuntimeError(
+                "Supabase admin user creation is not allowed. Check the deployed "
+                "SUPABASE_SERVICE_ROLE_KEY; it must be the service_role key, not anon."
+            ) from exc
+        raise
 
 
 def sign_in_with_email(email: str, password: str) -> dict:
@@ -107,4 +92,3 @@ def sign_in_with_email(email: str, password: str) -> dict:
         "refresh_token": response.session.refresh_token,
         "user": response.user,
     }
-

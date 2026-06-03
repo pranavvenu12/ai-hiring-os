@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.interview import InterviewSession, InterviewStatus
 from app.models.resume import Resume
 from app.models.job import Job
-from app.services import interview_ai_service
+from app.services import assemblyai_service, interview_ai_service, realtime_service
 
 logger = logging.getLogger(__name__)
 
@@ -82,15 +82,88 @@ async def submit_answer(
     if question_index < 0 or question_index >= len(questions):
         raise ValueError(f"Invalid question index: {question_index}")
 
-    transcript = list(session.transcript or [])
-    transcript.append({
+    answer_entry = {
         "question_index": question_index,
         "question": questions[question_index].get("question", ""),
         "category": questions[question_index].get("category", ""),
         "answer": answer_text,
-    })
+    }
+    transcript = list(session.transcript or [])
+    transcript.append(answer_entry)
     session.transcript = transcript
+    session.interview_transcript = "\n\n".join(
+        f"Q{item.get('question_index', 0) + 1}: {item.get('question', '')}\nA: {item.get('answer', '')}"
+        for item in transcript
+    )
 
+    await db.flush()
+    await db.refresh(session)
+    return session
+
+
+async def submit_voice_answer(
+    db: AsyncSession,
+    session_id: uuid.UUID,
+    question_index: int,
+    audio_bytes: bytes,
+    *,
+    filename: str,
+    content_type: str | None = None,
+) -> InterviewSession:
+    """Transcribe a recorded voice answer with AssemblyAI and append it to the transcript."""
+    transcription = await assemblyai_service.transcribe_audio(
+        audio_bytes,
+        filename=filename,
+        content_type=content_type,
+    )
+    session = await submit_answer(db, session_id, question_index, transcription["text"])
+    metrics = dict(session.interview_metrics or {})
+    voice_answers = list(metrics.get("voice_answers", []))
+    voice_answers.append({
+        "question_index": question_index,
+        "text": transcription["text"],
+        "metrics": transcription["metrics"],
+        "audio_url": transcription["audio_url"],
+        "assemblyai_id": transcription["assemblyai_id"],
+    })
+    metrics["voice_answers"] = voice_answers
+    metrics["latest_voice"] = transcription["metrics"]
+    metrics["aggregate"] = _aggregate_voice_metrics(voice_answers)
+    session.interview_metrics = metrics
+    session.audio_url = transcription["audio_url"]
+    session.communication_score = transcription["metrics"]["communication_score"]
+    session.confidence_score = transcription["metrics"]["confidence_score"]
+    session.fluency_score = transcription["metrics"]["fluency_score"]
+    await db.flush()
+    await db.refresh(session)
+    return session
+
+
+async def submit_browser_voice_fallback(
+    db: AsyncSession,
+    session_id: uuid.UUID,
+    question_index: int,
+    transcript_text: str,
+) -> InterviewSession:
+    """Store browser speech-recognition fallback transcript and derived metrics."""
+    session = await submit_answer(db, session_id, question_index, transcript_text)
+    metrics = dict(session.interview_metrics or {})
+    fallback_metrics = assemblyai_service.build_voice_metrics(transcript_text, [])
+    voice_answers = list(metrics.get("voice_answers", []))
+    voice_answers.append({
+        "question_index": question_index,
+        "text": transcript_text,
+        "metrics": fallback_metrics,
+        "audio_url": None,
+        "source": "browser_speech_recognition",
+    })
+    metrics["voice_answers"] = voice_answers
+    metrics["latest_voice"] = fallback_metrics
+    metrics["aggregate"] = _aggregate_voice_metrics(voice_answers)
+    session.interview_metrics = metrics
+    session.communication_score = fallback_metrics["communication_score"]
+    session.confidence_score = fallback_metrics["confidence_score"]
+    session.fluency_score = fallback_metrics["fluency_score"]
     await db.flush()
     await db.refresh(session)
     return session
@@ -135,13 +208,22 @@ async def complete_interview(
     session.status = InterviewStatus.COMPLETED.value
     session.ai_summary = evaluation.get("ai_summary", "")
     session.technical_score = evaluation.get("technical_score", 0)
-    session.communication_score = evaluation.get("communication_score", 0)
-    session.confidence_score = evaluation.get("confidence_score", 0)
+    voice_aggregate = (session.interview_metrics or {}).get("aggregate", {})
+    session.communication_score = voice_aggregate.get("communication_score", evaluation.get("communication_score", 0))
+    session.confidence_score = voice_aggregate.get("confidence_score", evaluation.get("confidence_score", 0))
+    session.fluency_score = voice_aggregate.get("fluency_score", session.fluency_score or 0)
     session.overall_score = evaluation.get("overall_score", 0)
     session.recommendation = evaluation.get("recommendation", "consider")
 
     await db.flush()
     await db.refresh(session)
+    await realtime_service.publish_event(session.company_id, "interview.completed", {
+        "session_id": str(session.id),
+        "candidate_id": str(session.candidate_id),
+        "job_id": str(session.job_id),
+        "overall_score": session.overall_score,
+        "recommendation": session.recommendation,
+    })
     return session
 
 
@@ -180,10 +262,14 @@ async def list_interviews_by_candidate(
             "status": session.status,
             "questions": session.questions,
             "transcript": session.transcript,
+            "interview_transcript": session.interview_transcript,
+            "interview_metrics": session.interview_metrics,
+            "audio_url": session.audio_url,
             "ai_summary": session.ai_summary,
             "technical_score": session.technical_score,
             "communication_score": session.communication_score,
             "confidence_score": session.confidence_score,
+            "fluency_score": session.fluency_score,
             "overall_score": session.overall_score,
             "recommendation": session.recommendation,
             "created_at": session.created_at.isoformat(),
@@ -224,6 +310,8 @@ async def list_interviews_by_company(
             "technical_score": session.technical_score,
             "communication_score": session.communication_score,
             "confidence_score": session.confidence_score,
+            "fluency_score": session.fluency_score,
+            "interview_metrics": session.interview_metrics,
             "overall_score": session.overall_score,
             "recommendation": session.recommendation,
             "created_at": session.created_at.isoformat(),
@@ -242,3 +330,23 @@ async def list_interviews_by_company(
         "avg_overall_score": round(sum(overall_scores) / len(overall_scores), 1) if overall_scores else 0.0,
         "interviews": interviews[:20],
     }
+
+
+def _aggregate_voice_metrics(voice_answers: list[dict]) -> dict:
+    values = [answer.get("metrics", {}) for answer in voice_answers]
+    if not values:
+        return {}
+    numeric_keys = [
+        "speaking_pace_wpm",
+        "filler_word_rate",
+        "communication_score",
+        "confidence_score",
+        "fluency_score",
+    ]
+    aggregate = {}
+    for key in numeric_keys:
+        nums = [float(item[key]) for item in values if isinstance(item.get(key), (int, float))]
+        aggregate[key] = round(sum(nums) / len(nums), 1) if nums else 0
+    aggregate["filler_word_count"] = sum(int(item.get("filler_word_count", 0)) for item in values)
+    aggregate["word_count"] = sum(int(item.get("word_count", 0)) for item in values)
+    return aggregate

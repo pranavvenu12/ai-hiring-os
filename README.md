@@ -15,10 +15,12 @@ The current implementation is a React/Vite frontend backed by a FastAPI API. Aut
 | Candidates | Bulk PDF resume upload, Supabase Storage upload, background extraction, AI scoring, candidate list by job |
 | AI Screening | Resume parsing, skill match score, semantic score, overall score, summary/explanation, matched/missing skills |
 | AI Interview | Question generation, browser speech-to-text capture, transcript recording, AI evaluation, recommendation, interview analytics |
+| Voice AI Interviews | AssemblyAI audio upload/transcription, voice metrics, transcript persistence, browser speech fallback |
 | Employees | Employee directory, department filtering, HR/Admin create/update/delete, manager team visibility, employee self visibility |
 | Attendance | Clock in/out, total hour calculation, present/half-day/absent status, own/team/company views |
 | Performance | Manager reviews, employee review history, team reviews, company analytics |
 | Payroll | Generate payroll from attendance, HR approval, paid status, employee payslip history, PDF-ready payslip, AI payroll insight |
+| Realtime | Tenant-scoped FastAPI WebSockets for resume, score, interview, and payroll events |
 | Dashboards | Role-specific HR, Manager, and Employee dashboards with recruitment and HRMS widgets |
 
 ## Architecture
@@ -42,6 +44,7 @@ graph LR
 | Database | Supabase PostgreSQL with asyncpg |
 | Auth | Supabase Auth JWT verification plus local `users` table |
 | AI | Gemini API, HuggingFace Router, deterministic template fallback |
+| Voice AI | AssemblyAI transcription API with browser speech-recognition fallback |
 | File Processing | PyMuPDF for PDF text extraction, Supabase Storage for resume files |
 | Deployment | Vercel frontend, AWS EC2 Docker backend, legacy Render config retained |
 
@@ -94,6 +97,7 @@ AI_GEMINI_KEY=
 AI_HF_KEY=
 AI_HF_BASE_URL=https://router.huggingface.co/v1
 AI_HF_MODEL=meta-llama/Llama-3.1-8B-Instruct
+ASSEMBLYAI_API_KEY=
 ```
 
 ### Frontend
@@ -129,6 +133,7 @@ The frontend is configured for Vercel through `vercel.json` with `frontend` as t
 | `docs/INTERVIEW_PREPARATION_GUIDE.md` | Product, technical, and HR interview preparation |
 | `docs/PROJECT_WALKTHROUGH.md` | Screen-by-screen walkthrough |
 | `docs/FWC_REQUIREMENT_MAPPING.md` | FWC requirement compliance mapping |
+| `docs/SCALABILITY_REPORT.md` | Locust load-test plan and architecture scaling analysis |
 | `docs/ARCHITECTURE_DECISIONS.md` | Architecture decision records |
 
 ## Known Limitations
@@ -140,3 +145,10 @@ The frontend is configured for Vercel through `vercel.json` with `frontend` as t
 | Background jobs | Resume extraction uses FastAPI `BackgroundTasks`, not a durable queue |
 | Migrations | Models are auto-created on startup; Alembic is installed but no formal migration history is maintained |
 | Scale testing | Architecture is designed for horizontal scale, but no load-test evidence is included in the repo |
+
+## Enterprise Readiness Upgrades
+
+- AssemblyAI voice interview transcription now stores `interview_transcript`, `interview_metrics`, and `audio_url`.
+- FastAPI WebSockets provide tenant-scoped realtime events for resumes, AI scoring, interviews, and payroll.
+- Payroll now stores explicit salary components: basic salary, allowances, bonuses, manual deductions, and attendance deductions.
+- Locust load tests cover login, candidate listing, resume upload, and payroll retrieval for staged 100/250/500-user validation.

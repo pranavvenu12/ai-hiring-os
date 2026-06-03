@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Users, Briefcase, Star, ClipboardList, ArrowRight, Building2, MapPin, Globe, Mail, Layers3, UserCheck, Clock, TrendingUp, Brain, Mic, Wallet, Receipt, BadgeDollarSign } from 'lucide-react';
+import { Users, Briefcase, Star, ClipboardList, ArrowRight, Building2, MapPin, Globe, Mail, Layers3, UserCheck, Clock, TrendingUp, Mic, Wallet, Receipt, BadgeDollarSign } from 'lucide-react';
 import { formatRelativeTime, formatShortDate } from '../utils/date';
 
 const DashboardHR = () => {
@@ -35,14 +35,8 @@ const DashboardHR = () => {
         }
         return null;
     });
-    const [loading, setLoading] = useState(true);
     const [hrmsStats, setHrmsStats] = useState({ totalEmployees: 0, attendanceToday: 0, avgPerformance: 0, interviewCompletion: 0 });
     const [payrollStats, setPayrollStats] = useState({ totalPayrollCost: 0, pendingPayroll: 0, employeesPaid: 0 });
-
-    useEffect(() => {
-        document.title = 'AI Hiring OS - HR Dashboard';
-        fetchData();
-    }, []);
 
     useEffect(() => {
         if (user?.company_id) {
@@ -53,7 +47,7 @@ const DashboardHR = () => {
         }
     }, [user]);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             const currentUser = await api.get('/me');
             const [jobsData, companyData] = await Promise.all([
@@ -119,10 +113,13 @@ const DashboardHR = () => {
             } catch (e) { console.error('HRMS stats fetch failed:', e); }
         } catch (error) {
             console.error(error);
-        } finally {
-            setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        document.title = 'AI Hiring OS - HR Dashboard';
+        fetchData();
+    }, [fetchData]);
 
     const containerVariants = {
         animate: {

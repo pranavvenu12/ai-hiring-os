@@ -50,6 +50,9 @@ async def generate_payroll(
             month=payload.month,
             year=payload.year,
             base_salary=payload.base_salary,
+            allowances=payload.allowances,
+            bonuses=payload.bonuses,
+            deductions=payload.deductions,
         )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
@@ -74,6 +77,9 @@ async def generate_all_payroll(
             year=payload.year,
             default_base_salary=payload.default_base_salary,
             employee_salaries=payload.employee_salaries,
+            default_allowances=payload.default_allowances,
+            default_bonuses=payload.default_bonuses,
+            default_deductions=payload.default_deductions,
         )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))

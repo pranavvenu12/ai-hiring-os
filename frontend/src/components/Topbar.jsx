@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { Bell, Search, ChevronRight, Briefcase, Users, UserPlus, X, Settings, LogOut, Sparkles, Loader2, Sun, Moon, CheckCheck } from 'lucide-react';
+import { Bell, Search, ChevronRight, Briefcase, Users, UserPlus, X, Settings, LogOut, Sparkles, Loader2, Sun, Moon, CheckCheck, FileText } from 'lucide-react';
 import { formatRelativeTime } from '../utils/date';
 import { useTheme } from '../context/ThemeContext';
+import { useRealtime } from '../hooks/useRealtime';
 
 const Topbar = ({ title }) => {
     const { user, logout } = useAuth();
@@ -67,10 +68,31 @@ const Topbar = ({ title }) => {
         [notifications],
     );
 
-    useEffect(() => {
-        if (!user) return;
-        fetchNotifications();
-    }, [user]);
+    const handleRealtimeEvent = useCallback((event) => {
+        const config = {
+            'resume.uploaded': ['Resume uploaded', event.payload?.candidate_name || 'New candidate received', '/candidates', Users],
+            'resume.processed': ['Resume processed', event.payload?.candidate_name || 'Extraction completed', '/candidates', FileText],
+            'ai_score.generated': ['AI score generated', `${event.payload?.candidate_name || 'Candidate'} scored ${event.payload?.score || 0}%`, '/candidates', Sparkles],
+            'interview.completed': ['Interview completed', `Recommendation: ${event.payload?.recommendation || 'review'}`, '/interviews', Users],
+            'payroll.generated': ['Payroll generated', event.payload?.employee_name || 'Payroll record created', '/payroll', Briefcase],
+            'payroll.status_updated': ['Payroll updated', `${event.payload?.employee_name || 'Employee'}: ${event.payload?.status || 'updated'}`, '/payroll', Briefcase],
+        };
+        const item = config[event.type];
+        if (!item) return;
+        const [titleText, message, href, Icon] = item;
+        setNotifications((current) => [{
+            id: `${event.type}-${Date.now()}`,
+            title: titleText,
+            message,
+            href,
+            icon: Icon,
+            time: 'Just now',
+            timestamp: Date.now(),
+            read: false,
+        }, ...current].slice(0, 8));
+    }, []);
+
+    useRealtime(handleRealtimeEvent, Boolean(user));
 
     useEffect(() => {
         const handleOutsideClick = (event) => {
@@ -98,7 +120,7 @@ const Topbar = ({ title }) => {
         };
     }, []);
 
-    const fetchNotifications = async () => {
+    const fetchNotifications = useCallback(async () => {
         setIsLoading(true);
         try {
             const readIds = new Set(
@@ -177,7 +199,12 @@ const Topbar = ({ title }) => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [readNotificationsKey]);
+
+    useEffect(() => {
+        if (!user) return;
+        fetchNotifications();
+    }, [fetchNotifications, user]);
 
     const safeGet = async (path, fallback) => {
         try {

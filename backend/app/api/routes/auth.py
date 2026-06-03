@@ -148,15 +148,13 @@ async def signup(
                 raise HTTPException(status_code=400, detail=f"Supabase error: {exc}")
         else:
             err_str = str(exc).lower()
-            if "not allowed" in err_str or "unauthorized" in err_str:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=(
-                        "Registration is currently restricted by the platform. "
-                        "Please ask your HR/Admin to enable signups in Supabase Auth settings "
-                        "(Authentication → Settings → 'Allow new users to sign up')."
-                    ),
+            if "service_role" in err_str or "not allowed" in err_str or "unauthorized" in err_str:
+                detail = (
+                    "Signup is blocked because the backend Supabase service-role key "
+                    "is missing or incorrect. Deploy the backend with the real "
+                    "SUPABASE_SERVICE_ROLE_KEY value."
                 )
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=detail)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Supabase registration failed: {exc}",

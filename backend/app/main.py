@@ -12,7 +12,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from app.api.routes import auth, companies, health, users, jobs, employees, attendance, performance, interviews, payroll
+from app.api.routes import auth, companies, health, users, jobs, employees, attendance, performance, interviews, payroll, realtime
 from app.core.config import get_settings
 from app.db.base import Base
 from app.db.session import engine
@@ -37,6 +37,15 @@ async def lifespan(app: FastAPI):
         await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS salary_range VARCHAR(120)"))
         await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS open_until TIMESTAMPTZ"))
         await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS status VARCHAR(40) NOT NULL DEFAULT 'open'"))
+        await conn.execute(text("ALTER TABLE interview_sessions ADD COLUMN IF NOT EXISTS interview_transcript TEXT"))
+        await conn.execute(text("ALTER TABLE interview_sessions ADD COLUMN IF NOT EXISTS interview_metrics JSONB"))
+        await conn.execute(text("ALTER TABLE interview_sessions ADD COLUMN IF NOT EXISTS audio_url VARCHAR(1024)"))
+        await conn.execute(text("ALTER TABLE interview_sessions ADD COLUMN IF NOT EXISTS fluency_score FLOAT"))
+        await conn.execute(text("ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS basic_salary FLOAT NOT NULL DEFAULT 0"))
+        await conn.execute(text("ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS allowances FLOAT NOT NULL DEFAULT 0"))
+        await conn.execute(text("ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS bonuses FLOAT NOT NULL DEFAULT 0"))
+        await conn.execute(text("ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS manual_deductions FLOAT NOT NULL DEFAULT 0"))
+        await conn.execute(text("ALTER TABLE payroll_records ADD COLUMN IF NOT EXISTS attendance_deductions FLOAT NOT NULL DEFAULT 0"))
         await conn.execute(text("""
             CREATE UNIQUE INDEX IF NOT EXISTS ix_companies_name_lower_unique
             ON companies (lower(name));
@@ -95,6 +104,7 @@ app.include_router(attendance.router)
 app.include_router(performance.router)
 app.include_router(interviews.router)
 app.include_router(payroll.router)
+app.include_router(realtime.router)
 
 
 # ── Root redirect ───────────────────────────────────────────────

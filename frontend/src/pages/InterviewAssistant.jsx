@@ -1,14 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
-import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { Mic, MicOff, Send, Brain, Play, CheckCircle2, ArrowRight, Loader2, MessageSquare, BarChart3, Award, ChevronRight, Volume2 } from 'lucide-react';
+import { Mic, MicOff, Brain, Play, CheckCircle2, ArrowRight, Loader2, MessageSquare, BarChart3, Award, Volume2 } from 'lucide-react';
+import { useRealtime } from '../hooks/useRealtime';
 
 const InterviewAssistant = () => {
-    const { user } = useAuth();
     const [jobs, setJobs] = useState([]);
     const [selectedJob, setSelectedJob] = useState(null);
     const [candidates, setCandidates] = useState([]);
@@ -18,6 +17,8 @@ const InterviewAssistant = () => {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answerText, setAnswerText] = useState('');
     const [isRecording, setIsRecording] = useState(false);
+    const [recordedAudio, setRecordedAudio] = useState(null);
+    const [voiceMetrics, setVoiceMetrics] = useState(null);
     const [submittingAnswer, setSubmittingAnswer] = useState(false);
     const [completing, setCompleting] = useState(false);
     const [starting, setStarting] = useState(false);
@@ -25,26 +26,36 @@ const InterviewAssistant = () => {
     const [companyStats, setCompanyStats] = useState(null);
     const { toast } = useToast();
     const recognitionRef = useRef(null);
+    const mediaRecorderRef = useRef(null);
+    const audioChunksRef = useRef([]);
+
+    const fetchJobs = useCallback(async () => {
+        try {
+            const data = await api.get('/jobs');
+            setJobs(data);
+        } catch (err) { console.error(err); }
+    }, []);
+
+    const fetchCompanyStats = useCallback(async () => {
+        try {
+            const data = await api.get('/interviews/company/analytics');
+            setCompanyStats(data);
+        } catch (err) { console.error(err); }
+    }, []);
 
     useEffect(() => {
         document.title = 'AI Hiring OS - AI Interview Assistant';
         fetchJobs();
         fetchCompanyStats();
-    }, []);
+    }, [fetchCompanyStats, fetchJobs]);
 
-    const fetchJobs = async () => {
-        try {
-            const data = await api.get('/jobs');
-            setJobs(data);
-        } catch (err) { console.error(err); }
-    };
+    const handleRealtimeEvent = useCallback((event) => {
+        if (event.type === 'interview.completed') {
+            fetchCompanyStats();
+        }
+    }, [fetchCompanyStats]);
 
-    const fetchCompanyStats = async () => {
-        try {
-            const data = await api.get('/interviews/company/analytics');
-            setCompanyStats(data);
-        } catch (err) { console.error(err); }
-    };
+    useRealtime(handleRealtimeEvent);
 
     const fetchCandidates = async (jobId) => {
         try {
@@ -79,16 +90,42 @@ const InterviewAssistant = () => {
         if (!answerText.trim()) return;
         setSubmittingAnswer(true);
         try {
-            await api.post(`/interviews/${session.id}/answer`, {
-                question_index: currentQuestionIndex,
-                answer_text: answerText,
-            });
+            if (recordedAudio) {
+                const formData = new FormData();
+                formData.append('question_index', String(currentQuestionIndex));
+                formData.append('audio', recordedAudio, `interview-${session.id}-${currentQuestionIndex}.webm`);
+                const response = await api.post(`/interviews/${session.id}/voice-answer`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
+                setVoiceMetrics(response.voice_metrics || response.interview_metrics?.latest_voice || null);
+            } else {
+                await api.post(`/interviews/${session.id}/voice-fallback`, {
+                    question_index: currentQuestionIndex,
+                    transcript_text: answerText,
+                });
+            }
 
             if (currentQuestionIndex < (session.questions?.length || 0) - 1) {
                 setCurrentQuestionIndex(prev => prev + 1);
                 setAnswerText('');
+                setRecordedAudio(null);
             }
-        } catch (err) { toast.error(err.detail || 'Failed to submit answer'); }
+        } catch (err) {
+            try {
+                await api.post(`/interviews/${session.id}/voice-fallback`, {
+                    question_index: currentQuestionIndex,
+                    transcript_text: answerText,
+                });
+                toast.warning('AssemblyAI unavailable. Saved browser transcript fallback.');
+                if (currentQuestionIndex < (session.questions?.length || 0) - 1) {
+                    setCurrentQuestionIndex(prev => prev + 1);
+                    setAnswerText('');
+                    setRecordedAudio(null);
+                }
+            } catch (fallbackErr) {
+                toast.error(fallbackErr.detail || err.detail || 'Failed to submit answer');
+            }
+        }
         finally { setSubmittingAnswer(false); }
     };
 
@@ -106,14 +143,34 @@ const InterviewAssistant = () => {
 
     // Voice Recording
     const toggleRecording = () => {
-        if (isRecording) {
-            stopRecording();
-        } else {
-            startRecording();
+        if (isRecording) stopRecording();
+        else startRecording();
+    };
+
+    const startRecording = async () => {
+        setRecordedAudio(null);
+        audioChunksRef.current = [];
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const recorder = new MediaRecorder(stream);
+            recorder.ondataavailable = (event) => {
+                if (event.data.size > 0) audioChunksRef.current.push(event.data);
+            };
+            recorder.onstop = () => {
+                const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                setRecordedAudio(blob);
+                stream.getTracks().forEach((track) => track.stop());
+            };
+            mediaRecorderRef.current = recorder;
+            recorder.start();
+            setIsRecording(true);
+        } catch (error) {
+            console.error('MediaRecorder unavailable, falling back to browser speech recognition:', error);
+            startSpeechRecognitionFallback();
         }
     };
 
-    const startRecording = () => {
+    const startSpeechRecognitionFallback = () => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
             toast.warning('Speech recognition is not supported in this browser. Please use Chrome or Edge.');
@@ -155,6 +212,10 @@ const InterviewAssistant = () => {
     };
 
     const stopRecording = () => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+            mediaRecorderRef.current.stop();
+            mediaRecorderRef.current = null;
+        }
         if (recognitionRef.current) {
             recognitionRef.current.stop();
             recognitionRef.current = null;
@@ -296,7 +357,8 @@ const InterviewAssistant = () => {
                                 <div className="flex items-center justify-between">
                                     <div className="text-xs text-slate-400 font-medium flex items-center gap-2">
                                         {isRecording && <><Volume2 size={14} className="text-rose-500 animate-pulse" /> Recording in progress...</>}
-                                        {!isRecording && <>Press the mic button for voice input or type your answer</>}
+                                        {!isRecording && recordedAudio && <>Audio recorded. Submit to transcribe with AssemblyAI.</>}
+                                        {!isRecording && !recordedAudio && <>Press the mic button for voice input or type your answer</>}
                                     </div>
                                     <div className="flex gap-3">
                                         <button onClick={handleSubmitAnswer} disabled={!answerText.trim() || submittingAnswer || isLastQuestion}
@@ -314,6 +376,19 @@ const InterviewAssistant = () => {
                                         )}
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {voiceMetrics && (
+                        <div className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm">
+                            <h3 className="text-lg font-semibold text-slate-900 mb-4">Latest Voice Analytics</h3>
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                <MiniStatCard icon={MessageSquare} label="Fluency" value={`${voiceMetrics.fluency_score || 0}%`} />
+                                <MiniStatCard icon={BarChart3} label="Pace" value={`${voiceMetrics.speaking_pace_wpm || 0} WPM`} />
+                                <MiniStatCard icon={Award} label="Fillers" value={voiceMetrics.filler_word_count || 0} />
+                                <MiniStatCard icon={CheckCircle2} label="Confidence" value={`${voiceMetrics.confidence_score || 0}%`} />
+                                <MiniStatCard icon={Brain} label="Comm." value={`${voiceMetrics.communication_score || 0}%`} />
                             </div>
                         </div>
                     )}

@@ -178,3 +178,9 @@ Answer: The backend resolves `company_id` from the authenticated user and applie
 | GitHub | Source control and deployment source |
 
 Deployment interview answer: The active production direction is Vercel for static frontend and EC2 Docker for the always-on FastAPI backend. Supabase remains the managed database/auth/storage layer.
+# Enterprise Upgrade Notes
+
+- AssemblyAI is used for recorded voice interview transcription and speech analytics.
+- FastAPI WebSockets provide tenant-scoped realtime updates without replacing REST APIs.
+- Locust is included for reproducible concurrency validation.
+- Payroll uses persisted salary components instead of only attendance-adjusted base salary.

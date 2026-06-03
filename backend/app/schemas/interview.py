@@ -33,6 +33,13 @@ class InterviewAnswer(BaseModel):
     answer_text: str
 
 
+class BrowserVoiceFallback(BaseModel):
+    """Fallback voice transcript submitted when AssemblyAI is unavailable."""
+
+    question_index: int
+    transcript_text: str
+
+
 # ── Responses ────────────────────────────────────────────────────
 
 
@@ -55,10 +62,14 @@ class InterviewOut(BaseModel):
     status: str
     questions: Optional[List[Dict]] = None
     transcript: Optional[List[Dict]] = None
+    interview_transcript: Optional[str] = None
+    interview_metrics: Optional[Dict] = None
+    audio_url: Optional[str] = None
     ai_summary: Optional[str] = None
     technical_score: Optional[float] = None
     communication_score: Optional[float] = None
     confidence_score: Optional[float] = None
+    fluency_score: Optional[float] = None
     overall_score: Optional[float] = None
     recommendation: Optional[str] = None
     created_at: datetime

@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import React, { createContext, useCallback, useState, useContext, useEffect } from 'react';
 import api from '../services/api';
 
 const AuthContext = createContext(null);
@@ -9,6 +10,30 @@ export const AuthProvider = ({ children }) => {
         return savedUser ? JSON.parse(savedUser) : null;
     });
     const [loading, setLoading] = useState(true);
+
+    const logout = useCallback(() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
+        window.location.href = '/login';
+    }, []);
+
+    const fetchUser = useCallback(async () => {
+        try {
+            const data = await api.get('/me');
+            setUser(data);
+            localStorage.setItem('user', JSON.stringify(data));
+            return data;
+        } catch (error) {
+            const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/signup';
+            if (!isAuthPage) {
+                logout();
+            }
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    }, [logout]);
 
     useEffect(() => {
         // Detect Supabase OAuth tokens in the hash fragment
@@ -30,42 +55,18 @@ export const AuthProvider = ({ children }) => {
         } else {
             setLoading(false);
         }
-    }, []);
+    }, [fetchUser, user]);
 
-    const fetchUser = async () => {
-        try {
-            const data = await api.get('/me');
-            setUser(data);
-            localStorage.setItem('user', JSON.stringify(data));
-            return data;
-        } catch (error) {
-            const isAuthPage = window.location.pathname === '/login' || window.location.pathname === '/signup';
-            if (!isAuthPage) {
-                logout();
-            }
-            throw error;
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const login = async (email, password) => {
+    const login = useCallback(async (email, password) => {
         const data = await api.post('/auth/login', { email, password });
         localStorage.setItem('token', data.access_token);
         await fetchUser();
-    };
+    }, [fetchUser]);
 
-    const signup = async (payload) => {
+    const signup = useCallback(async (payload) => {
         await api.post('/auth/signup', payload);
         await login(payload.email, payload.password);
-    };
-
-    const logout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setUser(null);
-        window.location.href = '/login';
-    };
+    }, [login]);
 
     return (
         <AuthContext.Provider value={{ user, login, signup, logout, loading, fetchUser }}>
