@@ -16,6 +16,7 @@ class JobBase(BaseModel):
     department: str | None = None
     location: str | None = None
     employment_type: str | None = None
+    salary_range: str | None = None
     open_until: datetime | None = None
 
 
@@ -45,6 +46,7 @@ class PublicJobOut(JobBase):
     department: str | None = None
     location: str | None = None
     employment_type: str | None = None
+    salary_range: str | None = None
     open_until: datetime | None = None
 
     model_config = {"from_attributes": True}

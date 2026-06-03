@@ -26,6 +26,7 @@ async def create_job(
         department=payload.department,
         location=payload.location,
         employment_type=payload.employment_type,
+        salary_range=payload.salary_range,
         open_until=payload.open_until,
         company_id=company_id,
         created_by=user_id,

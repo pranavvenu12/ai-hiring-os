@@ -51,6 +51,7 @@ def _public_job_out(job: Job, company_name: str) -> PublicJobOut:
         department=job.department,
         location=job.location,
         employment_type=job.employment_type,
+        salary_range=job.salary_range,
         open_until=job.open_until,
     )
 

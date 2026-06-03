@@ -30,6 +30,7 @@ class Job(Base):
     department: Mapped[str | None] = mapped_column(String(255), nullable=True)
     location: Mapped[str | None] = mapped_column(String(255), nullable=True)
     employment_type: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    salary_range: Mapped[str | None] = mapped_column(String(120), nullable=True)
     open_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     status: Mapped[str] = mapped_column(String(40), nullable=False, default="open", server_default="open")
     created_by: Mapped[uuid.UUID] = mapped_column(

@@ -34,6 +34,7 @@ async def lifespan(app: FastAPI):
         await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS department VARCHAR(255)"))
         await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS location VARCHAR(255)"))
         await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS employment_type VARCHAR(80)"))
+        await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS salary_range VARCHAR(120)"))
         await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS open_until TIMESTAMPTZ"))
         await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS status VARCHAR(40) NOT NULL DEFAULT 'open'"))
     yield

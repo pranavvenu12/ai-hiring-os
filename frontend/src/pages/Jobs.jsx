@@ -16,6 +16,7 @@ const Jobs = () => {
         department: '',
         location: '',
         employment_type: 'Full-time',
+        salary_range: '',
         open_until: '',
         description: '',
     });
@@ -49,6 +50,7 @@ const Jobs = () => {
                 department: '',
                 location: '',
                 employment_type: 'Full-time',
+                salary_range: '',
                 open_until: '',
                 description: '',
             });
@@ -322,6 +324,17 @@ const Jobs = () => {
                                                 <option>Part-time</option>
                                                 <option>Remote</option>
                                             </select>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Salary</label>
+                                            <input
+                                                type="text"
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-6 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 transition-all font-medium"
+                                                placeholder="e.g. INR 8 LPA - INR 12 LPA"
+                                                value={newJob.salary_range}
+                                                onChange={e => setNewJob({...newJob, salary_range: e.target.value})}
+                                                required
+                                            />
                                         </div>
                                         <div className="space-y-3">
                                             <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Open Till</label>

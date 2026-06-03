@@ -68,8 +68,11 @@ function App() {
                         <Route path="/login" element={<Login />} />
                         <Route path="/signup" element={<Signup />} />
                         <Route path="/careers" element={<Careers />} />
+                        <Route path="/careers/:jobId" element={<Careers />} />
                         <Route path="/jobs/public" element={<Careers />} />
+                        <Route path="/jobs/public/:jobId" element={<Careers />} />
                         <Route path="/apply" element={<Careers />} />
+                        <Route path="/apply/:jobId" element={<Careers />} />
                         
                         {/* Role-Based Dashboards */}
                         <Route path="/dashboard/hr" element={
