@@ -11,7 +11,7 @@ import uuid
 from datetime import date, datetime, timezone
 from enum import Enum as PyEnum
 
-from sqlalchemy import Date, DateTime, ForeignKey, String, Text, text
+from sqlalchemy import Date, DateTime, ForeignKey, String, Text, UniqueConstraint, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -35,6 +35,9 @@ class Employee(Base):
     """An employee record scoped to a company (tenant)."""
 
     __tablename__ = "employees"
+    __table_args__ = (
+        UniqueConstraint("company_id", "employee_code", name="uq_employee_company_code"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

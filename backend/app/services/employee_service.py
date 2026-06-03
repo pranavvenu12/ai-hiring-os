@@ -19,10 +19,17 @@ from app.schemas.employee import EmployeeCreate, EmployeeUpdate
 async def _generate_employee_code(db: AsyncSession, company_id: uuid.UUID) -> str:
     """Generate the next sequential employee code for a company."""
     result = await db.execute(
-        select(func.count(Employee.id)).where(Employee.company_id == company_id)
+        select(Employee.employee_code).where(Employee.company_id == company_id)
     )
-    count = result.scalar() or 0
-    return f"EMP-{count + 1:04d}"
+    max_number = 0
+    for code in result.scalars().all():
+        if not code or not code.startswith("EMP-"):
+            continue
+        suffix = code.removeprefix("EMP-")
+        if suffix.isdigit():
+            max_number = max(max_number, int(suffix))
+
+    return f"EMP-{max_number + 1:04d}"
 
 
 async def create_employee(

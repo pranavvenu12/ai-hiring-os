@@ -37,6 +37,23 @@ async def lifespan(app: FastAPI):
         await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS salary_range VARCHAR(120)"))
         await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS open_until TIMESTAMPTZ"))
         await conn.execute(text("ALTER TABLE jobs ADD COLUMN IF NOT EXISTS status VARCHAR(40) NOT NULL DEFAULT 'open'"))
+        await conn.execute(text("""
+            CREATE UNIQUE INDEX IF NOT EXISTS ix_companies_name_lower_unique
+            ON companies (lower(name));
+        """))
+        await conn.execute(text("""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM pg_constraint
+                    WHERE conname = 'uq_employee_company_code'
+                ) THEN
+                    ALTER TABLE employees
+                    ADD CONSTRAINT uq_employee_company_code UNIQUE (company_id, employee_code);
+                END IF;
+            END $$;
+        """))
     yield
     await engine.dispose()
 
