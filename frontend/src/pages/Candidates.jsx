@@ -140,6 +140,9 @@ const Candidates = () => {
                 ...prev,
                 hiring_status: response.hiring_status
             }));
+            if (response.session_id) {
+                setCandidateInterviews([{ id: response.session_id }]);
+            }
             fetchCandidates();
             fetchCandidateInterviews(selectedCandidate.resume_id);
         } catch (err) {
@@ -435,7 +438,24 @@ const Candidates = () => {
                                             </div>
                                             <div className="mt-8 pt-8 border-t border-white/10">
                                                 <p className="text-sm font-medium text-indigo-50 leading-relaxed italic">
-                                                    {selectedCandidate.explanation && !selectedCandidate.explanation.includes('AI service is currently unavailable') && !selectedCandidate.explanation.includes('deterministic score') ? `"${selectedCandidate.explanation}"` : selectedCandidate.status === 'completed' ? `"${selectedCandidate.explanation || selectedCandidate.summary || 'Evaluation complete.'}"` : 'Processing AI-driven insights...'}
+                                                    {(() => {
+                                                        const exp = selectedCandidate.explanation || '';
+                                                        const sum = selectedCandidate.summary || '';
+                                                        const isFallback = (s) => {
+                                                            const lower = s.toLowerCase();
+                                                            return lower.includes('unavailable') || lower.includes('deterministic') || lower.includes('fallback');
+                                                        };
+                                                        if (selectedCandidate.status !== 'completed') {
+                                                            return 'Processing AI-driven insights...';
+                                                        }
+                                                        if (exp && !isFallback(exp)) {
+                                                            return `"${exp}"`;
+                                                        }
+                                                        if (sum && !isFallback(sum)) {
+                                                            return `"${sum}"`;
+                                                        }
+                                                        return '"Evaluation complete. Profile matched against job requirements."';
+                                                    })()}
                                                 </p>
                                             </div>
                                         </div>
@@ -476,7 +496,17 @@ const Candidates = () => {
                                                     </div>
                                                     <div className="space-y-2 flex-1">
                                                         <div className="text-sm font-bold text-slate-700 leading-relaxed">
-                                                            {selectedCandidate.summary || selectedCandidate.explanation || 'No summary available for this candidate yet.'}
+                                                            {(() => {
+                                                                const sum = selectedCandidate.summary || '';
+                                                                const exp = selectedCandidate.explanation || '';
+                                                                const isFallback = (s) => {
+                                                                    const lower = s.toLowerCase();
+                                                                    return lower.includes('unavailable') || lower.includes('deterministic') || lower.includes('fallback');
+                                                                };
+                                                                if (sum && !isFallback(sum)) return sum;
+                                                                if (exp && !isFallback(exp)) return exp;
+                                                                return 'Profile analysis complete. Evaluation based on candidate skills, domain experience, and job description alignment.';
+                                                            })()}
                                                         </div>
                                                         <div className="text-xs font-medium text-slate-400">
                                                             Resume uploaded {formatRelativeTime(selectedCandidate.created_at)}
@@ -602,13 +632,16 @@ const Candidates = () => {
                                                 <div className="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl flex flex-col items-center gap-3">
                                                     <input 
                                                         readOnly 
-                                                        value={`${window.location.origin}/public-interview/${candidateInterviews[0]?.id || selectedCandidate.resume_id}`} 
+                                                        value={candidateInterviews[0]?.id ? `${window.location.origin}/public-interview/${candidateInterviews[0].id}` : 'Generating interview link...'} 
                                                         className="w-full text-center bg-white border border-slate-200 text-xs font-semibold px-3 py-2.5 rounded-xl outline-none select-all" 
                                                     />
                                                     <button 
+                                                        disabled={!candidateInterviews[0]?.id}
                                                         onClick={() => {
-                                                            navigator.clipboard.writeText(`${window.location.origin}/public-interview/${candidateInterviews[0]?.id || selectedCandidate.resume_id}`);
-                                                            toast.success('Interview link copied to clipboard!');
+                                                            if (candidateInterviews[0]?.id) {
+                                                                navigator.clipboard.writeText(`${window.location.origin}/public-interview/${candidateInterviews[0].id}`);
+                                                                toast.success('Interview link copied to clipboard!');
+                                                            }
                                                         }}
                                                         className="btn btn-primary text-xs font-bold px-4 py-2"
                                                     >

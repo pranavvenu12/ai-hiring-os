@@ -146,7 +146,7 @@ Net salary: {record_data["net_salary"]}
         try:
             url = (
                 "https://generativelanguage.googleapis.com/v1beta/models/"
-                f"gemini-1.5-flash:generateContent?key={settings.AI_GEMINI_KEY}"
+                f"gemini-2.5-flash:generateContent?key={settings.AI_GEMINI_KEY}"
             )
             payload = {"contents": [{"parts": [{"text": prompt}]}]}
             async with httpx.AsyncClient(timeout=20.0) as client:

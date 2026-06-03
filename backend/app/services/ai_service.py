@@ -93,7 +93,7 @@ Be accurate and specific. Do not be overly generous."""
 async def _call_gemini(prompt: str) -> Dict[str, Any]:
     url = (
         f"https://generativelanguage.googleapis.com/v1beta/models/"
-        f"gemini-1.5-flash:generateContent?key={settings.AI_GEMINI_KEY}"
+        f"gemini-2.5-flash:generateContent?key={settings.AI_GEMINI_KEY}"
     )
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],

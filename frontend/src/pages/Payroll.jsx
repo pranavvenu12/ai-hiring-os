@@ -260,17 +260,19 @@ const Payroll = () => {
                     </div>
                 ) : (
                     <div className="space-y-8">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                            <MetricCard icon={Wallet} label="Total Payroll Cost" value={currency.format(summary.total_payroll_cost || 0)} />
-                            <MetricCard icon={CheckCircle2} label="Employees Paid" value={summary.employees_paid || 0} />
-                            <MetricCard icon={Receipt} label="Pending Payroll" value={summary.pending_payroll || 0} />
-                            <MetricCard icon={FileText} label="Approved Payroll" value={summary.approved_payroll || 0} />
-                            <MetricCard icon={BadgeDollarSign} label="Average Salary" value={currency.format(summary.average_salary || 0)} />
-                        </div>
+                        {!isEmployee && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                                <MetricCard icon={Wallet} label="Total Payroll Cost" value={currency.format(summary.total_payroll_cost || 0)} />
+                                <MetricCard icon={CheckCircle2} label="Employees Paid" value={summary.employees_paid || 0} />
+                                <MetricCard icon={Receipt} label="Pending Payroll" value={summary.pending_payroll || 0} />
+                                <MetricCard icon={FileText} label="Approved Payroll" value={summary.approved_payroll || 0} />
+                                <MetricCard icon={BadgeDollarSign} label="Average Salary" value={currency.format(summary.average_salary || 0)} />
+                            </div>
+                        )}
 
                         {canManage && (
                             <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-6 space-y-6">
-                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                     <Field label="Month">
                                         <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="input-field py-3">
                                             {monthNames.map((name, index) => <option key={name} value={index + 1}>{name}</option>)}
@@ -301,8 +303,8 @@ const Payroll = () => {
                             </div>
                         )}
 
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 min-w-0">
-                            <section className="lg:col-span-2 bg-white rounded-[1.5rem] border border-slate-200 shadow-sm overflow-hidden min-w-0">
+                        <div className={`${isEmployee ? 'block' : 'grid grid-cols-1 lg:grid-cols-3'} gap-8 min-w-0`}>
+                            <section className={`${isEmployee ? 'w-full' : 'lg:col-span-2'} bg-white rounded-[1.5rem] border border-slate-200 shadow-sm overflow-hidden min-w-0`}>
                                 <div className="p-6 border-b border-slate-100">
                                     <h2 className="text-2xl font-semibold tracking-tight text-slate-950">{isEmployee ? 'Payslip History' : 'Payroll Register'}</h2>
                                     <p className="text-sm font-medium text-slate-500 mt-1">{summary.ai_summary || 'Attendance-based payroll records for the selected period.'}</p>
@@ -391,11 +393,13 @@ const Payroll = () => {
                                 )}
                             </section>
 
-                            <aside className="space-y-6">
-                                <AnalyticsCard title="Salary Distribution" data={salaryDistribution} />
-                                <AnalyticsCard title="Department Cost" data={Object.entries(summary.department_costs || {}).map(([label, value]) => ({ label, value }))} money />
-                                <AnalyticsCard title="Monthly Payroll Trend" data={monthlyTrend} money />
-                            </aside>
+                            {!isEmployee && (
+                                <aside className="space-y-6">
+                                    <AnalyticsCard title="Salary Distribution" data={salaryDistribution} />
+                                    <AnalyticsCard title="Department Cost" data={Object.entries(summary.department_costs || {}).map(([label, value]) => ({ label, value }))} money />
+                                    <AnalyticsCard title="Monthly Payroll Trend" data={monthlyTrend} money />
+                                </aside>
+                            )}
                         </div>
 
                         {canManage && emptyCompanyRows.length > 0 && (
@@ -457,7 +461,7 @@ const MetricCard = ({ icon: Icon, label, value }) => (
 );
 
 const Field = ({ label, children }) => (
-    <label className="flex-1 min-w-[180px]">
+    <label className="block w-full">
         <span className="block text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400 mb-2">{label}</span>
         {children}
     </label>
