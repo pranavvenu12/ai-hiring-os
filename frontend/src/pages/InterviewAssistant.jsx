@@ -367,7 +367,22 @@ const InterviewAssistant = () => {
                                     <div className="break-all text-sm font-semibold text-indigo-950 mb-4">{publicInterviewUrl}</div>
                                     <div className="flex gap-3">
                                         <button
-                                            onClick={() => { navigator.clipboard.writeText(publicInterviewUrl); toast.success('Link copied to clipboard!'); }}
+                                            onClick={async () => {
+                                                try {
+                                                    await navigator.clipboard.writeText(publicInterviewUrl);
+                                                    toast.success('Link copied to clipboard!');
+                                                } catch {
+                                                    const el = document.createElement('textarea');
+                                                    el.value = publicInterviewUrl;
+                                                    el.style.position = 'fixed';
+                                                    el.style.opacity = '0';
+                                                    document.body.appendChild(el);
+                                                    el.select();
+                                                    document.execCommand('copy');
+                                                    document.body.removeChild(el);
+                                                    toast.success('Link copied!');
+                                                }
+                                            }}
                                             className="btn btn-secondary flex-1 justify-center py-3 text-sm font-bold"
                                         >
                                             <Copy size={16} /> Copy Link
