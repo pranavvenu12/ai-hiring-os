@@ -16,6 +16,7 @@ const RecruiterCopilot = () => {
     const [open, setOpen] = useState(false);
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
+    const [conversationStarted, setConversationStarted] = useState(false);
     const [messages, setMessages] = useState([
         {
             role: 'assistant',
@@ -29,6 +30,7 @@ const RecruiterCopilot = () => {
         const clean = text.trim();
         if (!clean || loading) return;
         setMessages(prev => [...prev, { role: 'user', text: clean }]);
+        setConversationStarted(true);
         setMessage('');
         setLoading(true);
         try {
@@ -115,17 +117,26 @@ const RecruiterCopilot = () => {
                         </div>
 
                         <div className="border-t border-slate-100 p-4">
-                            <div className="mb-3 flex flex-wrap gap-2">
-                                {prompts.map(prompt => (
-                                    <button
-                                        key={prompt}
-                                        onClick={() => ask(prompt)}
-                                        className="rounded-xl border border-slate-100 bg-white px-3 py-2 text-xs font-bold text-slate-500 hover:border-indigo-100 hover:bg-indigo-50 hover:text-indigo-600"
+                            <AnimatePresence>
+                                {!conversationStarted && (
+                                    <motion.div
+                                        initial={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="mb-3 flex flex-wrap gap-2 overflow-hidden"
                                     >
-                                        {prompt}
-                                    </button>
-                                ))}
-                            </div>
+                                        {prompts.map(prompt => (
+                                            <button
+                                                key={prompt}
+                                                onClick={() => ask(prompt)}
+                                                className="rounded-xl border border-slate-100 bg-white px-3 py-2 text-xs font-bold text-slate-500 hover:border-indigo-100 hover:bg-indigo-50 hover:text-indigo-600"
+                                            >
+                                                {prompt}
+                                            </button>
+                                        ))}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                             <div className="flex gap-2">
                                 <input
                                     value={message}
