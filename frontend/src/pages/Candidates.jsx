@@ -382,7 +382,11 @@ const Candidates = () => {
                                         </div>
                                     </div>
                                     <div className="flex gap-2 w-full sm:w-auto">
-                                        <button className="btn btn-secondary flex-1 sm:flex-none justify-center px-4 py-2 text-xs font-bold">Download PDF</button>
+                                        <button 
+                                            className="btn btn-secondary flex-1 sm:flex-none justify-center px-4 py-2 text-xs font-bold"
+                                            onClick={() => window.open(selectedCandidate.file_url, '_blank')}
+                                            disabled={!selectedCandidate.file_url}
+                                        >Download PDF</button>
                                         {selectedCandidate.hiring_status === 'shortlisted' ? (
                                             <span className="btn bg-emerald-500 text-white flex-1 sm:flex-none justify-center px-4 py-2 text-xs font-bold shadow-md cursor-default">
                                                 Shortlisted
