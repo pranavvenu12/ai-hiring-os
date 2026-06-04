@@ -280,15 +280,15 @@ const PublicInterview = () => {
                     <div className="space-y-4">
                         <p className="text-sm font-bold text-slate-700">Dear {session.candidate_name},</p>
                         <p className="text-sm leading-relaxed text-slate-500 font-medium">
-                            You are invited to complete an automated **AI Interview** for the position of **{session.job_title}** within our **{session.job_department}** department.
+                            You are invited to complete an automated <strong className="font-bold text-slate-900">AI Interview</strong> for the position of <strong className="font-bold text-slate-900">{session.job_title}</strong>{session.job_department ? <> within our <strong className="font-bold text-slate-900">{session.job_department}</strong> department</> : ''}.
                         </p>
                         <div className="bg-indigo-50/50 rounded-2xl p-5 border border-indigo-100/50 space-y-3">
                             <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-900 flex items-center gap-2">
                                 <Sparkles size={14} className="text-indigo-600 animate-pulse" /> Interview Instructions
                             </h4>
                             <ul className="text-xs text-indigo-950/70 font-semibold space-y-2 list-disc pl-4 leading-relaxed">
-                                <li>The interview consists of **{maxQuestions} adaptive questions** structured around technical, project, and behavioral criteria.</li>
-                                <li>You can answer by **speaking** (using your microphone for transcription) or by **typing** your responses in the text area.</li>
+                                <li>The interview consists of <strong className="font-extrabold text-indigo-950">{maxQuestions} adaptive questions</strong> structured around technical, project, and behavioral criteria.</li>
+                                <li>You can answer by <strong className="font-extrabold text-indigo-950">speaking</strong> (using your microphone for transcription) or by <strong className="font-extrabold text-indigo-950">typing</strong> your responses in the text area.</li>
                                 <li>Take your time; there is no strict timer for answers, but keep them concise and relevant.</li>
                                 <li>Ensure you are in a quiet room if you choose to record your audio.</li>
                             </ul>
