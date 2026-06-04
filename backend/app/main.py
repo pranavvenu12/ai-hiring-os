@@ -12,7 +12,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from app.api.routes import auth, companies, health, users, jobs, employees, attendance, performance, interviews, payroll, realtime
+from app.api.routes import agent, auth, companies, health, users, jobs, employees, attendance, performance, interviews, payroll, realtime
 from app.core.config import get_settings
 from app.db.base import Base
 from app.db.session import engine
@@ -108,6 +108,7 @@ app.include_router(performance.router)
 app.include_router(interviews.router)
 app.include_router(payroll.router)
 app.include_router(realtime.router)
+app.include_router(agent.router)
 
 
 # ── Root redirect ───────────────────────────────────────────────

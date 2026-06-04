@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
+import RecruiterCopilot from '../components/RecruiterCopilot';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Users, Briefcase, Star, ClipboardList, ArrowRight, Building2, MapPin, Globe, Mail, Layers3, UserCheck, Clock, TrendingUp, Mic, Wallet, Receipt, BadgeDollarSign } from 'lucide-react';
@@ -134,6 +135,7 @@ const DashboardHR = () => {
             <Sidebar />
             <main className="flex-1 ml-0 lg:ml-[280px] px-4 py-6 md:p-10 relative">
                 <Topbar title="System Overview" />
+                <RecruiterCopilot />
                 
                 {/* Stats Grid */}
                 <motion.div 

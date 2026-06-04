@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
+import RecruiterCopilot from '../components/RecruiterCopilot';
 import api from '../services/api';
 import { CheckCircle2, XCircle, Star, Brain, Clock, Users, TrendingUp, Wallet } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -59,6 +60,7 @@ const DashboardManager = () => {
             <Sidebar />
             <main className="flex-1 ml-0 lg:ml-[280px] px-4 py-6 md:p-10">
                 <Topbar title="Hiring Manager Portal" />
+                <RecruiterCopilot />
                 
                 <motion.div 
                     variants={containerVariants}
