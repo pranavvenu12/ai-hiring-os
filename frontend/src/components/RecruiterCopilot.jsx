@@ -3,6 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Bot, ChevronDown, Loader2, Send, Sparkles, Wrench } from 'lucide-react';
 import api from '../services/api';
 
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://ai-hiring-os-3rgo.onrender.com';
+
 const prompts = [
     'Show me top candidates',
     'Which candidates need manual review?',
@@ -38,9 +40,12 @@ const RecruiterCopilot = () => {
                 actions: response.suggested_actions || [],
             }]);
         } catch (error) {
+            const isNotFound = error?.detail === 'Not Found' || error?.status === 404;
             setMessages(prev => [...prev, {
                 role: 'assistant',
-                text: error.detail || 'Copilot could not complete that request.',
+                text: isNotFound
+                    ? `The Recruiter Copilot route is not available on the configured backend (${apiBaseUrl}). Use the updated Render backend or redeploy the current backend code.`
+                    : error.detail || 'Copilot could not complete that request.',
                 tools: [],
                 actions: [],
             }]);

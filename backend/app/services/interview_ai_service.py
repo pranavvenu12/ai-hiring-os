@@ -134,6 +134,32 @@ async def generate_adaptive_question(
     return _fallback_adaptive_question(transcript, skill_gaps or [], max_questions)
 
 
+def generate_initial_adaptive_question(
+    *,
+    resume_text: str,
+    skill_gaps: List[str] | None = None,
+) -> Dict[str, Any]:
+    """Fast deterministic first question so interview creation never waits on an LLM."""
+    project = _extract_project_hint(resume_text)
+    gaps = skill_gaps or []
+    if project:
+        return {
+            "question": f"Walk me through {project}. Why was it built, what architecture did you choose, and what was the hardest technical challenge?",
+            "category": "project_deep_dive",
+            "reasoning": "The first question starts with a resume project to verify real ownership and depth.",
+            "focus_area": project,
+            "should_continue": True,
+        }
+    focus = gaps[0] if gaps else "the core technologies required for this role"
+    return {
+        "question": f"Tell me about your experience with {focus}. What have you built with it, and what tradeoffs did you handle?",
+        "category": "technical",
+        "reasoning": "The first question targets the strongest available job-relevant skill signal.",
+        "focus_area": focus,
+        "should_continue": True,
+    }
+
+
 def _build_question_prompt(
     job_description: str, resume_text: str, interview_type: str
 ) -> str:
@@ -326,6 +352,18 @@ def _fallback_adaptive_question(transcript: List[Dict], skill_gaps: List[str], m
         "reasoning": "Fallback adaptive question selected from skill gaps and interview progress.",
         "should_continue": answered < max_questions,
     }
+
+
+def _extract_project_hint(resume_text: str) -> str | None:
+    known_projects = ["JourneySync", "AI Hiring OS", "WaterBuddy"]
+    for project in known_projects:
+        if project.lower() in resume_text.lower():
+            return project
+    for line in resume_text.splitlines():
+        clean = line.strip(" -:|")
+        if len(clean.split()) <= 5 and any(word in clean.lower() for word in ["project", "app", "system", "platform"]):
+            return clean[:80]
+    return None
 
 
 async def _call_gemini(prompt: str) -> Any:

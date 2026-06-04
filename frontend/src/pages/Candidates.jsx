@@ -141,6 +141,9 @@ const Candidates = () => {
             }));
             if (response.session_id) {
                 setCandidateInterviews([{ id: response.session_id }]);
+                const link = `${window.location.origin}/public-interview/${response.session_id}`;
+                navigator.clipboard?.writeText(link);
+                toast.success(`Candidate interview link copied: ${link}`);
             }
             fetchCandidates();
             fetchCandidateInterviews(selectedCandidate.resume_id);

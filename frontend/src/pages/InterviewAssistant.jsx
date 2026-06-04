@@ -4,7 +4,7 @@ import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
 import { useToast } from '../context/ToastContext';
-import { Mic, MicOff, Brain, Play, CheckCircle2, ArrowRight, Loader2, MessageSquare, BarChart3, Award, Volume2 } from 'lucide-react';
+import { Mic, MicOff, Brain, Play, CheckCircle2, ArrowRight, Loader2, MessageSquare, BarChart3, Award, Volume2, Copy, ExternalLink } from 'lucide-react';
 import { useRealtime } from '../hooks/useRealtime';
 
 const InterviewAssistant = () => {
@@ -240,6 +240,7 @@ const InterviewAssistant = () => {
 
     const maxQuestions = 5;
     const isLastQuestion = session && currentQuestionIndex >= maxQuestions - 1;
+    const publicInterviewUrl = session?.id ? `${window.location.origin}/public-interview/${session.id}` : '';
 
     return (
         <div className="flex bg-[#f8fafc] min-h-screen font-inter">
@@ -262,7 +263,7 @@ const InterviewAssistant = () => {
                     {!session && !completedSession && (
                         <div className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm">
                             <h3 className="text-xl font-semibold text-slate-900 mb-8 flex items-center gap-3">
-                                <Brain size={22} className="text-indigo-600" /> Start New AI Interview
+                                <Brain size={22} className="text-indigo-600" /> Create Candidate Interview Link
                             </h3>
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -311,7 +312,7 @@ const InterviewAssistant = () => {
                                     <button onClick={handleStartInterview} disabled={!selectedCandidate || !selectedJob || starting}
                                         className="btn btn-primary w-full justify-center py-4 mt-6 font-semibold text-base shadow-sm disabled:opacity-40">
                                         {starting ? <Loader2 className="animate-spin" size={22} /> : <Play size={22} />}
-                                        {starting ? 'Generating Questions...' : 'Start Interview'}
+                                        {starting ? 'Creating Link...' : 'Generate Public Interview Link'}
                                     </button>
                                 </div>
                             </div>
@@ -321,10 +322,33 @@ const InterviewAssistant = () => {
                     {/* Active Interview Session */}
                     {session && !completedSession && (
                         <div className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm">
+                            <div className="mb-6 rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+                                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                    <div>
+                                        <div className="text-xs font-bold uppercase tracking-widest text-emerald-700">Candidate Public Interview Link</div>
+                                        <div className="mt-1 break-all text-sm font-semibold text-emerald-950">{publicInterviewUrl}</div>
+                                        <p className="mt-1 text-xs font-semibold text-emerald-800/70">
+                                            Send this link to the candidate. The panel below is only an HR preview/test console.
+                                        </p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => navigator.clipboard.writeText(publicInterviewUrl)}
+                                            className="btn btn-secondary px-4 py-2 text-xs font-bold"
+                                        >
+                                            <Copy size={16} /> Copy
+                                        </button>
+                                        <a href={publicInterviewUrl} target="_blank" rel="noreferrer" className="btn btn-primary px-4 py-2 text-xs font-bold">
+                                            <ExternalLink size={16} /> Open
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* Progress */}
                             <div className="flex items-center justify-between mb-8">
                                 <div>
-                                    <h3 className="text-xl font-semibold text-slate-900">AI Interview in Progress</h3>
+                                    <h3 className="text-xl font-semibold text-slate-900">HR Preview Console</h3>
                                     <p className="text-sm text-slate-400 font-medium">Question {currentQuestionIndex + 1} of {maxQuestions}</p>
                                 </div>
                                 <div className="text-right">

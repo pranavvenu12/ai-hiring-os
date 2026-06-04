@@ -45,12 +45,9 @@ async def start_interview(
     # existing fixed generator so old demos remain reliable if a provider fails.
     score_result = await db.execute(select(AIScore).where(AIScore.resume_id == candidate_id))
     ai_score = score_result.scalar_one_or_none()
-    first_question = await interview_ai_service.generate_adaptive_question(
-        job_description=job.description if job else "",
+    first_question = interview_ai_service.generate_initial_adaptive_question(
         resume_text=resume.extracted_text or "" if resume else "",
-        transcript=[],
         skill_gaps=ai_score.missing_skills if ai_score else [],
-        interview_metrics={},
     )
     if not first_question.get("question"):
         fallback_questions = await interview_ai_service.generate_interview_questions(
