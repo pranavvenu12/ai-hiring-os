@@ -319,112 +319,87 @@ const InterviewAssistant = () => {
                         </div>
                     )}
 
-                    {/* Active Interview Session */}
+                    {/* Link Generated State */}
                     {session && !completedSession && (
-                        <div className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm">
-                            <div className="mb-6 rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
-                                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                                    <div>
-                                        <div className="text-xs font-bold uppercase tracking-widest text-emerald-700">Candidate Public Interview Link</div>
-                                        <div className="mt-1 break-all text-sm font-semibold text-emerald-950">{publicInterviewUrl}</div>
-                                        <p className="mt-1 text-xs font-semibold text-emerald-800/70">
-                                            Send this link to the candidate. The panel below is only an HR preview/test console.
-                                        </p>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => navigator.clipboard.writeText(publicInterviewUrl)}
-                                            className="btn btn-secondary px-4 py-2 text-xs font-bold"
-                                        >
-                                            <Copy size={16} /> Copy
-                                        </button>
-                                        <a href={publicInterviewUrl} target="_blank" rel="noreferrer" className="btn btn-primary px-4 py-2 text-xs font-bold">
-                                            <ExternalLink size={16} /> Open
-                                        </a>
-                                    </div>
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-white rounded-[1.5rem] border border-slate-200 shadow-sm overflow-hidden"
+                        >
+                            {/* Success Header */}
+                            <div className="bg-emerald-500 px-8 py-6 flex items-center gap-4">
+                                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center shrink-0">
+                                    <CheckCircle2 size={26} className="text-white" />
                                 </div>
-                            </div>
-
-                            {/* Progress */}
-                            <div className="flex items-center justify-between mb-8">
                                 <div>
-                                    <h3 className="text-xl font-semibold text-slate-900">HR Preview Console</h3>
-                                    <p className="text-sm text-slate-400 font-medium">Question {currentQuestionIndex + 1} of {maxQuestions}</p>
-                                </div>
-                                <div className="text-right">
-                                    <div className="text-xs font-semibold text-indigo-600 uppercase tracking-widest">{session.interview_type}</div>
+                                    <div className="text-white font-bold text-lg">Interview Link Generated!</div>
+                                    <div className="text-emerald-100 text-sm font-semibold">Copy the link below and send it to the candidate.</div>
                                 </div>
                             </div>
 
-                            <div className="w-full h-2 bg-slate-100 rounded-full mb-8">
-                                <motion.div
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${((currentQuestionIndex + 1) / maxQuestions) * 100}%` }}
-                                    className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500" />
-                            </div>
-
-                            {questionReasoning && (
-                                <div className="mb-6 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4">
-                                    <div className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 mb-1">Question Reasoning</div>
-                                    <p className="text-sm font-semibold text-indigo-950/75">{questionReasoning}</p>
-                                </div>
-                            )}
-
-                            {/* Question */}
-                            <div className="bg-slate-950 rounded-[1.5rem] p-8 text-white mb-8 relative overflow-hidden">
-                                <div className="absolute top-0 right-0 opacity-10 translate-x-1/4 -translate-y-1/4">
-                                    <Brain size={160} />
-                                </div>
-                                <div className="relative z-10">
-                                    <div className="text-xs font-semibold uppercase tracking-widest text-indigo-200 mb-3 flex items-center gap-2">
-                                        <MessageSquare size={14} />
-                                        {session.questions?.[currentQuestionIndex]?.category || 'Question'}
-                                    </div>
-                                    <div className="text-xl font-bold leading-relaxed">
-                                        {session.questions?.[currentQuestionIndex]?.question || 'Loading question...'}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Answer Input */}
-                            <div className="space-y-4">
-                                <div className="flex gap-3">
-                                    <button onClick={toggleRecording}
-                                        className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${isRecording ? 'bg-rose-500 text-white animate-pulse shadow-lg shadow-rose-500/30' : 'bg-slate-100 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600'}`}>
-                                        {isRecording ? <MicOff size={22} /> : <Mic size={22} />}
-                                    </button>
-                                    <div className="flex-1 relative">
-                                        <textarea value={answerText} onChange={e => setAnswerText(e.target.value)}
-                                            placeholder={isRecording ? 'Listening... Speak your answer.' : 'Type your answer here or click the microphone to speak...'}
-                                            className="w-full bg-white border border-slate-200 rounded-2xl py-4 px-6 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/5 transition-all font-medium text-sm min-h-[120px] resize-none"
-                                        />
+                            <div className="p-8 space-y-6">
+                                {/* Candidate Info — WHO to send it to */}
+                                <div className="rounded-2xl border border-slate-100 bg-slate-50 p-5">
+                                    <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Send this interview to</div>
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center font-bold text-lg shrink-0">
+                                            {selectedCandidate?.candidate_name?.charAt(0) || '?'}
+                                        </div>
+                                        <div>
+                                            <div className="font-bold text-slate-900 text-base">{selectedCandidate?.candidate_name}</div>
+                                            {selectedCandidate?.email ? (
+                                                <a
+                                                    href={`mailto:${selectedCandidate.email}?subject=Your AI Interview for ${selectedJob?.title}&body=Hi ${selectedCandidate?.candidate_name},%0A%0AYou have been shortlisted for the ${selectedJob?.title} position. Please complete your AI interview using the link below:%0A%0A${publicInterviewUrl}%0A%0AThis is an automated AI interview. Please ensure you are in a quiet environment.%0A%0AGood luck!`}
+                                                    className="text-sm font-semibold text-indigo-600 hover:underline flex items-center gap-1.5 mt-0.5"
+                                                >
+                                                    <ExternalLink size={13} /> {selectedCandidate.email}
+                                                </a>
+                                            ) : (
+                                                <div className="text-sm font-medium text-slate-400 mt-0.5">No email on record — share the link manually</div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between">
-                                    <div className="text-xs text-slate-400 font-medium flex items-center gap-2">
-                                        {isRecording && <><Volume2 size={14} className="text-rose-500 animate-pulse" /> Recording in progress...</>}
-                                        {!isRecording && recordedAudio && <>Audio recorded. Submit to transcribe with AssemblyAI.</>}
-                                        {!isRecording && !recordedAudio && <>Press the mic button for voice input or type your answer</>}
-                                    </div>
+                                {/* The Link */}
+                                <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-5">
+                                    <div className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 mb-2">Candidate Interview Link</div>
+                                    <div className="break-all text-sm font-semibold text-indigo-950 mb-4">{publicInterviewUrl}</div>
                                     <div className="flex gap-3">
-                                        <button onClick={handleSubmitAnswer} disabled={!answerText.trim() || submittingAnswer || isLastQuestion}
-                                            className="btn btn-secondary px-6 py-3 font-bold disabled:opacity-40">
-                                            {submittingAnswer ? <Loader2 className="animate-spin" size={18} /> : <ArrowRight size={18} />}
-                                            {isLastQuestion ? 'Ready to Complete' : 'Next Adaptive Question'}
+                                        <button
+                                            onClick={() => { navigator.clipboard.writeText(publicInterviewUrl); toast.success('Link copied to clipboard!'); }}
+                                            className="btn btn-secondary flex-1 justify-center py-3 text-sm font-bold"
+                                        >
+                                            <Copy size={16} /> Copy Link
                                         </button>
-                                        {isLastQuestion && (
-                                            <button onClick={async () => { const saved = answerText.trim() ? await handleSubmitAnswer() : true; if (saved) handleCompleteInterview(); }}
-                                                disabled={completing}
-                                                className="btn btn-primary px-8 py-3 font-bold shadow-sm">
-                                                {completing ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
-                                                {completing ? 'Evaluating...' : 'Complete Interview'}
-                                            </button>
+                                        <a
+                                            href={publicInterviewUrl}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="btn btn-primary flex-1 justify-center py-3 text-sm font-bold"
+                                        >
+                                            <ExternalLink size={16} /> Preview Interview
+                                        </a>
+                                        {selectedCandidate?.email && (
+                                            <a
+                                                href={`mailto:${selectedCandidate.email}?subject=Your AI Interview for ${selectedJob?.title}&body=Hi ${selectedCandidate?.candidate_name},%0A%0AYou have been shortlisted for the ${selectedJob?.title} position. Please complete your AI interview using the link below:%0A%0A${publicInterviewUrl}%0A%0AThis is an automated AI interview. Please ensure you are in a quiet environment.%0A%0AGood luck!`}
+                                                className="btn justify-center py-3 text-sm font-bold bg-slate-900 text-white hover:bg-slate-700 flex-1"
+                                            >
+                                                <ExternalLink size={16} /> Send Email
+                                            </a>
                                         )}
                                     </div>
                                 </div>
+
+                                {/* Next action */}
+                                <button
+                                    onClick={() => { setSession(null); setSelectedCandidate(null); setSelectedJob(null); setCandidates([]); }}
+                                    className="btn btn-secondary w-full justify-center py-3 font-bold text-sm"
+                                >
+                                    <Play size={16} /> Generate for Another Candidate
+                                </button>
                             </div>
-                        </div>
+                        </motion.div>
                     )}
 
                     {voiceMetrics && (
