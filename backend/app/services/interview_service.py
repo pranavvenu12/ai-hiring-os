@@ -15,6 +15,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.interview import InterviewSession, InterviewStatus
 from app.models.resume import Resume
 from app.models.job import Job
+from app.models.ai_score import AIScore
+from app.models.agent import InterviewAgentHistory
 from app.services import assemblyai_service, interview_ai_service, realtime_service
 
 logger = logging.getLogger(__name__)
@@ -39,12 +41,29 @@ async def start_interview(
     )
     job = job_result.scalar_one_or_none()
 
-    # Generate questions using AI
-    questions = await interview_ai_service.generate_interview_questions(
+    # Generate the first question using the adaptive agent. Fallback to the
+    # existing fixed generator so old demos remain reliable if a provider fails.
+    score_result = await db.execute(select(AIScore).where(AIScore.resume_id == candidate_id))
+    ai_score = score_result.scalar_one_or_none()
+    first_question = await interview_ai_service.generate_adaptive_question(
         job_description=job.description if job else "",
         resume_text=resume.extracted_text or "" if resume else "",
-        interview_type=interview_type,
+        transcript=[],
+        skill_gaps=ai_score.missing_skills if ai_score else [],
+        interview_metrics={},
     )
+    if not first_question.get("question"):
+        fallback_questions = await interview_ai_service.generate_interview_questions(
+            job_description=job.description if job else "",
+            resume_text=resume.extracted_text or "" if resume else "",
+            interview_type=interview_type,
+        )
+        first_question = {
+            **fallback_questions[0],
+            "reasoning": "Initial fallback question generated from job and resume context.",
+            "focus_area": fallback_questions[0].get("category", "technical"),
+            "should_continue": True,
+        }
 
     session = InterviewSession(
         candidate_id=candidate_id,
@@ -52,11 +71,22 @@ async def start_interview(
         company_id=company_id,
         interview_type=interview_type,
         status=InterviewStatus.IN_PROGRESS.value,
-        questions=questions,
+        questions=[first_question],
         transcript=[],
     )
     db.add(session)
     await db.flush()
+    db.add(InterviewAgentHistory(
+        session_id=session.id,
+        question=first_question["question"],
+        reasoning=first_question.get("reasoning"),
+        next_action="Collect candidate answer",
+        details={
+            "category": first_question.get("category"),
+            "focus_area": first_question.get("focus_area"),
+            "source": "adaptive_start",
+        },
+    ))
     await db.refresh(session)
     return session
 
@@ -214,6 +244,18 @@ async def complete_interview(
     session.fluency_score = voice_aggregate.get("fluency_score", session.fluency_score or 0)
     session.overall_score = evaluation.get("overall_score", 0)
     session.recommendation = evaluation.get("recommendation", "consider")
+    session.interview_metrics = {
+        **(session.interview_metrics or {}),
+        "final_agent_report": {
+            "technical_score": session.technical_score,
+            "communication_score": session.communication_score,
+            "problem_solving_score": _category_score(session.transcript or [], "problem"),
+            "project_understanding_score": _category_score(session.transcript or [], "project"),
+            "leadership_score": _category_score(session.transcript or [], "leadership"),
+            "overall_recommendation": session.recommendation,
+            "human_approval_required": True,
+        },
+    }
 
     await db.flush()
     await db.refresh(session)
@@ -225,6 +267,94 @@ async def complete_interview(
         "recommendation": session.recommendation,
     })
     return session
+
+
+async def generate_next_question(
+    db: AsyncSession,
+    session_id: uuid.UUID,
+    *,
+    max_questions: int = 5,
+) -> dict:
+    """Generate and append the next adaptive interview question."""
+    result = await db.execute(
+        select(InterviewSession).where(InterviewSession.id == session_id)
+    )
+    session = result.scalar_one_or_none()
+    if not session:
+        raise ValueError("Interview session not found.")
+    if session.status == InterviewStatus.COMPLETED.value:
+        raise ValueError("Interview is already completed.")
+
+    transcript = list(session.transcript or [])
+    questions = list(session.questions or [])
+    if len(transcript) >= max_questions:
+        return {
+            "should_continue": False,
+            "message": "Maximum adaptive interview questions reached.",
+            "questions": questions,
+            "current_question_index": max(len(questions) - 1, 0),
+        }
+
+    resume_result = await db.execute(select(Resume).where(Resume.id == session.candidate_id))
+    resume = resume_result.scalar_one_or_none()
+    job_result = await db.execute(select(Job).where(Job.id == session.job_id))
+    job = job_result.scalar_one_or_none()
+    score_result = await db.execute(select(AIScore).where(AIScore.resume_id == session.candidate_id))
+    ai_score = score_result.scalar_one_or_none()
+
+    latest_answer = transcript[-1].get("answer") if transcript else None
+    next_question = await interview_ai_service.generate_adaptive_question(
+        job_description=job.description if job else "",
+        resume_text=resume.extracted_text or "" if resume else "",
+        transcript=transcript,
+        skill_gaps=ai_score.missing_skills if ai_score else [],
+        interview_metrics=session.interview_metrics or {},
+        max_questions=max_questions,
+    )
+
+    if not next_question.get("should_continue"):
+        return {
+            "should_continue": False,
+            "message": "The adaptive interview has enough signal for final evaluation.",
+            "questions": questions,
+            "current_question_index": max(len(questions) - 1, 0),
+        }
+
+    question_text = next_question.get("question")
+    if not question_text:
+        raise ValueError("Adaptive agent could not generate a next question.")
+
+    questions.append(next_question)
+    session.questions = questions
+    await db.flush()
+    db.add(InterviewAgentHistory(
+        session_id=session.id,
+        question=question_text,
+        answer=latest_answer,
+        reasoning=next_question.get("reasoning"),
+        next_action="Ask next adaptive question",
+        details={
+            "category": next_question.get("category"),
+            "focus_area": next_question.get("focus_area"),
+            "question_number": len(questions),
+            "voice_metrics": session.interview_metrics,
+        },
+    ))
+    await db.flush()
+    await db.refresh(session)
+    await realtime_service.publish_event(session.company_id, "next_question_generated", {
+        "session_id": str(session.id),
+        "question_number": len(questions),
+        "category": next_question.get("category"),
+        "focus_area": next_question.get("focus_area"),
+    })
+    return {
+        "should_continue": True,
+        "question": next_question,
+        "questions": questions,
+        "current_question_index": len(questions) - 1,
+        "reasoning": next_question.get("reasoning"),
+    }
 
 
 async def get_interview(
@@ -350,3 +480,15 @@ def _aggregate_voice_metrics(voice_answers: list[dict]) -> dict:
     aggregate["filler_word_count"] = sum(int(item.get("filler_word_count", 0)) for item in values)
     aggregate["word_count"] = sum(int(item.get("word_count", 0)) for item in values)
     return aggregate
+
+
+def _category_score(transcript: list[dict], category_hint: str) -> float:
+    matching = [
+        item for item in transcript
+        if category_hint in str(item.get("category", "")).lower()
+        or category_hint in str(item.get("question", "")).lower()
+    ]
+    if not matching:
+        return 0.0
+    avg_words = sum(len(str(item.get("answer", "")).split()) for item in matching) / max(len(matching), 1)
+    return round(min(100.0, 45.0 + avg_words), 1)

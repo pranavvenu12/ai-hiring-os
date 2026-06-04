@@ -91,6 +91,49 @@ async def evaluate_interview(
     return _get_template_evaluation(transcript)
 
 
+async def generate_adaptive_question(
+    *,
+    job_description: str,
+    resume_text: str,
+    transcript: List[Dict],
+    skill_gaps: List[str] | None = None,
+    interview_metrics: Dict[str, Any] | None = None,
+    max_questions: int = 5,
+) -> Dict[str, Any]:
+    """
+    Generate the next interview question from prior answers and skill gaps.
+    Returns question, category, reasoning, focus_area, and should_continue.
+    """
+    answered = len([item for item in transcript if item.get("answer")])
+    if answered >= max_questions:
+        return {
+            "question": "",
+            "category": "complete",
+            "reasoning": "The interview has enough answered questions for final evaluation.",
+            "focus_area": "completion",
+            "should_continue": False,
+        }
+
+    prompt = _build_adaptive_question_prompt(
+        job_description=job_description,
+        resume_text=resume_text,
+        transcript=transcript,
+        skill_gaps=skill_gaps or [],
+        interview_metrics=interview_metrics or {},
+        max_questions=max_questions,
+    )
+
+    for provider in (_try_gemini_json, _try_groq_json, _try_hf_json):
+        try:
+            result = await provider(prompt)
+            if result and result.get("question"):
+                return _normalise_adaptive_question(result)
+        except Exception as e:
+            logger.error(f"Adaptive question generation failed: {e}")
+
+    return _fallback_adaptive_question(transcript, skill_gaps or [], max_questions)
+
+
 def _build_question_prompt(
     job_description: str, resume_text: str, interview_type: str
 ) -> str:
@@ -159,6 +202,130 @@ Scoring guidelines:
 - confidence_score: assertiveness and composure
 - overall_score: weighted average (40% technical, 30% communication, 30% confidence)
 - recommendation: strong_hire (>=85), hire (>=70), consider (>=50), reject (<50)"""
+
+
+def _build_adaptive_question_prompt(
+    *,
+    job_description: str,
+    resume_text: str,
+    transcript: List[Dict],
+    skill_gaps: List[str],
+    interview_metrics: Dict[str, Any],
+    max_questions: int,
+) -> str:
+    transcript_text = "\n\n".join(
+        f"Q{idx + 1}: {item.get('question', '')}\nA{idx + 1}: {item.get('answer', '')}"
+        for idx, item in enumerate(transcript)
+    ) or "No answers yet."
+
+    return f"""You are an adaptive AI interview agent for a hiring platform.
+
+Generate the NEXT single interview question only. The question must adapt to:
+- the job description
+- the resume projects and technologies
+- previous answers
+- known skill gaps
+- voice metrics such as confidence, fluency, and communication where available
+
+Do not ask unrelated questions. If the candidate struggled with a skill, probe nearby fundamentals.
+Include project deep-dive questions when the resume mentions projects.
+
+Job description:
+{job_description[:2500]}
+
+Resume:
+{resume_text[:2500]}
+
+Previous transcript:
+{transcript_text[:2500]}
+
+Skill gaps:
+{json.dumps(skill_gaps)}
+
+Voice metrics:
+{json.dumps(interview_metrics)}
+
+Answered questions: {len(transcript)}
+Max questions: {max_questions}
+
+Return ONLY valid JSON:
+{{
+  "question": "The next question to ask.",
+  "category": "technical | behavioral | problem_solving | project_deep_dive | leadership",
+  "reasoning": "One sentence explaining why this question is next.",
+  "focus_area": "The specific skill, project, or competency being tested.",
+  "should_continue": true
+}}"""
+
+
+async def _try_gemini_json(prompt: str) -> Any:
+    if not settings.AI_GEMINI_KEY:
+        return None
+    return await _call_gemini(prompt)
+
+
+async def _try_groq_json(prompt: str) -> Any:
+    if not settings.AI_GROQ_KEY:
+        return None
+    return await _call_groq(prompt)
+
+
+async def _try_hf_json(prompt: str) -> Any:
+    if not settings.AI_HF_KEY:
+        return None
+    return await _call_hf_router(prompt)
+
+
+def _normalise_adaptive_question(result: Dict[str, Any]) -> Dict[str, Any]:
+    valid_categories = {"technical", "behavioral", "problem_solving", "project_deep_dive", "leadership"}
+    category = str(result.get("category", "technical")).strip().lower()
+    if category not in valid_categories:
+        category = "technical"
+    return {
+        "question": str(result.get("question", "")).strip(),
+        "category": category,
+        "reasoning": str(result.get("reasoning", "Selected to gather stronger job-relevant signal.")).strip(),
+        "focus_area": str(result.get("focus_area", category)).strip(),
+        "should_continue": bool(result.get("should_continue", True)),
+    }
+
+
+def _fallback_adaptive_question(transcript: List[Dict], skill_gaps: List[str], max_questions: int) -> Dict[str, Any]:
+    answered = len(transcript)
+    focus = skill_gaps[0] if skill_gaps else "the most relevant project from your resume"
+    fallback_questions = [
+        {
+            "question": f"Walk me through a project where you used {focus}. What architecture decisions did you make?",
+            "category": "project_deep_dive",
+            "focus_area": focus,
+        },
+        {
+            "question": f"Explain a production challenge you might face with {focus} and how you would debug it.",
+            "category": "problem_solving",
+            "focus_area": focus,
+        },
+        {
+            "question": "Describe a time you had to explain a technical tradeoff to a non-technical stakeholder.",
+            "category": "behavioral",
+            "focus_area": "communication",
+        },
+        {
+            "question": "How would you scale one of your resume projects for ten times more users?",
+            "category": "technical",
+            "focus_area": "scalability",
+        },
+        {
+            "question": "Tell me about a time you led a technical decision or mentored someone through a difficult task.",
+            "category": "leadership",
+            "focus_area": "leadership",
+        },
+    ]
+    selected = fallback_questions[min(answered, len(fallback_questions) - 1)]
+    return {
+        **selected,
+        "reasoning": "Fallback adaptive question selected from skill gaps and interview progress.",
+        "should_continue": answered < max_questions,
+    }
 
 
 async def _call_gemini(prompt: str) -> Any:

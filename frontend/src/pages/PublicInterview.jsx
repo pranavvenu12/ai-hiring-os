@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import api from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { Mic, MicOff, Brain, Play, CheckCircle2, ArrowRight, Loader2, MessageSquare, Volume2, Sparkles } from 'lucide-react';
@@ -14,7 +14,7 @@ const PublicInterview = () => {
     const [answerText, setAnswerText] = useState('');
     const [isRecording, setIsRecording] = useState(false);
     const [recordedAudio, setRecordedAudio] = useState(null);
-    const [voiceMetrics, setVoiceMetrics] = useState(null);
+    const [questionReasoning, setQuestionReasoning] = useState('');
     const [submittingAnswer, setSubmittingAnswer] = useState(false);
     const [completing, setCompleting] = useState(false);
     const [loadingSession, setLoadingSession] = useState(true);
@@ -34,6 +34,7 @@ const PublicInterview = () => {
             if (data.status === 'completed') {
                 setCompletedState(true);
             }
+            setQuestionReasoning(data.questions?.[data.transcript_length || 0]?.reasoning || data.questions?.[0]?.reasoning || '');
             // Resume index if they partially completed
             setCurrentQuestionIndex(data.transcript_length || 0);
         } catch (err) {
@@ -54,17 +55,16 @@ const PublicInterview = () => {
     };
 
     const handleSubmitAnswer = async () => {
-        if (!answerText.trim()) return;
+        if (!answerText.trim()) return false;
         setSubmittingAnswer(true);
         try {
             if (recordedAudio) {
                 const formData = new FormData();
                 formData.append('question_index', String(currentQuestionIndex));
                 formData.append('audio', recordedAudio, `interview-${session.id}-${currentQuestionIndex}.webm`);
-                const response = await api.post(`/interviews/public/${sessionId}/voice-answer`, formData, {
+                await api.post(`/interviews/public/${sessionId}/voice-answer`, formData, {
                     headers: { 'Content-Type': 'multipart/form-data' },
                 });
-                setVoiceMetrics(response.voice_metrics || response.interview_metrics?.latest_voice || null);
             } else {
                 await api.post(`/interviews/public/${sessionId}/voice-fallback`, {
                     question_index: currentQuestionIndex,
@@ -72,11 +72,17 @@ const PublicInterview = () => {
                 });
             }
 
-            if (currentQuestionIndex < (session.questions?.length || 0) - 1) {
-                setCurrentQuestionIndex(prev => prev + 1);
+            if (currentQuestionIndex < maxQuestions - 1) {
+                const next = await api.post(`/interviews/public/${sessionId}/next-question`);
+                if (next.should_continue) {
+                    setSession(prev => ({ ...prev, questions: next.questions }));
+                    setCurrentQuestionIndex(next.current_question_index);
+                    setQuestionReasoning(next.reasoning || next.question?.reasoning || '');
+                }
                 setAnswerText('');
                 setRecordedAudio(null);
             }
+            return true;
         } catch (err) {
             try {
                 // Fallback direct text submission
@@ -84,17 +90,24 @@ const PublicInterview = () => {
                     question_index: currentQuestionIndex,
                     transcript_text: answerText,
                 });
-                if (currentQuestionIndex < (session.questions?.length || 0) - 1) {
-                    setCurrentQuestionIndex(prev => prev + 1);
+                if (currentQuestionIndex < maxQuestions - 1) {
+                    const next = await api.post(`/interviews/public/${sessionId}/next-question`);
+                    if (next.should_continue) {
+                        setSession(prev => ({ ...prev, questions: next.questions }));
+                        setCurrentQuestionIndex(next.current_question_index);
+                        setQuestionReasoning(next.reasoning || next.question?.reasoning || '');
+                    }
                     setAnswerText('');
                     setRecordedAudio(null);
                 }
+                return true;
             } catch (fallbackErr) {
                 toast.error(fallbackErr.detail || err.detail || 'Failed to submit answer');
             }
         } finally {
             setSubmittingAnswer(false);
         }
+        return false;
     };
 
     const handleCompleteInterview = async () => {
@@ -192,7 +205,8 @@ const PublicInterview = () => {
         setIsRecording(false);
     };
 
-    const isLastQuestion = session && currentQuestionIndex >= (session.questions?.length || 0) - 1;
+    const maxQuestions = 5;
+    const isLastQuestion = session && currentQuestionIndex >= maxQuestions - 1;
 
     if (loadingSession) {
         return (
@@ -273,7 +287,7 @@ const PublicInterview = () => {
                                 <Sparkles size={14} className="text-indigo-600 animate-pulse" /> Interview Instructions
                             </h4>
                             <ul className="text-xs text-indigo-950/70 font-semibold space-y-2 list-disc pl-4 leading-relaxed">
-                                <li>The interview consists of **{session.questions?.length || 5} questions** structured around technical and behavioral criteria.</li>
+                                <li>The interview consists of **{maxQuestions} adaptive questions** structured around technical, project, and behavioral criteria.</li>
                                 <li>You can answer by **speaking** (using your microphone for transcription) or by **typing** your responses in the text area.</li>
                                 <li>Take your time; there is no strict timer for answers, but keep them concise and relevant.</li>
                                 <li>Ensure you are in a quiet room if you choose to record your audio.</li>
@@ -316,7 +330,7 @@ const PublicInterview = () => {
                     <div className="flex items-center justify-between">
                         <div>
                             <h3 className="text-lg font-bold text-slate-900">AI Evaluation Progress</h3>
-                            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-0.5">Question {currentQuestionIndex + 1} of {session.questions?.length || 0}</p>
+                            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-0.5">Question {currentQuestionIndex + 1} of {maxQuestions}</p>
                         </div>
                         <div className="text-right">
                             <div className="text-xs font-bold text-indigo-600 uppercase tracking-widest bg-indigo-50 border border-indigo-100/50 px-3 py-1 rounded-xl">{session.interview_type}</div>
@@ -326,9 +340,16 @@ const PublicInterview = () => {
                     <div className="w-full h-2 bg-slate-100 rounded-full">
                         <motion.div
                             initial={{ width: 0 }}
-                            animate={{ width: `${((currentQuestionIndex + 1) / (session.questions?.length || 1)) * 100}%` }}
+                            animate={{ width: `${((currentQuestionIndex + 1) / maxQuestions) * 100}%` }}
                             className="h-full rounded-full bg-slate-950" />
                     </div>
+
+                    {questionReasoning && (
+                        <div className="rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4">
+                            <div className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 mb-1">Why this question</div>
+                            <p className="text-sm font-semibold text-indigo-950/75">{questionReasoning}</p>
+                        </div>
+                    )}
 
                     {/* Question Card */}
                     <div className="bg-slate-950 rounded-[1.5rem] p-8 text-white relative overflow-hidden shadow-inner">
@@ -371,10 +392,10 @@ const PublicInterview = () => {
                                 <button onClick={handleSubmitAnswer} disabled={!answerText.trim() || submittingAnswer || isLastQuestion}
                                     className="btn btn-secondary px-6 py-3 font-bold text-xs disabled:opacity-40">
                                     {submittingAnswer ? <Loader2 className="animate-spin" size={18} /> : <ArrowRight size={18} />}
-                                    {isLastQuestion ? 'Last Question' : 'Next Question'}
+                                    {isLastQuestion ? 'Ready to Submit' : 'Next Adaptive Question'}
                                 </button>
                                 {isLastQuestion && (
-                                    <button onClick={async () => { if (answerText.trim()) { await handleSubmitAnswer(); } handleCompleteInterview(); }}
+                                    <button onClick={async () => { const saved = answerText.trim() ? await handleSubmitAnswer() : false; if (saved) handleCompleteInterview(); }}
                                         disabled={completing || !answerText.trim()}
                                         className="btn btn-primary px-8 py-3 font-bold text-xs shadow-sm disabled:opacity-40">
                                         {completing ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}

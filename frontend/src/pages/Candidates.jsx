@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useEffect, useRef } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
@@ -12,7 +12,6 @@ import { useRealtime } from '../hooks/useRealtime';
 const Candidates = () => {
     const [searchParams] = useSearchParams();
     const jobId = searchParams.get('job_id');
-    const navigate = useNavigate();
     
     const [candidates, setCandidates] = useState([]);
     const [selectedCandidate, setSelectedCandidate] = useState(null);
@@ -460,6 +459,36 @@ const Candidates = () => {
                                             </div>
                                         </div>
 
+                                        <div className="rounded-[1.5rem] border border-indigo-100 bg-indigo-50/60 p-6">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className="w-10 h-10 rounded-xl bg-white text-indigo-600 border border-indigo-100 flex items-center justify-center">
+                                                    <Brain size={18} />
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-sm font-semibold text-slate-900">AI Hiring Insights</h4>
+                                                    <p className="text-xs font-semibold text-indigo-700/70">Advisory only. Final decision remains human approved.</p>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <InsightTile
+                                                    label="Why Ranked"
+                                                    value={selectedCandidate.score >= 75 ? 'Strong score and role alignment.' : 'Needs recruiter validation before shortlist.'}
+                                                />
+                                                <InsightTile
+                                                    label="Interview Readiness"
+                                                    value={selectedCandidate.score >= 70 ? 'Ready for adaptive interview.' : 'Review resume gaps before interview.'}
+                                                />
+                                                <InsightTile
+                                                    label="Risk Analysis"
+                                                    value={(selectedCandidate.missing_skills || []).length > 3 ? 'Broad skill gaps detected.' : 'No major skill-gap concentration.'}
+                                                />
+                                                <InsightTile
+                                                    label="Suggested Next Action"
+                                                    value={selectedCandidate.hiring_status === 'shortlisted' ? 'Send interview link and review scorecard.' : 'Shortlist only after HR review.'}
+                                                />
+                                            </div>
+                                        </div>
+
                                         {/* Skills Section */}
                                         <div className="space-y-6">
                                             <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-2">
@@ -717,6 +746,13 @@ const ScoreSummaryCard = ({ label, score }) => (
     <div className="text-center">
         <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">{label}</div>
         <div className="text-xl font-semibold text-white">{score}%</div>
+    </div>
+);
+
+const InsightTile = ({ label, value }) => (
+    <div className="rounded-2xl border border-white bg-white/80 p-4">
+        <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</div>
+        <div className="mt-2 text-sm font-semibold leading-relaxed text-slate-800">{value}</div>
     </div>
 );
 

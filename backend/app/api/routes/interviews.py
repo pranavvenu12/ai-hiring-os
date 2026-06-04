@@ -191,10 +191,33 @@ async def complete_interview(
         "overall_score": session.overall_score,
         "recommendation": session.recommendation,
         "interview_metrics": session.interview_metrics,
+        "final_agent_report": (session.interview_metrics or {}).get("final_agent_report"),
         "interview_transcript": session.interview_transcript,
         "audio_url": session.audio_url,
         "message": "Interview completed and evaluated by AI.",
     }
+
+
+@router.post(
+    "/{session_id}/next-question",
+    dependencies=[Depends(require_roles(Role.ADMIN, Role.HR))],
+)
+async def next_adaptive_question(
+    session_id: uuid.UUID,
+    current_user: CurrentUser,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Generate the next adaptive interview question after the previous answer."""
+    session = await interview_service.get_interview(db, session_id)
+    if not session or session.company_id != current_user.company_id:
+        raise HTTPException(status_code=404, detail="Interview session not found.")
+
+    try:
+        result = await interview_service.generate_next_question(db, session_id)
+        await db.commit()
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/{session_id}")
@@ -413,5 +436,20 @@ async def complete_public_interview(
         "ai_summary": session.ai_summary,
         "overall_score": session.overall_score,
         "recommendation": session.recommendation,
+        "final_agent_report": (session.interview_metrics or {}).get("final_agent_report"),
         "message": "Interview completed and evaluated by AI.",
     }
+
+
+@router.post("/public/{session_id}/next-question")
+async def next_public_adaptive_question(
+    session_id: uuid.UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """Generate the next adaptive question for guest candidate interviews."""
+    try:
+        result = await interview_service.generate_next_question(db, session_id)
+        await db.commit()
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

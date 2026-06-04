@@ -19,6 +19,7 @@ const InterviewAssistant = () => {
     const [isRecording, setIsRecording] = useState(false);
     const [recordedAudio, setRecordedAudio] = useState(null);
     const [voiceMetrics, setVoiceMetrics] = useState(null);
+    const [questionReasoning, setQuestionReasoning] = useState('');
     const [submittingAnswer, setSubmittingAnswer] = useState(false);
     const [completing, setCompleting] = useState(false);
     const [starting, setStarting] = useState(false);
@@ -80,6 +81,7 @@ const InterviewAssistant = () => {
             });
             setSession(data);
             setCurrentQuestionIndex(0);
+            setQuestionReasoning(data.questions?.[0]?.reasoning || 'Initial question selected from job, resume, and skill gaps.');
             setAnswerText('');
             toast.success('AI Interview started! Speak or type your answers.');
         } catch (err) { toast.error(err.detail || 'Failed to start interview'); }
@@ -87,7 +89,7 @@ const InterviewAssistant = () => {
     };
 
     const handleSubmitAnswer = async () => {
-        if (!answerText.trim()) return;
+        if (!answerText.trim()) return false;
         setSubmittingAnswer(true);
         try {
             if (recordedAudio) {
@@ -105,11 +107,17 @@ const InterviewAssistant = () => {
                 });
             }
 
-            if (currentQuestionIndex < (session.questions?.length || 0) - 1) {
-                setCurrentQuestionIndex(prev => prev + 1);
+            if (currentQuestionIndex < maxQuestions - 1) {
+                const next = await api.post(`/interviews/${session.id}/next-question`);
+                if (next.should_continue) {
+                    setSession(prev => ({ ...prev, questions: next.questions }));
+                    setCurrentQuestionIndex(next.current_question_index);
+                    setQuestionReasoning(next.reasoning || next.question?.reasoning || '');
+                }
                 setAnswerText('');
                 setRecordedAudio(null);
             }
+            return true;
         } catch (err) {
             try {
                 await api.post(`/interviews/${session.id}/voice-fallback`, {
@@ -117,16 +125,23 @@ const InterviewAssistant = () => {
                     transcript_text: answerText,
                 });
                 toast.warning('AssemblyAI unavailable. Saved browser transcript fallback.');
-                if (currentQuestionIndex < (session.questions?.length || 0) - 1) {
-                    setCurrentQuestionIndex(prev => prev + 1);
+                if (currentQuestionIndex < maxQuestions - 1) {
+                    const next = await api.post(`/interviews/${session.id}/next-question`);
+                    if (next.should_continue) {
+                        setSession(prev => ({ ...prev, questions: next.questions }));
+                        setCurrentQuestionIndex(next.current_question_index);
+                        setQuestionReasoning(next.reasoning || next.question?.reasoning || '');
+                    }
                     setAnswerText('');
                     setRecordedAudio(null);
                 }
+                return true;
             } catch (fallbackErr) {
                 toast.error(fallbackErr.detail || err.detail || 'Failed to submit answer');
             }
         }
         finally { setSubmittingAnswer(false); }
+        return false;
     };
 
     const handleCompleteInterview = async () => {
@@ -223,7 +238,8 @@ const InterviewAssistant = () => {
         setIsRecording(false);
     };
 
-    const isLastQuestion = session && currentQuestionIndex >= (session.questions?.length || 0) - 1;
+    const maxQuestions = 5;
+    const isLastQuestion = session && currentQuestionIndex >= maxQuestions - 1;
 
     return (
         <div className="flex bg-[#f8fafc] min-h-screen font-inter">
@@ -309,7 +325,7 @@ const InterviewAssistant = () => {
                             <div className="flex items-center justify-between mb-8">
                                 <div>
                                     <h3 className="text-xl font-semibold text-slate-900">AI Interview in Progress</h3>
-                                    <p className="text-sm text-slate-400 font-medium">Question {currentQuestionIndex + 1} of {session.questions?.length || 0}</p>
+                                    <p className="text-sm text-slate-400 font-medium">Question {currentQuestionIndex + 1} of {maxQuestions}</p>
                                 </div>
                                 <div className="text-right">
                                     <div className="text-xs font-semibold text-indigo-600 uppercase tracking-widest">{session.interview_type}</div>
@@ -319,9 +335,16 @@ const InterviewAssistant = () => {
                             <div className="w-full h-2 bg-slate-100 rounded-full mb-8">
                                 <motion.div
                                     initial={{ width: 0 }}
-                                    animate={{ width: `${((currentQuestionIndex + 1) / (session.questions?.length || 1)) * 100}%` }}
+                                    animate={{ width: `${((currentQuestionIndex + 1) / maxQuestions) * 100}%` }}
                                     className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500" />
                             </div>
+
+                            {questionReasoning && (
+                                <div className="mb-6 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4">
+                                    <div className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 mb-1">Question Reasoning</div>
+                                    <p className="text-sm font-semibold text-indigo-950/75">{questionReasoning}</p>
+                                </div>
+                            )}
 
                             {/* Question */}
                             <div className="bg-slate-950 rounded-[1.5rem] p-8 text-white mb-8 relative overflow-hidden">
@@ -364,10 +387,10 @@ const InterviewAssistant = () => {
                                         <button onClick={handleSubmitAnswer} disabled={!answerText.trim() || submittingAnswer || isLastQuestion}
                                             className="btn btn-secondary px-6 py-3 font-bold disabled:opacity-40">
                                             {submittingAnswer ? <Loader2 className="animate-spin" size={18} /> : <ArrowRight size={18} />}
-                                            {isLastQuestion ? 'Last Question' : 'Next Question'}
+                                            {isLastQuestion ? 'Ready to Complete' : 'Next Adaptive Question'}
                                         </button>
                                         {isLastQuestion && (
-                                            <button onClick={async () => { if (answerText.trim()) { await handleSubmitAnswer(); } handleCompleteInterview(); }}
+                                            <button onClick={async () => { const saved = answerText.trim() ? await handleSubmitAnswer() : true; if (saved) handleCompleteInterview(); }}
                                                 disabled={completing}
                                                 className="btn btn-primary px-8 py-3 font-bold shadow-sm">
                                                 {completing ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
