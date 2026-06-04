@@ -673,10 +673,23 @@ const Candidates = () => {
                                                     />
                                                     <button 
                                                         disabled={!candidateInterviews[0]?.id}
-                                                        onClick={() => {
-                                                            if (candidateInterviews[0]?.id) {
-                                                                navigator.clipboard.writeText(`${window.location.origin}/public-interview/${candidateInterviews[0].id}`);
+                                                        onClick={async () => {
+                                                            if (!candidateInterviews[0]?.id) return;
+                                                            const link = `${window.location.origin}/public-interview/${candidateInterviews[0].id}`;
+                                                            try {
+                                                                await navigator.clipboard.writeText(link);
                                                                 toast.success('Interview link copied to clipboard!');
+                                                            } catch {
+                                                                // Fallback for HTTP or restricted contexts
+                                                                const el = document.createElement('textarea');
+                                                                el.value = link;
+                                                                el.style.position = 'fixed';
+                                                                el.style.opacity = '0';
+                                                                document.body.appendChild(el);
+                                                                el.select();
+                                                                document.execCommand('copy');
+                                                                document.body.removeChild(el);
+                                                                toast.success('Interview link copied!');
                                                             }
                                                         }}
                                                         className="btn btn-primary text-xs font-bold px-4 py-2"

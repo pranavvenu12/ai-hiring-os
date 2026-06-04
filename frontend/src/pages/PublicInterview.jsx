@@ -344,12 +344,7 @@ const PublicInterview = () => {
                             className="h-full rounded-full bg-slate-950" />
                     </div>
 
-                    {questionReasoning && (
-                        <div className="rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4">
-                            <div className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 mb-1">Why this question</div>
-                            <p className="text-sm font-semibold text-indigo-950/75">{questionReasoning}</p>
-                        </div>
-                    )}
+{/* Internal reasoning hidden from candidate view */}
 
                     {/* Question Card */}
                     <div className="bg-slate-950 rounded-[1.5rem] p-8 text-white relative overflow-hidden shadow-inner">
