@@ -4,7 +4,7 @@ import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import RecruiterCopilot from '../components/RecruiterCopilot';
 import api from '../services/api';
-import { CheckCircle2, XCircle, Star, Brain, Clock, Users, TrendingUp, Wallet } from 'lucide-react';
+import { Eye, Star, Brain, Clock, Users, TrendingUp, Wallet } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const DashboardManager = () => {
@@ -160,16 +160,13 @@ const DashboardManager = () => {
                                             </div>
                                         </div>
                                         
-                                        <div className="flex gap-3 w-full md:w-auto">
-                                            <button className="flex-1 md:flex-none btn bg-rose-50 text-rose-600 border border-rose-100 hover:bg-rose-500 hover:text-white px-5 py-2.5 text-sm font-semibold rounded-xl transition-all">
-                                                <XCircle size={18} />
-                                                Reject
-                                            </button>
-                                            <button className="flex-1 md:flex-none btn btn-primary px-5 py-2.5 text-sm font-semibold rounded-xl shadow-sm">
-                                                <CheckCircle2 size={18} />
-                                                Approve
-                                            </button>
-                                        </div>
+                                        <Link
+                                            to="/candidates"
+                                            className="w-full md:w-auto btn btn-primary px-5 py-2.5 text-sm font-semibold rounded-xl shadow-sm justify-center"
+                                        >
+                                            <Eye size={18} />
+                                            Review Candidate
+                                        </Link>
                                     </motion.div>
                                 ))}
                                 {candidates.length === 0 && (

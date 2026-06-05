@@ -304,9 +304,9 @@ const DashboardEmployee = () => {
                             {latestPayslip ? (
                                 <div className="space-y-5">
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                        <DetailCard label="Basic Salary" value={`?${Math.round(latestPayslip.basic_salary ?? latestPayslip.base_salary).toLocaleString('en-IN')}`} />
-                                        <DetailCard label="Allowances + Bonus" value={`?${Math.round((latestPayslip.allowances || 0) + (latestPayslip.bonuses || 0)).toLocaleString('en-IN')}`} />
-                                        <DetailCard label="Net Salary" value={`?${Math.round(latestPayslip.net_salary).toLocaleString('en-IN')} � ${latestPayslip.status}`} />
+                                        <DetailCard label="Basic Salary" value={`INR ${Math.round(latestPayslip.basic_salary ?? latestPayslip.base_salary).toLocaleString('en-IN')}`} />
+                                        <DetailCard label="Allowances + Bonus" value={`INR ${Math.round((latestPayslip.allowances || 0) + (latestPayslip.bonuses || 0)).toLocaleString('en-IN')}`} />
+                                        <DetailCard label="Net Salary" value={`INR ${Math.round(latestPayslip.net_salary).toLocaleString('en-IN')} - ${latestPayslip.status}`} />
                                     </div>
                                     <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
                                         <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400 mb-3">Payroll History</div>
@@ -314,7 +314,7 @@ const DashboardEmployee = () => {
                                             {payrollData.records.slice(0, 3).map((record) => (
                                                 <div key={record.id} className="flex items-center justify-between text-xs font-semibold text-slate-600">
                                                     <span>{record.month}/{record.year}</span>
-                                                    <span>?{Math.round(record.net_salary).toLocaleString('en-IN')} � {record.status}</span>
+                                                    <span>INR {Math.round(record.net_salary).toLocaleString('en-IN')} - {record.status}</span>
                                                 </div>
                                             ))}
                                         </div>

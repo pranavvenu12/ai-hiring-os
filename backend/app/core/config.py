@@ -55,6 +55,12 @@ class Settings(BaseSettings):
     AI_HF_BASE_URL: str = "https://router.huggingface.co/v1"
     AI_HF_MODEL: str = "meta-llama/Llama-3.1-8B-Instruct"
     ASSEMBLYAI_API_KEY: str | None = None
+    SMTP_HOST: str | None = None
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str | None = None
+    SMTP_PASSWORD: str | None = None
+    SMTP_FROM_EMAIL: str | None = None
+    FRONTEND_BASE_URL: str = "https://ai-hiring-os.vercel.app"
 
     # ── CORS ─────────────────────────────────────────────────────
     CORS_ORIGINS: str = "http://localhost:3000"

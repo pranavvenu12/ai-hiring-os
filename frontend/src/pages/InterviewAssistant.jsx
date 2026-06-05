@@ -1,10 +1,10 @@
-import React, { useCallback, useState, useEffect, useRef } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
 import { useToast } from '../context/ToastContext';
-import { Mic, MicOff, Brain, Play, CheckCircle2, ArrowRight, Loader2, MessageSquare, BarChart3, Award, Volume2, Copy, ExternalLink } from 'lucide-react';
+import { Brain, Play, CheckCircle2, Loader2, BarChart3, Award, Copy, ExternalLink } from 'lucide-react';
 import { useRealtime } from '../hooks/useRealtime';
 
 const InterviewAssistant = () => {
@@ -14,21 +14,9 @@ const InterviewAssistant = () => {
     const [selectedCandidate, setSelectedCandidate] = useState(null);
     const [interviewType, setInterviewType] = useState('technical');
     const [session, setSession] = useState(null);
-    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [answerText, setAnswerText] = useState('');
-    const [isRecording, setIsRecording] = useState(false);
-    const [recordedAudio, setRecordedAudio] = useState(null);
-    const [voiceMetrics, setVoiceMetrics] = useState(null);
-    const [questionReasoning, setQuestionReasoning] = useState('');
-    const [submittingAnswer, setSubmittingAnswer] = useState(false);
-    const [completing, setCompleting] = useState(false);
     const [starting, setStarting] = useState(false);
-    const [completedSession, setCompletedSession] = useState(null);
     const [companyStats, setCompanyStats] = useState(null);
     const { toast } = useToast();
-    const recognitionRef = useRef(null);
-    const mediaRecorderRef = useRef(null);
-    const audioChunksRef = useRef([]);
 
     const fetchJobs = useCallback(async () => {
         try {
@@ -80,166 +68,10 @@ const InterviewAssistant = () => {
                 interview_type: interviewType,
             });
             setSession(data);
-            setCurrentQuestionIndex(0);
-            setQuestionReasoning(data.questions?.[0]?.reasoning || 'Initial question selected from job, resume, and skill gaps.');
-            setAnswerText('');
-            toast.success('AI Interview started! Speak or type your answers.');
+            toast.success('Public interview link generated. Send it to the candidate.');
         } catch (err) { toast.error(err.detail || 'Failed to start interview'); }
         finally { setStarting(false); }
     };
-
-    const handleSubmitAnswer = async () => {
-        if (!answerText.trim()) return false;
-        setSubmittingAnswer(true);
-        try {
-            if (recordedAudio) {
-                const formData = new FormData();
-                formData.append('question_index', String(currentQuestionIndex));
-                formData.append('audio', recordedAudio, `interview-${session.id}-${currentQuestionIndex}.webm`);
-                const response = await api.post(`/interviews/${session.id}/voice-answer`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' },
-                });
-                setVoiceMetrics(response.voice_metrics || response.interview_metrics?.latest_voice || null);
-            } else {
-                await api.post(`/interviews/${session.id}/voice-fallback`, {
-                    question_index: currentQuestionIndex,
-                    transcript_text: answerText,
-                });
-            }
-
-            if (currentQuestionIndex < maxQuestions - 1) {
-                const next = await api.post(`/interviews/${session.id}/next-question`);
-                if (next.should_continue) {
-                    setSession(prev => ({ ...prev, questions: next.questions }));
-                    setCurrentQuestionIndex(next.current_question_index);
-                    setQuestionReasoning(next.reasoning || next.question?.reasoning || '');
-                }
-                setAnswerText('');
-                setRecordedAudio(null);
-            }
-            return true;
-        } catch (err) {
-            try {
-                await api.post(`/interviews/${session.id}/voice-fallback`, {
-                    question_index: currentQuestionIndex,
-                    transcript_text: answerText,
-                });
-                toast.warning('AssemblyAI unavailable. Saved browser transcript fallback.');
-                if (currentQuestionIndex < maxQuestions - 1) {
-                    const next = await api.post(`/interviews/${session.id}/next-question`);
-                    if (next.should_continue) {
-                        setSession(prev => ({ ...prev, questions: next.questions }));
-                        setCurrentQuestionIndex(next.current_question_index);
-                        setQuestionReasoning(next.reasoning || next.question?.reasoning || '');
-                    }
-                    setAnswerText('');
-                    setRecordedAudio(null);
-                }
-                return true;
-            } catch (fallbackErr) {
-                toast.error(fallbackErr.detail || err.detail || 'Failed to submit answer');
-            }
-        }
-        finally { setSubmittingAnswer(false); }
-        return false;
-    };
-
-    const handleCompleteInterview = async () => {
-        setCompleting(true);
-        try {
-            const data = await api.post(`/interviews/${session.id}/complete`);
-            setCompletedSession(data);
-            setSession(null);
-            fetchCompanyStats();
-            toast.success('Interview complete! AI evaluation scorecards generated successfully.');
-        } catch (err) { toast.error(err.detail || 'Failed to complete interview'); }
-        finally { setCompleting(false); }
-    };
-
-    // Voice Recording
-    const toggleRecording = () => {
-        if (isRecording) stopRecording();
-        else startRecording();
-    };
-
-    const startRecording = async () => {
-        setRecordedAudio(null);
-        audioChunksRef.current = [];
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const recorder = new MediaRecorder(stream);
-            recorder.ondataavailable = (event) => {
-                if (event.data.size > 0) audioChunksRef.current.push(event.data);
-            };
-            recorder.onstop = () => {
-                const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-                setRecordedAudio(blob);
-                stream.getTracks().forEach((track) => track.stop());
-            };
-            mediaRecorderRef.current = recorder;
-            recorder.start();
-            setIsRecording(true);
-        } catch (error) {
-            console.error('MediaRecorder unavailable, falling back to browser speech recognition:', error);
-            startSpeechRecognitionFallback();
-        }
-    };
-
-    const startSpeechRecognitionFallback = () => {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            toast.warning('Speech recognition is not supported in this browser. Please use Chrome or Edge.');
-            return;
-        }
-
-        const recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = 'en-US';
-
-        let finalTranscript = answerText;
-
-        recognition.onresult = (event) => {
-            let interimTranscript = '';
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                const transcript = event.results[i][0].transcript;
-                if (event.results[i].isFinal) {
-                    finalTranscript += ' ' + transcript;
-                } else {
-                    interimTranscript += transcript;
-                }
-            }
-            setAnswerText((finalTranscript + ' ' + interimTranscript).trim());
-        };
-
-        recognition.onerror = (event) => {
-            console.error('Speech recognition error:', event.error);
-            setIsRecording(false);
-        };
-
-        recognition.onend = () => {
-            setIsRecording(false);
-        };
-
-        recognitionRef.current = recognition;
-        recognition.start();
-        setIsRecording(true);
-    };
-
-    const stopRecording = () => {
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-            mediaRecorderRef.current.stop();
-            mediaRecorderRef.current = null;
-        }
-        if (recognitionRef.current) {
-            recognitionRef.current.stop();
-            recognitionRef.current = null;
-        }
-        setIsRecording(false);
-    };
-
-    const maxQuestions = 5;
-    const isLastQuestion = session && currentQuestionIndex >= maxQuestions - 1;
     const publicInterviewUrl = session?.id ? `${window.location.origin}/public-interview/${session.id}` : '';
 
     return (
@@ -260,7 +92,7 @@ const InterviewAssistant = () => {
                     )}
 
                     {/* Interview Setup — shown when no active session */}
-                    {!session && !completedSession && (
+                    {!session && (
                         <div className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm">
                             <h3 className="text-xl font-semibold text-slate-900 mb-8 flex items-center gap-3">
                                 <Brain size={22} className="text-indigo-600" /> Create Candidate Interview Link
@@ -320,7 +152,7 @@ const InterviewAssistant = () => {
                     )}
 
                     {/* Link Generated State */}
-                    {session && !completedSession && (
+                    {session && (
                         <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -416,53 +248,8 @@ const InterviewAssistant = () => {
                             </div>
                         </motion.div>
                     )}
-
-                    {voiceMetrics && (
-                        <div className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm">
-                            <h3 className="text-lg font-semibold text-slate-900 mb-4">Latest Voice Analytics</h3>
-                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                                <MiniStatCard icon={MessageSquare} label="Fluency" value={`${voiceMetrics.fluency_score || 0}%`} />
-                                <MiniStatCard icon={BarChart3} label="Pace" value={`${voiceMetrics.speaking_pace_wpm || 0} WPM`} />
-                                <MiniStatCard icon={Award} label="Fillers" value={voiceMetrics.filler_word_count || 0} />
-                                <MiniStatCard icon={CheckCircle2} label="Confidence" value={`${voiceMetrics.confidence_score || 0}%`} />
-                                <MiniStatCard icon={Brain} label="Comm." value={`${voiceMetrics.communication_score || 0}%`} />
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Completed Interview Results */}
-                    {completedSession && (
-                        <div className="space-y-8">
-                            <div className="bg-slate-950 rounded-[1.5rem] p-10 text-white relative overflow-hidden shadow-lg shadow-slate-300/50">
-                                <div className="absolute top-0 right-0 opacity-10 translate-x-1/4 -translate-y-1/4">
-                                    <Brain size={240} />
-                                </div>
-                                <div className="relative z-10">
-                                    <div className="flex items-center gap-2 text-indigo-200 font-semibold text-xs uppercase tracking-widest mb-6">
-                                        <Award size={16} /> Interview Evaluation Complete
-                                    </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-                                        <ScoreCircle label="Technical" score={completedSession.technical_score} />
-                                        <ScoreCircle label="Communication" score={completedSession.communication_score} />
-                                        <ScoreCircle label="Confidence" score={completedSession.confidence_score} />
-                                        <ScoreCircle label="Overall" score={completedSession.overall_score} />
-                                    </div>
-                                    <div className="flex items-center gap-4 pt-6 border-t border-white/10">
-                                        <RecommendationBadge recommendation={completedSession.recommendation} />
-                                        <p className="text-sm text-indigo-100 italic flex-1">"{completedSession.ai_summary}"</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button onClick={() => { setCompletedSession(null); setSelectedCandidate(null); }}
-                                className="btn btn-secondary px-8 py-3 font-bold">
-                                <Play size={18} /> Start New Interview
-                            </button>
-                        </div>
-                    )}
-
                     {/* Recent Interviews */}
-                    {companyStats?.interviews?.length > 0 && !session && !completedSession && (
+                    {companyStats?.interviews?.length > 0 && !session && (
                         <div className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm">
                             <h3 className="text-lg font-semibold text-slate-900 mb-6">Recent Interviews</h3>
                             <div className="space-y-3">
@@ -505,20 +292,6 @@ const MiniStatCard = ({ icon: Icon, label, value }) => (
         <h2 className="text-3xl font-semibold text-slate-900 tracking-tighter">{value}</h2>
         <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mt-1">{label}</p>
     </motion.div>
-);
-
-const ScoreCircle = ({ label, score }) => (
-    <div className="text-center">
-        <div className="w-20 h-20 rounded-full border-4 border-white/20 flex items-center justify-center mx-auto mb-2 relative">
-            <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 36 36">
-                <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="2" />
-                <circle cx="18" cy="18" r="16" fill="none" stroke="white" strokeWidth="2"
-                    strokeDasharray={`${(score || 0)} ${100 - (score || 0)}`} strokeDashoffset="0" strokeLinecap="round" />
-            </svg>
-            <span className="text-xl font-semibold relative z-10">{score || 0}</span>
-        </div>
-        <div className="text-[10px] font-semibold uppercase tracking-widest text-indigo-200">{label}</div>
-    </div>
 );
 
 const recommendationConfig = {

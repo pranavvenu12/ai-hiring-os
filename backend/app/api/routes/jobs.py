@@ -23,6 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import or_, select
 
 from app.api.deps import CurrentUser, require_roles
+from app.core.config import get_settings
 from app.core.security import Role
 from app.db.session import AsyncSessionLocal, get_db
 from app.models.company import Company
@@ -30,6 +31,7 @@ from app.models.job import Job
 from app.schemas.job import JobCreate, JobOut, PublicJobOut
 from app.schemas.candidate import CandidateOut
 from app.services import (
+    email_service,
     extraction_service,
     job_service,
     resume_service,
@@ -39,6 +41,7 @@ from app.services import (
 )
 
 router = APIRouter(prefix="/jobs", tags=["Jobs"])
+settings = get_settings()
 
 
 def _public_job_out(job: Job, company_name: str) -> PublicJobOut:
@@ -398,6 +401,14 @@ async def shortlist_candidate(
             "job_id": str(job.id),
         })
 
+    interview_url = f"{settings.FRONTEND_BASE_URL.rstrip('/')}/public-interview/{session.id}"
+    email_status = await email_service.send_interview_invite(
+        to_email=resume.email,
+        candidate_name=resume.candidate_name,
+        job_title=job.title,
+        interview_url=interview_url,
+    )
+
     # Return info
     return {
         "message": "Candidate shortlisted and AI Interview session initialized.",
@@ -405,7 +416,8 @@ async def shortlist_candidate(
         "session_id": str(session.id),
         "candidate_name": resume.candidate_name,
         "email": resume.email,
-        "interview_url": f"/public-interview/{session.id}",
+        "interview_url": interview_url,
+        "email_status": email_status,
     }
 
 

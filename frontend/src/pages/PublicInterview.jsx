@@ -14,7 +14,6 @@ const PublicInterview = () => {
     const [answerText, setAnswerText] = useState('');
     const [isRecording, setIsRecording] = useState(false);
     const [recordedAudio, setRecordedAudio] = useState(null);
-    const [questionReasoning, setQuestionReasoning] = useState('');
     const [submittingAnswer, setSubmittingAnswer] = useState(false);
     const [completing, setCompleting] = useState(false);
     const [loadingSession, setLoadingSession] = useState(true);
@@ -34,7 +33,6 @@ const PublicInterview = () => {
             if (data.status === 'completed') {
                 setCompletedState(true);
             }
-            setQuestionReasoning(data.questions?.[data.transcript_length || 0]?.reasoning || data.questions?.[0]?.reasoning || '');
             // Resume index if they partially completed
             setCurrentQuestionIndex(data.transcript_length || 0);
         } catch (err) {
@@ -77,7 +75,6 @@ const PublicInterview = () => {
                 if (next.should_continue) {
                     setSession(prev => ({ ...prev, questions: next.questions }));
                     setCurrentQuestionIndex(next.current_question_index);
-                    setQuestionReasoning(next.reasoning || next.question?.reasoning || '');
                 }
                 setAnswerText('');
                 setRecordedAudio(null);
@@ -95,7 +92,6 @@ const PublicInterview = () => {
                     if (next.should_continue) {
                         setSession(prev => ({ ...prev, questions: next.questions }));
                         setCurrentQuestionIndex(next.current_question_index);
-                        setQuestionReasoning(next.reasoning || next.question?.reasoning || '');
                     }
                     setAnswerText('');
                     setRecordedAudio(null);
