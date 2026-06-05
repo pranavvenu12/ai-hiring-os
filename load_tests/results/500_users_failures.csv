@@ -1,2 +1,5 @@
 Method,Name,Error,Occurrences
-GET,GET /jobs/public,HTTPError('500 Server Error: Internal Server Error for url: GET /jobs/public'),151
+GET,GET /health,"ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None)",1
+GET,GET /jobs/public,"ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None)",1
+GET,GET /jobs/public,HTTPError('500 Server Error: Internal Server Error for url: GET /jobs/public'),893
+POST,POST /auth/login,CatchResponseError('Unexpected status: 0'),1
