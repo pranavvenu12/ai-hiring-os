@@ -1,0 +1,2 @@
+Method,Name,Error,Occurrences
+GET,GET /jobs/public,HTTPError('500 Server Error: Internal Server Error for url: GET /jobs/public'),151
