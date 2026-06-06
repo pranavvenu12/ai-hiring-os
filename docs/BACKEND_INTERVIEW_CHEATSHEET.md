@@ -117,8 +117,10 @@ Gemini -> Groq -> Hugging Face -> deterministic fallback
 Deterministic scoring:
 
 ```text
-final = 60% skill_match + 40% semantic_overlap
+final = 30% skills + 25% embeddings + 20% RAG evidence + 10% role context + 10% resume evidence + 5% phrase evidence
 ```
+
+This is not plain Jaccard similarity. The fallback scorer uses skill aliases, negation-aware skill matching, sentence embeddings, cosine similarity, RAG-style chunk evidence, role/domain context, resume evidence, and learning-to-rank weighting. LLM providers can still override this with structured reasoning when configured.
 
 ## Shortlist Flow
 

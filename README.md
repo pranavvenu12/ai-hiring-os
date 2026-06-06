@@ -134,7 +134,31 @@ The product is designed for HR teams, hiring managers, demo evaluators, and tech
 
 These metrics measure whether the resume/JD scoring engine gives believable results. They are calculated by `backend/scripts/ai_scoring_benchmark.py` using labeled JD/resume benchmark cases for four real hiring roles: Full Stack Developer, AI/ML Engineer, UI/UX Designer, and DevOps Engineer.
 
-The current benchmark validates the deterministic fallback scorer used by the production pipeline when LLM providers are unavailable. It does not claim real-world hiring accuracy across thousands of resumes; that would require a larger human-labeled dataset.
+The current benchmark validates the deterministic hybrid fallback scorer used by the production pipeline when LLM providers are unavailable. It does not claim real-world hiring accuracy across thousands of resumes; that would require a larger human-labeled dataset.
+
+The project does not rely on plain Jaccard similarity as the hiring decision engine. The backend uses hybrid resume/JD matching:
+
+| Method | Better Because |
+|---|---|
+| Skill alias extraction | Maps variants like `postgres`, `postgresql`, `react.js`, `reactjs`, `ci/cd`, and `cicd` into canonical skills |
+| Negation-aware skill matching | Avoids counting phrases like `no Docker` or `without Kubernetes` as positive skill evidence |
+| Sentence embeddings | Uses `sentence-transformers/all-MiniLM-L6-v2` when installed to understand meaning beyond exact word overlap |
+| Cosine similarity | Compares resume/JD embedding vectors semantically |
+| RAG-style evidence scoring | Splits the JD and resume into chunks, then matches each JD requirement to the most relevant resume evidence chunk |
+| Role/domain context scoring | Checks whether resume experience is actually in the same domain as the JD: backend, frontend, AI/ML, DevOps, QA, design, product, mobile |
+| Resume evidence scoring | Rewards concrete project, internship, achievement, deployment, metric, GitHub, and LinkedIn evidence |
+| Learning-to-rank weighting | Blends skill, embedding, RAG, context, evidence, and phrase features into one ranked score |
+| LLM structured evaluation | Gemini, Groq, or Hugging Face can reason over projects, experience, seniority, and role fit |
+| Hybrid scoring | Combines skills, embeddings, RAG evidence, contextual relevance, resume evidence, and LLM explanation instead of trusting one weak signal |
+| Human-reviewed final decision | AI produces shortlist advice and scorecards; recruiters still make the final hiring decision |
+
+Remaining production hardening path:
+
+| Method | Better Because |
+|---|---|
+| Named entity extraction | Extracts actual tools, frameworks, degrees, companies, roles, and dates |
+| Recruiter-trained ranking weights | Learns better weights from real recruiter shortlist/reject decisions once enough labeled history exists |
+| Calibration and bias checks | Measures whether scores are reliable, fair, and stable across roles and candidate groups |
 
 Run the benchmark:
 
@@ -148,22 +172,22 @@ python backend/scripts/ai_scoring_benchmark.py
 | Tier Classification Accuracy | 100.00% | Correctly classified resumes into strong, partial, or weak fit buckets |
 | Strong Fit Detection Accuracy | 100.00% | Correctly detected whether a candidate is a strong shortlist-level match |
 | Pairwise Ranking Accuracy | 100.00% | Correctly ranked stronger resumes above weaker resumes for the same JD |
-| Score Mean Absolute Error | 9.76 points | Average distance from human target score on a 0-100 scale |
-| Skill Precision | 100.00% | Skills marked as matched were actually present in the resume text |
-| Skill Recall | 100.00% | Expected present skills were found by the scorer |
+| Score Mean Absolute Error | 7.77 points | Average distance from human target score on a 0-100 scale |
+| Skill Precision | 93.94% | Skills marked as matched were actually present in the resume text |
+| Skill Recall | 93.94% | Expected present skills were found by the scorer |
 
 Score buckets used in the benchmark:
 
 | Score Range | Interpretation |
 |---|---|
-| `>= 70` | Strong fit |
-| `10 - 69` | Partial fit / manual review |
+| `>= 65` | Strong fit |
+| `10 - 64` | Partial fit / manual review |
 | `< 10` | Weak fit |
 
 Why the score is believable:
 
 - It is explainable: the UI shows overall score, skill match score, semantic score, matched skills, missing skills, summary, and explanation.
-- It is not only a black-box LLM output: deterministic keyword and token-overlap scoring always runs as a baseline.
+- It is not only a black-box LLM output: deterministic hybrid scoring always runs as a baseline.
 - It has fallback safety: if Gemini, Groq, or Hugging Face fails, deterministic scoring still produces a result.
 - It is advisory: final shortlist and hiring decisions remain human-reviewed.
 

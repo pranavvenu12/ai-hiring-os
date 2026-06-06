@@ -2,8 +2,8 @@
 AI Hiring OS — Evaluation Service (Coordinator)
 
 Runs full evaluation pipeline:
-1. Deterministic scoring (keyword + Jaccard) as baseline
-2. Gemini AI scoring as primary (overrides deterministic when available)
+1. Deterministic hybrid scoring as baseline
+2. Multi-provider AI scoring as primary when available
 3. Persists combined results to DB
 """
 

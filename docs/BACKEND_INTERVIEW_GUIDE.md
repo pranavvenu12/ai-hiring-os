@@ -122,9 +122,12 @@ AI scoring pipeline:
 
 Deterministic score:
 
-- `skill_match_score`: overlap between job keywords and resume keywords.
-- `semantic_score`: token Jaccard similarity.
-- `score`: `0.6 * skill_match_score + 0.4 * semantic_score`.
+- `skill_match_score`: normalized required skill coverage using aliases such as `postgres` = `postgresql`.
+- `semantic_score`: semantic relevance from sentence embeddings, cosine similarity, RAG-style resume/JD evidence chunks, role context, and phrase evidence.
+- `score`: learning-to-rank weighted blend: 30% skills, 25% embeddings, 20% RAG evidence, 10% role context, 10% resume evidence, 5% phrase evidence.
+- The fallback scorer is negation-aware, so text like `no Docker` is not counted as Docker experience.
+- Semantic signals are gated by skill coverage, so a resume with zero required skills cannot be rescued by generic embedding similarity.
+- LLM scoring can override this baseline when Gemini, Groq, or Hugging Face returns valid structured JSON.
 
 ## 6. Shortlist to Public Interview Flow
 
@@ -426,7 +429,7 @@ Events:
 - `services/resume_service.py`: create resume, update extracted text, list candidates with scores.
 - `services/storage_service.py`: uploads PDFs to Supabase bucket `resumes`.
 - `services/extraction_service.py`: extracts PDF text with PyMuPDF.
-- `services/scoring_service.py`: deterministic keyword/Jaccard scoring.
+- `services/scoring_service.py`: deterministic hybrid scoring with skill aliases, context, evidence, and negation handling.
 - `services/ai_service.py`: resume AI scoring and dashboard AI search provider calls.
 - `services/ai_score_service.py`: create/update/read `ai_scores`.
 - `services/evaluation_service.py`: orchestrates resume scoring pipeline.
@@ -524,7 +527,7 @@ Answer: Gemini first, Groq second, Hugging Face third.
 Answer: Deterministic fallback score is used.
 
 22. What is deterministic score based on?
-Answer: Keyword overlap and token Jaccard similarity.
+Answer: Skill coverage, role/domain context, resume evidence, and exact phrase evidence. It is not plain Jaccard similarity.
 
 23. What table stores AI scores?
 Answer: `ai_scores`.

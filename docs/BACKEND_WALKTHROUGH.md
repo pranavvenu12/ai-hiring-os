@@ -1079,11 +1079,17 @@ Flow:
 
 Deterministic scoring:
 
-- Tokenizes resume and job description.
-- Extracts simple keyword sets.
-- Calculates skill overlap.
-- Calculates token Jaccard similarity.
-- Final score is 60 percent skill match and 40 percent semantic overlap.
+- Extracts canonical skills with aliases such as `postgres` to `postgresql`.
+- Handles negation so missing-skill statements are not counted as positive matches.
+- Calculates required skill coverage.
+- Generates sentence embeddings using `sentence-transformers/all-MiniLM-L6-v2` when installed.
+- Calculates cosine similarity between resume and JD embedding vectors.
+- Splits JD and resume text into chunks and performs RAG-style evidence matching from each JD requirement to the closest resume chunk.
+- Calculates role/domain context alignment across backend, frontend, AI/ML, DevOps, QA, design, product, and mobile.
+- Calculates resume evidence from projects, internships, achievements, metrics, deployments, GitHub, and LinkedIn signals.
+- Uses phrase evidence as a small exact wording signal.
+- Gates semantic signals by skill coverage so generic text similarity cannot over-score irrelevant resumes.
+- Final fallback score is a learning-to-rank weighted blend: 30 percent skills, 25 percent embeddings, 20 percent RAG evidence, 10 percent role context, 10 percent resume evidence, and 5 percent phrase evidence.
 
 ### Interview AI
 

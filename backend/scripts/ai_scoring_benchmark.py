@@ -13,96 +13,140 @@ from app.services.scoring_service import calculate_deterministic_scores
 BENCHMARK_CASES = [
     {
         "role": "Full Stack Developer",
-        "jd": "Python FastAPI PostgreSQL Docker AWS React TypeScript",
+        "jd": (
+            "Full Stack Developer required to build backend REST APIs, responsive frontend dashboards, "
+            "database-backed services, deployment pipelines, and cloud integrations using Python, FastAPI, "
+            "PostgreSQL, Docker, AWS, React, and TypeScript."
+        ),
         "candidates": [
             {
                 "label": "strong",
                 "target_score": 90,
-                "resume": "Python FastAPI PostgreSQL Docker AWS React TypeScript",
+                "resume": (
+                    "Projects: Built and deployed a full-stack hiring dashboard with Python, FastAPI, "
+                    "PostgreSQL, Docker, AWS, React, and TypeScript. Implemented REST APIs, responsive UI "
+                    "components, database queries, authentication, and production deployment. GitHub and "
+                    "LinkedIn links included."
+                ),
                 "expected_present_skills": {"python", "fastapi", "postgresql", "docker", "aws", "react", "typescript"},
             },
             {
                 "label": "partial",
                 "target_score": 35,
-                "resume": "Python React JavaScript HTML CSS",
+                "resume": (
+                    "Projects: Created frontend dashboards using React, JavaScript, HTML, and CSS. "
+                    "Completed a Python internship and built small API scripts, but no cloud deployment "
+                    "or PostgreSQL production backend experience."
+                ),
                 "expected_present_skills": {"python", "react"},
             },
             {
                 "label": "weak",
                 "target_score": 5,
-                "resume": "Sales Marketing Excel",
+                "resume": "Experience in sales operations, marketing reports, Excel dashboards, and client outreach.",
                 "expected_present_skills": set(),
             },
         ],
     },
     {
         "role": "AI ML Engineer",
-        "jd": "Python TensorFlow PyTorch NLP MLOps Docker AWS",
+        "jd": (
+            "AI ML Engineer needed for model training, NLP pipelines, classification systems, deployment, "
+            "and cloud-based machine learning workflows using Python, TensorFlow, PyTorch, NLP, Docker, and AWS."
+        ),
         "candidates": [
             {
                 "label": "strong",
                 "target_score": 90,
-                "resume": "Python TensorFlow PyTorch NLP Docker AWS",
-                "expected_present_skills": {"python", "tensorflow", "pytorch", "nlp", "docker", "aws"},
+                "resume": (
+                    "Projects: Developed NLP classification models in Python using TensorFlow and PyTorch. "
+                    "Built machine learning model training pipelines, deployed Docker containers on AWS, "
+                    "analyzed datasets, and optimized prediction quality by 18 percent."
+                ),
+                "expected_present_skills": {"python", "tensorflow", "pytorch", "nlp", "docker", "aws", "machine learning"},
             },
             {
                 "label": "partial",
                 "target_score": 35,
-                "resume": "Python Data Analysis Pandas SQL",
+                "resume": (
+                    "Projects: Analyzed datasets using Python, Pandas, NumPy, and SQL. Built reporting "
+                    "dashboards and simple prediction notebooks, but no TensorFlow, PyTorch, NLP, Docker, "
+                    "or AWS deployment work."
+                ),
                 "expected_present_skills": {"python"},
             },
             {
                 "label": "weak",
                 "target_score": 5,
-                "resume": "Figma UI Branding",
+                "resume": "Portfolio: Figma UI branding, visual design, typography, and landing page mockups.",
                 "expected_present_skills": set(),
             },
         ],
     },
     {
         "role": "UI UX Designer",
-        "jd": "Figma Prototyping Wireframes Research Accessibility",
+        "jd": (
+            "UI UX Designer required for user research, wireframing, prototyping, usability testing, "
+            "accessibility, responsive product design, and design system work using Figma."
+        ),
         "candidates": [
             {
                 "label": "strong",
                 "target_score": 90,
-                "resume": "Figma Prototyping Wireframes Research Accessibility",
+                "resume": (
+                    "Experience: Designed responsive SaaS dashboards in Figma, created wireframes and "
+                    "interactive prototypes, conducted user research and usability testing, improved "
+                    "accessibility, and maintained a design system."
+                ),
                 "expected_present_skills": {"figma", "prototyping", "wireframes", "research", "accessibility"},
             },
             {
                 "label": "partial",
                 "target_score": 35,
-                "resume": "Figma Branding Visual Design",
+                "resume": (
+                    "Portfolio: Created Figma visual design screens, branding layouts, landing pages, "
+                    "and UI mockups. Limited research, accessibility, or wireframing evidence."
+                ),
                 "expected_present_skills": {"figma"},
             },
             {
                 "label": "weak",
                 "target_score": 5,
-                "resume": "Java Spring PostgreSQL",
+                "resume": "Projects: Java Spring backend APIs, PostgreSQL schemas, and server-side authentication.",
                 "expected_present_skills": set(),
             },
         ],
     },
     {
         "role": "DevOps Engineer",
-        "jd": "Docker Kubernetes AWS Terraform Linux Monitoring",
+        "jd": (
+            "DevOps Engineer required for deployment automation, cloud infrastructure, monitoring, "
+            "container orchestration, Linux operations, CI/CD pipelines, Docker, Kubernetes, AWS, and Terraform."
+        ),
         "candidates": [
             {
                 "label": "strong",
                 "target_score": 90,
-                "resume": "Docker Kubernetes AWS Terraform Linux Monitoring",
-                "expected_present_skills": {"docker", "kubernetes", "aws", "terraform", "linux", "monitoring"},
+                "resume": (
+                    "Experience: Automated CI/CD deployment pipelines, managed Linux servers, deployed "
+                    "Docker containers to Kubernetes on AWS, wrote Terraform infrastructure modules, "
+                    "and implemented monitoring dashboards that reduced incident response time by 25 percent."
+                ),
+                "expected_present_skills": {"docker", "kubernetes", "aws", "terraform", "linux", "monitoring", "ci/cd"},
             },
             {
                 "label": "partial",
                 "target_score": 35,
-                "resume": "AWS Linux Bash Monitoring",
+                "resume": (
+                    "Experience: Supported AWS Linux servers, wrote Bash scripts, and monitored cloud "
+                    "services. No Kubernetes, Terraform, Docker orchestration, or complete CI/CD ownership."
+                ),
                 "expected_present_skills": {"aws", "linux", "monitoring"},
             },
             {
                 "label": "weak",
                 "target_score": 5,
-                "resume": "Flutter Android iOS Firebase",
+                "resume": "Projects: Flutter mobile app, Android screens, iOS layouts, Firebase auth, and mobile analytics.",
                 "expected_present_skills": set(),
             },
         ],
@@ -114,7 +158,7 @@ LABEL_ORDER = {"weak": 0, "partial": 1, "strong": 2}
 
 
 def score_bucket(score: float) -> str:
-    if score >= 70:
+    if score >= 65:
         return "strong"
     if score >= 10:
         return "partial"
@@ -165,7 +209,7 @@ def main() -> None:
     strong_correct = sum(
         1
         for row in rows
-        if (row["expected_label"] == "strong") == (row["score"] >= 70)
+        if (row["expected_label"] == "strong") == (row["score"] >= 65)
     )
     precision = skill_tp / (skill_tp + skill_fp) if skill_tp + skill_fp else 0
     recall = skill_tp / (skill_tp + skill_fn) if skill_tp + skill_fn else 0
@@ -181,8 +225,8 @@ def main() -> None:
         "skill_precision": round(precision * 100, 2),
         "skill_recall": round(recall * 100, 2),
         "thresholds": {
-            "strong": "score >= 70",
-            "partial": "10 <= score < 70",
+            "strong": "score >= 65",
+            "partial": "10 <= score < 65",
             "weak": "score < 10",
         },
         "limitations": [

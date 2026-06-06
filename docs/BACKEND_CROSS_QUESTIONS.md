@@ -44,7 +44,7 @@ It provides a baseline and fallback. If Gemini, Groq, or Hugging Face fails, the
 
 ## 11. Is the deterministic scoring semantically strong?
 
-No. It uses keyword extraction and token overlap, not embeddings. It is reliable and cheap, but not deeply semantic. A stronger production version would use embeddings, skills taxonomy, and calibrated scoring.
+Yes, it is now meaningfully stronger than plain keyword/Jaccard matching. It uses skill aliases, negation-aware matching, sentence embeddings, cosine similarity, RAG-style resume/JD evidence chunks, role/domain context, resume evidence, and learning-to-rank weighting. The remaining production work is named entity extraction, recruiter-labeled calibration, bias checks, and score versioning.
 
 ## 12. Why does AI scoring store a single row per resume?
 
@@ -232,7 +232,7 @@ Answer: Add `ai_score_runs` with provider, model, prompt version, raw output, no
 Answer: Strict JSON schema, short context windows, provider fallback, deterministic validation, and human review.
 
 6. How would you avoid fake semantic scoring?
-Answer: Use embeddings and skill taxonomy instead of simple Jaccard token overlap.
+Answer: Do not present plain word overlap as semantic AI. Use hybrid scoring now, then add embeddings, named entity extraction, RAG evidence, recruiter-labeled evaluation, and calibration for a production-grade claim.
 
 7. How would you secure resume URLs?
 Answer: Use private bucket with signed URLs rather than public URLs.
