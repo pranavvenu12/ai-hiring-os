@@ -130,19 +130,46 @@ The product is designed for HR teams, hiring managers, demo evaluators, and tech
 | Voice Interview Evaluation | Transcribes voice answers and calculates communication/confidence/fluency metrics | `assemblyai_service.py`, interview voice routes |
 | Payroll Insights | Generates payroll summaries through AI provider fallback or template summaries | `payroll_service.py` |
 
-## System Metrics
+## AI Evaluation Metrics
 
-| Metric | Count | Source |
+These metrics measure whether the resume/JD scoring engine gives believable results. They are calculated by `backend/scripts/ai_scoring_benchmark.py` using labeled JD/resume benchmark cases for four real hiring roles: Full Stack Developer, AI/ML Engineer, UI/UX Designer, and DevOps Engineer.
+
+The current benchmark validates the deterministic fallback scorer used by the production pipeline when LLM providers are unavailable. It does not claim real-world hiring accuracy across thousands of resumes; that would require a larger human-labeled dataset.
+
+Run the benchmark:
+
+```bash
+python backend/scripts/ai_scoring_benchmark.py
+```
+
+| Metric | Result | What It Means |
 |---|---:|---|
-| Total AI Features | 6 | README AI feature inventory from current services |
-| Total Roles | 4 | `backend/app/core/security.py` |
-| Total Role Dashboards | 3 | HR/Admin, Manager, Employee dashboards |
-| Total HR Modules | 7 | Recruitment, Candidates, Interviews, Employees, Attendance, Payroll, Performance |
-| Total API Route Handlers | 59 | `backend/app/api/routes/*.py`, including WebSocket |
-| Total Database Tables | 14 | `backend/app/models/*.py` |
-| Total Agent Types | 2 | Recruiter Copilot, Adaptive Interview Agent |
-| Total Interview Modes | 3 | technical, behavioral, general |
-| Total Deployment Targets | 2 | Vercel frontend, Docker/EC2 backend |
+| Benchmark Cases | 12 | Strong, partial, and weak resumes across 4 roles |
+| Tier Classification Accuracy | 100.00% | Correctly classified resumes into strong, partial, or weak fit buckets |
+| Strong Fit Detection Accuracy | 100.00% | Correctly detected whether a candidate is a strong shortlist-level match |
+| Pairwise Ranking Accuracy | 100.00% | Correctly ranked stronger resumes above weaker resumes for the same JD |
+| Score Mean Absolute Error | 9.76 points | Average distance from human target score on a 0-100 scale |
+| Skill Precision | 100.00% | Skills marked as matched were actually present in the resume text |
+| Skill Recall | 100.00% | Expected present skills were found by the scorer |
+
+Score buckets used in the benchmark:
+
+| Score Range | Interpretation |
+|---|---|
+| `>= 70` | Strong fit |
+| `10 - 69` | Partial fit / manual review |
+| `< 10` | Weak fit |
+
+Why the score is believable:
+
+- It is explainable: the UI shows overall score, skill match score, semantic score, matched skills, missing skills, summary, and explanation.
+- It is not only a black-box LLM output: deterministic keyword and token-overlap scoring always runs as a baseline.
+- It has fallback safety: if Gemini, Groq, or Hugging Face fails, deterministic scoring still produces a result.
+- It is advisory: final shortlist and hiring decisions remain human-reviewed.
+
+Current limitation:
+
+- The benchmark is controlled and small. For a production-grade accuracy claim, the next step is to build a larger human-labeled dataset of real JDs and resumes, then report precision, recall, F1, calibration error, and bias checks.
 
 ## Architecture
 
@@ -533,4 +560,3 @@ AI-Hiring-OS/
 ## License
 
 This repository is currently intended for project submission and portfolio review.
-
