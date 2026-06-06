@@ -47,6 +47,7 @@ async def start_interview(
     ai_score = score_result.scalar_one_or_none()
     first_question = interview_ai_service.generate_initial_adaptive_question(
         resume_text=resume.extracted_text or "" if resume else "",
+        matched_skills=ai_score.matched_skills if ai_score else [],
         skill_gaps=ai_score.missing_skills if ai_score else [],
     )
     if not first_question.get("question"):

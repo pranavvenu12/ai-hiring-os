@@ -96,6 +96,7 @@ async def generate_adaptive_question(
     job_description: str,
     resume_text: str,
     transcript: List[Dict],
+    matched_skills: List[str] | None = None,
     skill_gaps: List[str] | None = None,
     interview_metrics: Dict[str, Any] | None = None,
     max_questions: int = 5,
@@ -118,6 +119,7 @@ async def generate_adaptive_question(
         job_description=job_description,
         resume_text=resume_text,
         transcript=transcript,
+        matched_skills=matched_skills or [],
         skill_gaps=skill_gaps or [],
         interview_metrics=interview_metrics or {},
         max_questions=max_questions,
@@ -131,23 +133,53 @@ async def generate_adaptive_question(
         except Exception as e:
             logger.error(f"Adaptive question generation failed: {e}")
 
-    return _fallback_adaptive_question(transcript, skill_gaps or [], max_questions)
+    return _fallback_adaptive_question(
+        transcript,
+        resume_text=resume_text,
+        matched_skills=matched_skills or [],
+        skill_gaps=skill_gaps or [],
+        max_questions=max_questions,
+    )
 
 
 def generate_initial_adaptive_question(
     *,
     resume_text: str,
+    matched_skills: List[str] | None = None,
     skill_gaps: List[str] | None = None,
 ) -> Dict[str, Any]:
     """Fast deterministic first question so interview creation never waits on an LLM."""
-    project = _extract_project_hint(resume_text)
+    profile = _extract_resume_profile(
+        resume_text,
+        matched_skills=matched_skills or [],
+        skill_gaps=skill_gaps or [],
+    )
+    project = profile["project"]
+    skill_focus = profile["skill_focus"]
+    achievement = profile["achievement"]
     gaps = skill_gaps or []
-    if project:
+    if project and skill_focus:
         return {
-            "question": f"Walk me through {project}. Why was it built, what architecture did you choose, and what was the hardest technical challenge?",
+            "question": f"Walk me through {project}. How did you use {skill_focus} there, why did you choose that approach, and what was the hardest technical challenge?",
             "category": "project_deep_dive",
-            "reasoning": "The first question starts with a resume project to verify real ownership and depth.",
-            "focus_area": project,
+            "reasoning": "The first question starts with a concrete resume project and a specific skill signal to verify real ownership and depth.",
+            "focus_area": skill_focus,
+            "should_continue": True,
+        }
+    if achievement:
+        return {
+            "question": f"You highlighted {achievement}. Can you explain what you personally owned, what stack you used, and what tradeoffs you had to make?",
+            "category": "experience",
+            "reasoning": "The first question uses a concrete achievement from the resume instead of a generic opening.",
+            "focus_area": achievement,
+            "should_continue": True,
+        }
+    if skill_focus:
+        return {
+            "question": f"Tell me about your experience with {skill_focus}. What have you built with it, and what tradeoffs did you handle?",
+            "category": "technical",
+            "reasoning": "The first question targets the strongest resume skill signal available.",
+            "focus_area": skill_focus,
             "should_continue": True,
         }
     focus = gaps[0] if gaps else "the core technologies required for this role"
@@ -235,6 +267,7 @@ def _build_adaptive_question_prompt(
     job_description: str,
     resume_text: str,
     transcript: List[Dict],
+    matched_skills: List[str],
     skill_gaps: List[str],
     interview_metrics: Dict[str, Any],
     max_questions: int,
@@ -261,6 +294,9 @@ Job description:
 
 Resume:
 {resume_text[:2500]}
+
+Matched skills from the resume:
+{json.dumps(matched_skills)}
 
 Previous transcript:
 {transcript_text[:2500]}
@@ -316,53 +352,144 @@ def _normalise_adaptive_question(result: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def _fallback_adaptive_question(transcript: List[Dict], skill_gaps: List[str], max_questions: int) -> Dict[str, Any]:
+def _fallback_adaptive_question(
+    transcript: List[Dict],
+    *,
+    resume_text: str,
+    matched_skills: List[str],
+    skill_gaps: List[str],
+    max_questions: int,
+) -> Dict[str, Any]:
     answered = len(transcript)
-    focus = skill_gaps[0] if skill_gaps else "the most relevant project from your resume"
+    profile = _extract_resume_profile(
+        resume_text,
+        matched_skills=matched_skills,
+        skill_gaps=skill_gaps,
+    )
+    project = profile["project"] or "one of the projects on your resume"
+    skill_focus = profile["skill_focus"] or (skill_gaps[0] if skill_gaps else "the most relevant technical skill on your resume")
+    achievement = profile["achievement"]
+
     fallback_questions = [
         {
-            "question": f"Walk me through a project where you used {focus}. What architecture decisions did you make?",
+            "question": f"Walk me through {project}. What role did you personally play, and how did {skill_focus} shape the design?",
             "category": "project_deep_dive",
-            "focus_area": focus,
+            "focus_area": skill_focus,
         },
         {
-            "question": f"Explain a production challenge you might face with {focus} and how you would debug it.",
+            "question": f"If you had to improve {project} for production, what would be the first performance or reliability issue you would address?",
             "category": "problem_solving",
-            "focus_area": focus,
+            "focus_area": project,
         },
         {
-            "question": "Describe a time you had to explain a technical tradeoff to a non-technical stakeholder.",
+            "question": (
+                f"You mentioned {achievement}. How did you measure that impact and what was the hardest part of delivering it?"
+                if achievement
+                else "Describe a time you had to explain a technical tradeoff to a non-technical stakeholder."
+            ),
             "category": "behavioral",
-            "focus_area": "communication",
+            "focus_area": achievement or "communication",
         },
         {
-            "question": "How would you scale one of your resume projects for ten times more users?",
+            "question": f"How would you scale or harden {project} if it had ten times more users or data?",
             "category": "technical",
             "focus_area": "scalability",
         },
         {
-            "question": "Tell me about a time you led a technical decision or mentored someone through a difficult task.",
+            "question": f"Tell me about a time you led a technical decision or mentored someone while working on {project}.",
             "category": "leadership",
-            "focus_area": "leadership",
+            "focus_area": project,
         },
     ]
     selected = fallback_questions[min(answered, len(fallback_questions) - 1)]
     return {
         **selected,
-        "reasoning": "Fallback adaptive question selected from skill gaps and interview progress.",
+        "reasoning": "Fallback adaptive question selected from resume-specific anchors and interview progress.",
         "should_continue": answered < max_questions,
     }
 
 
+def _extract_resume_profile(
+    resume_text: str,
+    *,
+    matched_skills: List[str],
+    skill_gaps: List[str],
+) -> Dict[str, str | None]:
+    project = _extract_project_hint(resume_text)
+    skill_focus = _extract_skill_focus(resume_text, matched_skills, skill_gaps)
+    achievement = _extract_achievement_hint(resume_text)
+    return {
+        "project": project,
+        "skill_focus": skill_focus,
+        "achievement": achievement,
+    }
+
+
 def _extract_project_hint(resume_text: str) -> str | None:
-    known_projects = ["JourneySync", "AI Hiring OS", "WaterBuddy"]
-    for project in known_projects:
-        if project.lower() in resume_text.lower():
-            return project
+    noisy_phrases = {
+        "candidate application metadata",
+        "resume",
+        "curriculum vitae",
+        "professional summary",
+        "personal information",
+        "contact information",
+        "summary",
+        "experience",
+        "education",
+        "skills",
+        "projects",
+    }
+    project_markers = ("built", "developed", "designed", "led", "launched", "created", "implemented", "architected", "shipped")
     for line in resume_text.splitlines():
         clean = line.strip(" -:|")
-        if len(clean.split()) <= 5 and any(word in clean.lower() for word in ["project", "app", "system", "platform"]):
-            return clean[:80]
+        if len(clean.split()) < 3 or len(clean.split()) > 12:
+            continue
+        lowered = clean.lower()
+        if lowered in noisy_phrases:
+            continue
+        if any(marker in lowered for marker in project_markers):
+            return clean[:100]
+    for line in resume_text.splitlines():
+        clean = line.strip(" -:|")
+        lowered = clean.lower()
+        if lowered in noisy_phrases:
+            continue
+        if any(word in lowered for word in ["project", "app", "system", "platform", "product", "tool", "dashboard"]):
+            return clean[:100]
+    return None
+
+
+def _extract_skill_focus(resume_text: str, matched_skills: List[str], skill_gaps: List[str]) -> str | None:
+    for skill in matched_skills:
+        clean_skill = str(skill).strip()
+        if clean_skill:
+            return clean_skill
+    for skill in skill_gaps:
+        clean_skill = str(skill).strip()
+        if clean_skill:
+            return clean_skill
+
+    resume_lower = resume_text.lower()
+    candidate_skills = [
+        "python", "javascript", "typescript", "react", "fastapi", "django", "flask", "postgresql", "sql",
+        "aws", "docker", "kubernetes", "redis", "celery", "pydantic", "supabase", "vector database",
+        "nlp", "machine learning", "api", "graphql", "rest", "microservices", "ci/cd", "git",
+    ]
+    for skill in candidate_skills:
+        if skill in resume_lower:
+            return skill
+    return None
+
+
+def _extract_achievement_hint(resume_text: str) -> str | None:
+    achievement_markers = ("%", "reduced", "increased", "improved", "optimized", "scaled", "cut", "saved", "sped up", "delivered")
+    for line in resume_text.splitlines():
+        clean = line.strip(" -:|")
+        lowered = clean.lower()
+        if len(clean.split()) < 4 or len(clean.split()) > 20:
+            continue
+        if any(marker in lowered for marker in achievement_markers):
+            return clean[:120]
     return None
 
 
