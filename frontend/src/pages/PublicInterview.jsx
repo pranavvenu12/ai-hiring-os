@@ -132,6 +132,48 @@ const PublicInterview = () => {
         }
     };
 
+    const createSpeechRecognition = () => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return null;
+
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        let finalTranscript = '';
+
+        recognition.onresult = (event) => {
+            let interimTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += `${transcript} `;
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+
+            setAnswerText((finalTranscript + interimTranscript).trim());
+        };
+
+        recognition.onerror = (e) => {
+            console.error('Speech recognition error:', e.error);
+            if (e.error !== 'aborted') {
+                toast.warning('Voice typing paused. Your audio recording is still active.');
+            }
+        };
+
+        recognition.onend = () => {
+            if (isRecording) {
+                setIsRecording(false);
+            }
+        };
+
+        return recognition;
+    };
+
     // Recording logic (from InterviewAssistant.jsx)
     const toggleRecording = () => {
         if (isRecording) stopRecording();
@@ -143,6 +185,7 @@ const PublicInterview = () => {
         audioChunksRef.current = [];
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const recognition = createSpeechRecognition();
             const recorder = new MediaRecorder(stream);
             recorder.ondataavailable = (event) => {
                 if (event.data.size > 0) audioChunksRef.current.push(event.data);
@@ -153,7 +196,11 @@ const PublicInterview = () => {
                 stream.getTracks().forEach((track) => track.stop());
             };
             mediaRecorderRef.current = recorder;
+            recognitionRef.current = recognition;
             recorder.start();
+            if (recognition) {
+                recognition.start();
+            }
             setIsRecording(true);
         } catch (error) {
             console.error('MediaRecorder unavailable, falling back to speech recognition:', error);
@@ -162,40 +209,11 @@ const PublicInterview = () => {
     };
 
     const startSpeechRecognitionFallback = () => {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
+        const recognition = createSpeechRecognition();
+        if (!recognition) {
             toast.warning('Browser speech recognition is not supported. Please type your response.');
             return;
         }
-
-        const recognition = new SpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = 'en-US';
-
-        let finalTranscript = answerText;
-
-        recognition.onresult = (event) => {
-            let interimTranscript = '';
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                const transcript = event.results[i][0].transcript;
-                if (event.results[i].isFinal) {
-                    finalTranscript += ' ' + transcript;
-                } else {
-                    interimTranscript += transcript;
-                }
-            }
-            setAnswerText((finalTranscript + ' ' + interimTranscript).trim());
-        };
-
-        recognition.onerror = (e) => {
-            console.error('Speech recognition error:', e.error);
-            setIsRecording(false);
-        };
-
-        recognition.onend = () => {
-            setIsRecording(false);
-        };
 
         recognitionRef.current = recognition;
         recognition.start();
@@ -406,7 +424,7 @@ const PublicInterview = () => {
                                 )}
                             </div>
                             <div className="flex gap-3 shrink-0">
-                                <button onClick={handleSubmitAnswer} disabled={!answerText.trim() || submittingAnswer || isLastQuestion}
+                                <button onClick={handleSubmitAnswer} disabled={(!answerText.trim() && !recordedAudio) || submittingAnswer || isLastQuestion}
                                     className="btn btn-secondary px-6 py-3 font-bold text-xs disabled:opacity-40">
                                     {submittingAnswer ? <Loader2 className="animate-spin" size={18} /> : <ArrowRight size={18} />}
                                     {isLastQuestion ? 'Ready to Submit' : 'Next Question'}
