@@ -14,6 +14,7 @@ const PublicInterview = () => {
     const [answerText, setAnswerText] = useState('');
     const [isRecording, setIsRecording] = useState(false);
     const [recordedAudio, setRecordedAudio] = useState(null);
+    const [recordedAudioUrl, setRecordedAudioUrl] = useState('');
     const [submittingAnswer, setSubmittingAnswer] = useState(false);
     const [completing, setCompleting] = useState(false);
     const [loadingSession, setLoadingSession] = useState(true);
@@ -48,12 +49,24 @@ const PublicInterview = () => {
         fetchSession();
     }, [fetchSession]);
 
+    useEffect(() => {
+        if (!recordedAudio) {
+            setRecordedAudioUrl('');
+            return;
+        }
+
+        const url = URL.createObjectURL(recordedAudio);
+        setRecordedAudioUrl(url);
+
+        return () => URL.revokeObjectURL(url);
+    }, [recordedAudio]);
+
     const handleStart = () => {
         setStartedState(true);
     };
 
     const handleSubmitAnswer = async () => {
-        if (!answerText.trim()) return false;
+        if (!answerText.trim() && !recordedAudio) return false;
         setSubmittingAnswer(true);
         try {
             if (recordedAudio) {
@@ -362,6 +375,8 @@ const PublicInterview = () => {
                     <div className="space-y-4">
                         <div className="flex gap-3">
                             <button onClick={toggleRecording}
+                                aria-pressed={isRecording}
+                                aria-label={isRecording ? 'Stop recording audio' : 'Start recording audio'}
                                 className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 transition-all ${isRecording ? 'bg-rose-500 text-white animate-pulse shadow-lg shadow-rose-500/30' : 'bg-slate-50 border border-slate-100 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600'}`}>
                                 {isRecording ? <MicOff size={22} /> : <Mic size={22} />}
                             </button>
@@ -374,20 +389,31 @@ const PublicInterview = () => {
                         </div>
 
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                            <div className="text-xs text-slate-400 font-bold flex items-center gap-2">
-                                {isRecording && <><Volume2 size={14} className="text-rose-500 animate-pulse" /> Recording audio...</>}
-                                {!isRecording && recordedAudio && <>Voice captured. Press submit to proceed.</>}
-                                {!isRecording && !recordedAudio && <>Feel free to speak using microphone or type your response</>}
+                            <div className="space-y-2">
+                                <div className="text-xs text-slate-400 font-bold flex items-center gap-2">
+                                    {isRecording && <><Volume2 size={14} className="text-rose-500 animate-pulse" /> Recording audio now. Your speech is being saved.</>}
+                                    {!isRecording && recordedAudio && <>Voice captured and saved locally. Preview it below before moving on.</>}
+                                    {!isRecording && !recordedAudio && <>Feel free to speak using microphone or type your response</>}
+                                </div>
+                                {recordedAudioUrl && !isRecording && (
+                                    <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-900">
+                                        <CheckCircle2 size={16} className="shrink-0 text-emerald-600" />
+                                        <div className="flex-1 min-w-0">
+                                            <div className="uppercase tracking-widest text-[10px] text-emerald-600 mb-1">Recorded Answer Preview</div>
+                                            <audio controls src={recordedAudioUrl} className="w-full h-8" />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             <div className="flex gap-3 shrink-0">
                                 <button onClick={handleSubmitAnswer} disabled={!answerText.trim() || submittingAnswer || isLastQuestion}
                                     className="btn btn-secondary px-6 py-3 font-bold text-xs disabled:opacity-40">
                                     {submittingAnswer ? <Loader2 className="animate-spin" size={18} /> : <ArrowRight size={18} />}
-                                    {isLastQuestion ? 'Ready to Submit' : 'Next Adaptive Question'}
+                                    {isLastQuestion ? 'Ready to Submit' : 'Next Question'}
                                 </button>
                                 {isLastQuestion && (
-                                    <button onClick={async () => { const saved = answerText.trim() ? await handleSubmitAnswer() : false; if (saved) handleCompleteInterview(); }}
-                                        disabled={completing || !answerText.trim()}
+                                    <button onClick={async () => { const saved = (answerText.trim() || recordedAudio) ? await handleSubmitAnswer() : false; if (saved) handleCompleteInterview(); }}
+                                        disabled={completing || (!answerText.trim() && !recordedAudio)}
                                         className="btn btn-primary px-8 py-3 font-bold text-xs shadow-sm disabled:opacity-40">
                                         {completing ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
                                         {completing ? 'Submitting...' : 'Complete Interview'}
