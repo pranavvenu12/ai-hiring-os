@@ -33,9 +33,19 @@ const DashboardManager = () => {
             }
 
             const jobs = await api.get('/jobs');
+            const candidateLists = await Promise.all(
+                jobs.map(job => 
+                    api.get(`/jobs/${job.id}/candidates`)
+                       .then(cands => ({ job, cands }))
+                       .catch(err => {
+                           console.error(`Error fetching candidates for job ${job.id}:`, err);
+                           return { job, cands: [] };
+                       })
+                )
+            );
+
             let allCands = [];
-            for (const job of jobs) {
-                const cands = await api.get(`/jobs/${job.id}/candidates`);
+            for (const { job, cands } of candidateLists) {
                 allCands = allCands.concat(
                     cands
                         .filter(c => (c.candidate_intelligence?.candidate_intelligence_score ?? c.score) > 60)

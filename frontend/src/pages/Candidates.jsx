@@ -48,9 +48,18 @@ const Candidates = () => {
                 data = await api.get(`/jobs/${jobId}/candidates`);
             } else {
                 const jobs = await api.get('/jobs');
-                for (const j of jobs) {
-                    const cands = await api.get(`/jobs/${j.id}/candidates`);
-                    data = data.concat(cands.map(c => ({ ...c, jobTitle: j.title })));
+                const candidateLists = await Promise.all(
+                    jobs.map(j => 
+                        api.get(`/jobs/${j.id}/candidates`)
+                           .then(cands => ({ job: j, cands }))
+                           .catch(err => {
+                               console.error(`Error fetching candidates for job ${j.id}:`, err);
+                               return { job: j, cands: [] };
+                           })
+                    )
+                );
+                for (const { job, cands } of candidateLists) {
+                    data = data.concat(cands.map(c => ({ ...c, jobTitle: job.title })));
                 }
             }
             setCandidates(data);

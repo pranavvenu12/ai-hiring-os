@@ -73,8 +73,18 @@ const DashboardHR = () => {
             let scoredCount = 0;
             const aggregatedCandidates = [];
 
-            for (const job of jobsData) {
-                const cands = await api.get(`/jobs/${job.id}/candidates`);
+            const candidateLists = await Promise.all(
+                jobsData.map(job => 
+                    api.get(`/jobs/${job.id}/candidates`)
+                       .then(cands => ({ job, cands }))
+                       .catch(err => {
+                           console.error(`Error fetching candidates for job ${job.id}:`, err);
+                           return { job, cands: [] };
+                       })
+                )
+            );
+
+            for (const { job, cands } of candidateLists) {
                 totalCands += cands.length;
                 cands.forEach(c => {
                     if (c.score >= 80) highScorers++;
