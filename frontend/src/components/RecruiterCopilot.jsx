@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bot, ChevronDown, Loader2, Send, Sparkles, Wrench } from 'lucide-react';
-import api from '../services/api';
+import api, { getApiBaseUrl } from '../services/api';
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://ai-hiring-os-3rgo.onrender.com';
+const apiBaseUrl = getApiBaseUrl();
 
 const prompts = [
     'Show me top candidates',

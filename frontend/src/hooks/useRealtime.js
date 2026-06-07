@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
+import { getApiBaseUrl } from '../services/api';
 
 const getWsUrl = () => {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://ai-hiring-os-3rgo.onrender.com';
+    const baseUrl = getApiBaseUrl();
     return baseUrl.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
 };
 

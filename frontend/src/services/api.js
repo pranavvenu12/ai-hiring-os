@@ -1,6 +1,23 @@
 import axios from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ai-hiring-os-3rgo.onrender.com';
+export const getApiBaseUrl = () => {
+    if (import.meta.env.VITE_API_BASE_URL) {
+        return import.meta.env.VITE_API_BASE_URL;
+    }
+
+    if (typeof window === 'undefined') {
+        return 'https://ai-hiring-os.duckdns.org';
+    }
+
+    const { hostname, origin } = window.location;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'http://localhost:8000';
+    }
+
+    return origin;
+};
+
+const BASE_URL = getApiBaseUrl();
 
 const api = axios.create({
     baseURL: BASE_URL,

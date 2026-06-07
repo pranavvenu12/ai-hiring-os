@@ -18,3 +18,30 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: ai-hiring-os-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: ai-hiring-os-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  caddy_data:
+  caddy_config:

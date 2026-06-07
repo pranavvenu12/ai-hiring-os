@@ -1,0 +1,8 @@
+ai-hiring-os.duckdns.org {
+    encode gzip zstd
+
+    @api path /health /docs* /redoc* /openapi.json /auth* /me /users* /ask-ai /agent* /companies* /jobs* /employees* /attendance* /performance* /interviews* /payroll* /realtime*
+    reverse_proxy @api backend:8000
+
+    reverse_proxy frontend:80
+}
