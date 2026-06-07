@@ -17,7 +17,7 @@ It is built as a full-stack SaaS-style application with a React/Vite frontend, F
 [ DEMO VIDEO ]
 ```
 
-YouTube: https://youtu.be/DThmSvaaQw0?si=w9Qmg0CPiibJFPGm  
+YouTube: https://youtu.be/gb4xG_c8Lx8?si=Aa0i09xzBnNFeQ77
 
 ## Project Overview
 
