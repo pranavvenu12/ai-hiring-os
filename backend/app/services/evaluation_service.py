@@ -125,3 +125,50 @@ def det_summary(resume_text: str) -> str:
     if lines:
         return lines[0][:200]
     return "Candidate profile extracted from resume."
+
+
+async def evaluate_stuck_candidate_background(resume_id: uuid.UUID):
+    """
+    Ensure the candidate's resume has text extracted and full evaluation completed.
+    This downloads the resume PDF if extracted_text is missing, then runs run_full_evaluation.
+    """
+    import httpx
+    from app.db.session import AsyncSessionLocal
+    from sqlalchemy import select
+    from app.models.resume import Resume
+    from app.models.ai_score import AIScoreStatus
+    from app.services import extraction_service
+    
+    async with AsyncSessionLocal() as db:
+        try:
+            # 1. Fetch Resume
+            result = await db.execute(select(Resume).where(Resume.id == resume_id))
+            resume = result.scalar_one_or_none()
+            if not resume:
+                return
+                
+            # 2. Extract text if missing
+            if not resume.extracted_text:
+                logger.info(f"Downloading PDF resume for stuck candidate {resume_id} from {resume.file_url}...")
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    resp = await client.get(resume.file_url)
+                    resp.raise_for_status()
+                    content = resp.content
+                
+                text = await extraction_service.extract_text_from_pdf(content)
+                resume.extracted_text = text
+                await db.commit()
+                await db.refresh(resume)
+                logger.info(f"Text extraction completed for stuck candidate {resume_id}.")
+            
+            # 3. Trigger evaluation
+            await run_full_evaluation(resume_id)
+        except Exception as e:
+            logger.error(f"Failed to evaluate stuck candidate {resume_id} in background: {e}")
+            try:
+                from app.services import ai_score_service
+                await ai_score_service.create_or_update_ai_score(
+                    db, resume_id, status=AIScoreStatus.FAILED
+                )
+            except Exception:
+                pass

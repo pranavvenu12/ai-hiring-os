@@ -488,6 +488,13 @@ const Topbar = ({ title }) => {
                                     <Link
                                         key={index}
                                         to={item.path}
+                                        onMouseDown={(e) => {
+                                            e.preventDefault();
+                                        }}
+                                        onClick={() => {
+                                            setIsSearchFocused(false);
+                                            setSearchQuery('');
+                                        }}
                                         className="flex items-center justify-between px-4 py-2 hover:bg-slate-50 text-slate-700 hover:text-indigo-600 transition-colors"
                                     >
                                         <span className="text-sm font-semibold">{item.name}</span>

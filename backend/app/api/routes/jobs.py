@@ -322,6 +322,7 @@ async def list_job_candidates(
     job_id: uuid.UUID,
     current_user: CurrentUser,
     db: Annotated[AsyncSession, Depends(get_db)],
+    background_tasks: BackgroundTasks,
 ):
     """
     List all candidates (resumes) for a job with their AI scores and insights.
@@ -343,7 +344,22 @@ async def list_job_candidates(
             detail="Insufficient privileges.",
         )
 
-    return await resume_service.list_candidates_with_scores(db, job_id)
+    candidates = await resume_service.list_candidates_with_scores(db, job_id)
+
+    # Automatically recover any stuck pending/processing evaluations
+    from datetime import datetime, timezone
+    from app.services.evaluation_service import evaluate_stuck_candidate_background
+
+    now = datetime.now(timezone.utc)
+    for cand in candidates:
+        if cand["status"] in ("pending", "processing"):
+            created_at = cand["created_at"]
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc)
+            if (now - created_at).total_seconds() > 15:
+                background_tasks.add_task(evaluate_stuck_candidate_background, cand["resume_id"])
+
+    return candidates
 
 
 @router.post(
