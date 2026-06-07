@@ -46,8 +46,9 @@ const EmployeeDirectory = () => {
             setError(null);
             setLoading(false);
         } catch (err) { 
-            console.error("Failed to load employee directory, retrying in 3s...", err); 
-            setTimeout(fetchEmployees, 3000);
+            console.error("Failed to load employee directory:", err); 
+            setError(err.detail || err.message || 'Failed to load employee directory.');
+            setLoading(false);
         }
     }, [departmentFilter, page, searchQuery]);
 

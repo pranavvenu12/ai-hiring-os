@@ -41,8 +41,9 @@ const Jobs = () => {
             setError(null);
             setIsPageLoading(false);
         } catch (err) { 
-            console.error("Failed to load jobs, retrying in 3s...", err); 
-            setTimeout(fetchJobs, 3000);
+            console.error("Failed to load jobs:", err); 
+            setError(err.detail || err.message || 'Failed to load jobs.');
+            setIsPageLoading(false);
         }
     };
 

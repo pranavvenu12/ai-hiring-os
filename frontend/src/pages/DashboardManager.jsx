@@ -69,8 +69,9 @@ const DashboardManager = () => {
             setError(null);
             setLoading(false);
         } catch (error) { 
-            console.error("Failed to load dashboard data, retrying in 3s...", error);
-            setTimeout(fetchData, 3000);
+            console.error("Failed to load dashboard data:", error);
+            setError(error.detail || error.message || 'Failed to load dashboard data.');
+            setLoading(false);
         }
     };
 
@@ -220,7 +221,7 @@ const DashboardManager = () => {
                                     </motion.div>
                                 ))}
                                 {candidates.length === 0 && (
-                                    <EmptyState title="No high-potential candidates" description="No candidates have passed the AI screening yet." icon={Star} />
+                                    <EmptyState title="No candidates" description="No candidates have passed the AI screening yet." icon={Star} />
                                 )}
                             </div>
                         </motion.div>

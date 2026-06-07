@@ -93,8 +93,9 @@ const DashboardEmployee = () => {
             setError(null);
             setLoading(false);
         } catch (error) {
-            console.error("Error loading dashboard data, retrying in 3s...", error);
-            setTimeout(fetchData, 3000);
+            console.error("Error loading dashboard data:", error);
+            setError(error.detail || error.message || 'Failed to load dashboard data.');
+            setLoading(false);
         }
     }, [user]);
 

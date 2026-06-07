@@ -42,8 +42,9 @@ const Attendance = () => {
             setError(null);
             setLoading(false);
         } catch (err) { 
-            console.error("Failed to load attendance data, retrying in 3s...", err); 
-            setTimeout(fetchData, 3000);
+            console.error("Failed to load attendance data:", err); 
+            setError(err.detail || err.message || 'Failed to load attendance data.');
+            setLoading(false);
         }
     }, [isHROrAdmin, isManager]);
 

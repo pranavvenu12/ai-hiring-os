@@ -294,7 +294,7 @@ const Candidates = () => {
                         ))}
                         {filteredCandidates.length === 0 && (
                             <EmptyState 
-                                title="Pool is empty" 
+                                title="No candidates" 
                                 description={jobId ? 'Upload resumes to start AI evaluation.' : 'Select a job posting to view candidates.'} 
                                 icon={Users} 
                             />
@@ -393,7 +393,7 @@ const Candidates = () => {
                                     <tr>
                                         <td colSpan="5" className="px-0 py-8">
                                             <EmptyState 
-                                                title="Pool is empty" 
+                                                title="No candidates" 
                                                 description={jobId ? 'Upload some resumes to start the AI evaluation process.' : 'Select a job posting to view its candidates.'} 
                                                 icon={Users} 
                                             />
