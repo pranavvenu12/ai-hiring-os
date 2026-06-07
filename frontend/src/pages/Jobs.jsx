@@ -38,11 +38,11 @@ const Jobs = () => {
         try {
             const data = await api.get('/jobs');
             setJobs(data);
-        } catch (err) { 
-            console.error(err); 
-            setError("Failed to load jobs.");
-        } finally {
+            setError(null);
             setIsPageLoading(false);
+        } catch (err) { 
+            console.error("Failed to load jobs, retrying in 3s...", err); 
+            setTimeout(fetchJobs, 3000);
         }
     };
 

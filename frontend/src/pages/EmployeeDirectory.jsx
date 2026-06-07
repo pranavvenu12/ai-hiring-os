@@ -43,11 +43,12 @@ const EmployeeDirectory = () => {
             const data = await api.get(`/employees?${params.toString()}`);
             setEmployees(data.employees || []);
             setTotal(data.total || 0);
+            setError(null);
+            setLoading(false);
         } catch (err) { 
-            console.error(err); 
-            setError("Failed to load employee directory.");
+            console.error("Failed to load employee directory, retrying in 3s...", err); 
+            setTimeout(fetchEmployees, 3000);
         }
-        finally { setLoading(false); }
     }, [departmentFilter, page, searchQuery]);
 
     const fetchDepartments = useCallback(async () => {

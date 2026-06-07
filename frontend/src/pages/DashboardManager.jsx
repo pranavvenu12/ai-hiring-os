@@ -56,11 +56,11 @@ const DashboardManager = () => {
                     setTeamAvgRating(+(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1));
                 }
             } catch (e) { console.error(e); }
-        } catch (error) { 
-            console.error(error); 
-            setError('Failed to load dashboard data.');
-        } finally {
+            setError(null);
             setLoading(false);
+        } catch (error) { 
+            console.error("Failed to load dashboard data, retrying in 3s...", error);
+            setTimeout(fetchData, 3000);
         }
     };
 

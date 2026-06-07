@@ -117,11 +117,11 @@ const DashboardHR = () => {
                     employeesPaid: payrollData.summary?.employees_paid || 0,
                 });
             } catch (e) { console.error('HRMS stats fetch failed:', e); }
-        } catch (error) {
-            console.error(error);
-            setError('Failed to load dashboard data. Please try again.');
-        } finally {
+            setError(null);
             setLoading(false);
+        } catch (error) {
+            console.error("Failed to load dashboard data, retrying in 3s...", error);
+            setTimeout(fetchData, 3000);
         }
     }, []);
 

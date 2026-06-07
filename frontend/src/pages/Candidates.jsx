@@ -54,15 +54,15 @@ const Candidates = () => {
                 }
             }
             setCandidates(data);
+            setError(null);
+            setLoading(false);
             
             if (data.some(c => ['pending', 'processing'].includes(c.status))) {
                 setTimeout(() => fetchCandidatesRef.current?.(), 3000);
             }
         } catch (err) { 
-            console.error(err); 
-            setError("Failed to load candidates.");
-        } finally {
-            setLoading(false);
+            console.error("Failed to load candidates, retrying in 3s...", err); 
+            setTimeout(fetchCandidates, 3000);
         }
     }, [jobId]);
 

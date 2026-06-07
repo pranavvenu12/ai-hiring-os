@@ -28,23 +28,22 @@ const Attendance = () => {
 
     const fetchData = useCallback(async () => {
         try {
-            const myData = await api.get('/attendance/me');
-            setMyAttendance(myData);
-
-            if (isManager || isHROrAdmin) {
+            const meData = await api.get('/attendance/me');
+            setMyAttendance(meData);
+            
+            if (isManager) {
                 const teamData = await api.get('/attendance/team');
                 setTeamAttendance(teamData);
             }
-
             if (isHROrAdmin) {
                 const compData = await api.get('/attendance/company');
                 setCompanyAttendance(compData);
             }
-        } catch (err) { 
-            console.error(err); 
-            setError("Failed to load attendance data.");
-        } finally {
+            setError(null);
             setLoading(false);
+        } catch (err) { 
+            console.error("Failed to load attendance data, retrying in 3s...", err); 
+            setTimeout(fetchData, 3000);
         }
     }, [isHROrAdmin, isManager]);
 

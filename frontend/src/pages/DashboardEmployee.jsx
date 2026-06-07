@@ -90,11 +90,11 @@ const DashboardEmployee = () => {
                 console.error("Error fetching payroll details:", err);
             }
 
-        } catch (error) {
-            console.error("Error loading dashboard data:", error);
-            setError("Failed to load dashboard data. Please try again.");
-        } finally {
+            setError(null);
             setLoading(false);
+        } catch (error) {
+            console.error("Error loading dashboard data, retrying in 3s...", error);
+            setTimeout(fetchData, 3000);
         }
     }, [user]);
 
