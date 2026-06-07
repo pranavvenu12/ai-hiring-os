@@ -28,8 +28,10 @@ const Sidebar = () => {
     navItems.push(
         { name: 'Attendance', path: '/attendance', icon: Clock },
         { name: 'Performance', path: '/performance', icon: TrendingUp },
-        { name: 'Payroll', path: '/payroll', icon: Wallet },
     );
+    if (user.role !== 'manager') {
+        navItems.push({ name: 'Payroll', path: '/payroll', icon: Wallet });
+    }
 
     if (['admin', 'hr'].includes(user.role)) {
         navItems.push({ name: 'AI Interview', path: '/interviews', icon: Mic });

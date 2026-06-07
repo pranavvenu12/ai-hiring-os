@@ -7,12 +7,16 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Search, Plus, User, Mail, Phone, Building, Calendar, ArrowLeft, X, Briefcase, Filter } from 'lucide-react';
 import { formatShortDate } from '../utils/date';
+import { SkeletonDashboard } from '../components/ui/SkeletonStates';
+import { ErrorState } from '../components/ui/ErrorState';
+import { EmptyState } from '../components/ui/EmptyState';
 
 const EmployeeDirectory = () => {
     const { user } = useAuth();
     const [employees, setEmployees] = useState([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [departmentFilter, setDepartmentFilter] = useState('');
     const [departments, setDepartments] = useState([]);
@@ -39,7 +43,10 @@ const EmployeeDirectory = () => {
             const data = await api.get(`/employees?${params.toString()}`);
             setEmployees(data.employees || []);
             setTotal(data.total || 0);
-        } catch (err) { console.error(err); }
+        } catch (err) { 
+            console.error(err); 
+            setError("Failed to load employee directory.");
+        }
         finally { setLoading(false); }
     }, [departmentFilter, page, searchQuery]);
 
@@ -120,6 +127,11 @@ const EmployeeDirectory = () => {
                         </div>
                     </div>
 
+                    {loading && <div className="mt-8"><SkeletonDashboard /></div>}
+                    {error && !loading && <div className="mt-8"><ErrorState message={error} onRetry={() => { setLoading(true); setError(null); fetchEmployees(); }} /></div>}
+
+                    {!loading && !error && (
+                        <>
                     {/* Employee Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                         {employees.map((emp, i) => (
@@ -168,15 +180,11 @@ const EmployeeDirectory = () => {
                     </div>
 
                     {employees.length === 0 && !loading && (
-                        <div className="text-center py-24 bg-white rounded-[1.5rem] border border-slate-200 shadow-sm">
-                            <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-slate-200">
-                                <User size={32} />
-                            </div>
-                            <h4 className="text-lg font-semibold text-slate-900 mb-2">No employees found</h4>
-                            <p className="text-sm font-medium text-slate-400">
-                                {searchQuery || departmentFilter ? 'Try adjusting your search or filters.' : 'Add your first employee to get started.'}
-                            </p>
-                        </div>
+                        <EmptyState 
+                            title="No employees found" 
+                            description={searchQuery || departmentFilter ? 'Try adjusting your search or filters.' : 'Add your first employee to get started.'} 
+                            icon={User} 
+                        />
                     )}
 
                     {/* Pagination */}
@@ -186,6 +194,8 @@ const EmployeeDirectory = () => {
                             <span className="px-4 py-2 text-sm font-bold text-slate-500">Page {page + 1} of {totalPages}</span>
                             <button disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-600 hover:bg-indigo-50 disabled:opacity-40 transition-all">Next</button>
                         </div>
+                    )}
+                    </>
                     )}
                 </motion.div>
             </main>

@@ -4,14 +4,21 @@ import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import RecruiterCopilot from '../components/RecruiterCopilot';
 import api from '../services/api';
-import { Eye, Star, Brain, Clock, Users, TrendingUp, Wallet } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Eye, Star, Brain, Clock, Users, TrendingUp, Building2, Layers3, Globe, MapPin, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { SkeletonDashboard } from '../components/ui/SkeletonStates';
+import { ErrorState } from '../components/ui/ErrorState';
+import { EmptyState } from '../components/ui/EmptyState';
 
 const DashboardManager = () => {
+    const { user } = useAuth();
+    const [company, setCompany] = useState(null);
     const [candidates, setCandidates] = useState([]);
     const [teamAttendance, setTeamAttendance] = useState([]);
     const [teamAvgRating, setTeamAvgRating] = useState(0);
-    const [payrollSummary, setPayrollSummary] = useState({ total_payroll_cost: 0, department_costs: {} });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         document.title = 'AI Hiring OS - Manager Dashboard';
@@ -20,6 +27,11 @@ const DashboardManager = () => {
 
     const fetchData = async () => {
         try {
+            if (user?.company_id) {
+                const co = await api.get(`/companies/${user.company_id}`);
+                setCompany(co);
+            }
+
             const jobs = await api.get('/jobs');
             let allCands = [];
             for (const job of jobs) {
@@ -44,11 +56,12 @@ const DashboardManager = () => {
                     setTeamAvgRating(+(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1));
                 }
             } catch (e) { console.error(e); }
-            try {
-                const payrollData = await api.get('/payroll?limit=500');
-                setPayrollSummary(payrollData.summary || { total_payroll_cost: 0, department_costs: {} });
-            } catch (e) { console.error(e); }
-        } catch (error) { console.error(error); }
+        } catch (error) { 
+            console.error(error); 
+            setError('Failed to load dashboard data.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const containerVariants = {
@@ -66,6 +79,10 @@ const DashboardManager = () => {
                 <Topbar title="Hiring Manager Portal" />
                 <RecruiterCopilot />
                 
+                {loading && <div className="mt-8"><SkeletonDashboard /></div>}
+                {error && !loading && <div className="mt-8"><ErrorState message={error} onRetry={() => { setLoading(true); setError(null); fetchData(); }} /></div>}
+                
+                {!loading && !error && (
                 <motion.div 
                     variants={containerVariants}
                     initial="initial"
@@ -79,28 +96,8 @@ const DashboardManager = () => {
                         <StatCard icon={Clock} label="Candidates Reviewed" value={candidates.length} color="emerald" />
                         <StatCard icon={Users} label="Team Present" value={teamAttendance.filter(r => r.status === 'present').length} color="indigo" />
                         <StatCard icon={TrendingUp} label="Team Avg Rating" value={`${teamAvgRating}/5`} color="violet" />
-                        <StatCard icon={Wallet} label="Payroll Overview" value={`₹${Math.round(payrollSummary.total_payroll_cost || 0).toLocaleString('en-IN')}`} color="emerald" />
                     </div>
 
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm">
-                        <div className="flex justify-between items-center gap-4 mb-6">
-                            <h3 className="text-xl font-semibold text-slate-900 flex items-center gap-3">
-                                <Wallet size={20} className="text-indigo-600" /> Department Payroll Overview
-                            </h3>
-                            <Link to="/payroll" className="btn btn-secondary px-4 py-2 text-xs font-bold uppercase tracking-widest">View Payroll</Link>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {Object.entries(payrollSummary.department_costs || {}).map(([department, cost]) => (
-                                <div key={department} className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
-                                    <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 truncate">{department}</div>
-                                    <div className="text-xl font-semibold text-slate-950 mt-2">₹{Math.round(cost).toLocaleString('en-IN')}</div>
-                                </div>
-                            ))}
-                            {Object.keys(payrollSummary.department_costs || {}).length === 0 && (
-                                <div className="text-sm font-semibold text-slate-400">No payroll records generated yet.</div>
-                            )}
-                        </div>
-                    </motion.div>
 
                     {/* Team Attendance Today */}
                     {teamAttendance.length > 0 && (
@@ -122,6 +119,30 @@ const DashboardManager = () => {
                                         </div>
                                     </div>
                                 ))}
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {/* Company Details Section */}
+                    {company && (
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                                    <Building2 size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-semibold text-slate-900">Company Profile</h3>
+                                    <p className="text-sm font-medium text-slate-400">View company details and contact information.</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <ProfileRow icon={Building2} label="Company Name" value={company?.name} />
+                                <ProfileRow icon={Layers3} label="Industry" value={company?.industry} />
+                                <ProfileRow icon={Globe} label="Website" value={company?.website} />
+                                <ProfileRow icon={MapPin} label="Location" value={company?.location} />
+                                <ProfileRow icon={Users} label="Team Size" value={company?.employee_count_range} />
+                                <ProfileRow icon={Mail} label="Contact Email" value={company?.contact_email} />
                             </div>
                         </motion.div>
                     )}
@@ -189,17 +210,13 @@ const DashboardManager = () => {
                                     </motion.div>
                                 ))}
                                 {candidates.length === 0 && (
-                                    <div className="text-center py-20">
-                                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                            <Star size={32} className="text-slate-200" />
-                                        </div>
-                                        <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No high-potential candidates yet</p>
-                                    </div>
+                                    <EmptyState title="No high-potential candidates" description="No candidates have passed the AI screening yet." icon={Star} />
                                 )}
                             </div>
                         </motion.div>
                     </div>
                 </motion.div>
+                )}
             </main>
         </div>
     );
@@ -245,6 +262,18 @@ const StatCard = ({ icon: Icon, label, value, color }) => {
     </motion.div>
     );
 };
+
+const ProfileRow = ({ icon: Icon, label, value }) => (
+    <div className="flex items-center gap-4 group">
+        <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-indigo-600 group-hover:border-indigo-100 transition-all shadow-sm">
+            <Icon size={18} />
+        </div>
+        <div className="min-w-0">
+            <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-[0.2em] mb-0.5">{label}</div>
+            <div className="text-sm font-semibold text-slate-700 truncate">{value || 'N/A'}</div>
+        </div>
+    </div>
+);
 
 export default DashboardManager;
 

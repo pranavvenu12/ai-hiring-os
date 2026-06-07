@@ -8,6 +8,9 @@ import { useToast } from '../context/ToastContext';
 import { Upload, ChevronRight, Brain, Loader2, CheckCircle2, FileText, Search, User, Users, SlidersHorizontal, ArrowLeft, Mic, Target, Github, Globe, BriefcaseBusiness, AlertTriangle, Code2 } from 'lucide-react';
 import { formatRelativeTime } from '../utils/date';
 import { useRealtime } from '../hooks/useRealtime';
+import { SkeletonTable, SkeletonDrawer } from '../components/ui/SkeletonStates';
+import { ErrorState } from '../components/ui/ErrorState';
+import { EmptyState } from '../components/ui/EmptyState';
 
 const Candidates = () => {
     const [searchParams] = useSearchParams();
@@ -17,6 +20,8 @@ const Candidates = () => {
     const [selectedCandidate, setSelectedCandidate] = useState(null);
     const [jobTitle, setJobTitle] = useState('Talent Pool');
     const [isUploading, setIsUploading] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const fileInputRef = useRef(null);
     const fetchCandidatesRef = useRef(null);
@@ -53,7 +58,12 @@ const Candidates = () => {
             if (data.some(c => ['pending', 'processing'].includes(c.status))) {
                 setTimeout(() => fetchCandidatesRef.current?.(), 3000);
             }
-        } catch (err) { console.error(err); }
+        } catch (err) { 
+            console.error(err); 
+            setError("Failed to load candidates.");
+        } finally {
+            setLoading(false);
+        }
     }, [jobId]);
 
     const fetchCandidateInterviews = useCallback(async (candId) => {
@@ -198,6 +208,11 @@ const Candidates = () => {
                         </div>
                     </div>
 
+                    {loading && <div className="mt-8"><SkeletonTable /></div>}
+                    {error && !loading && <div className="mt-8"><ErrorState message={error} onRetry={() => { setLoading(true); setError(null); fetchCandidates(); }} /></div>}
+
+                    {!loading && !error && (
+                        <>
                     {/* Mobile Cards */}
                     <div className="md:hidden space-y-3">
                         {filteredCandidates.map((c, i) => (
@@ -228,16 +243,24 @@ const Candidates = () => {
                                 <div className="mt-4 grid grid-cols-2 gap-3">
                                     <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
                                         <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Intelligence</p>
-                                        <p className="text-lg font-semibold text-indigo-600 mt-1">{Math.round(c.candidate_intelligence?.candidate_intelligence_score ?? c.score)} / 100</p>
+                                        {['pending', 'processing'].includes(c.status) ? (
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <Loader2 size={14} className="animate-spin text-indigo-600" />
+                                                <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">Evaluating</p>
+                                            </div>
+                                        ) : (
+                                            <p className="text-lg font-semibold text-indigo-600 mt-1">{Math.round(c.candidate_intelligence?.candidate_intelligence_score ?? c.score)} / 100</p>
+                                        )}
                                     </div>
                                     <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
                                         <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Status</p>
-                                        <p className={`text-xs font-semibold uppercase tracking-wider mt-2 ${
+                                        <div className={`text-xs font-semibold uppercase tracking-wider mt-2 flex items-center gap-1.5 ${
                                             c.status === 'completed' ? 'text-emerald-600' :
                                             c.status === 'failed' ? 'text-rose-600' : 'text-amber-600'
                                         }`}>
+                                            {['pending', 'processing'].includes(c.status) && <Loader2 size={12} className="animate-spin" />}
                                             {c.status}
-                                        </p>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -253,15 +276,11 @@ const Candidates = () => {
                             </motion.button>
                         ))}
                         {filteredCandidates.length === 0 && (
-                            <div className="rounded-[1.25rem] border border-slate-200 bg-white p-8 text-center shadow-sm">
-                                <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-300">
-                                    <Users size={28} />
-                                </div>
-                                <h4 className="text-base font-semibold text-slate-900 mb-2">Pool is empty</h4>
-                                <p className="text-sm font-medium text-slate-400">
-                                    {jobId ? 'Upload resumes to start AI evaluation.' : 'Select a job posting to view candidates.'}
-                                </p>
-                            </div>
+                            <EmptyState 
+                                title="Pool is empty" 
+                                description={jobId ? 'Upload resumes to start AI evaluation.' : 'Select a job posting to view candidates.'} 
+                                icon={Users} 
+                            />
                         )}
                     </div>
 
@@ -300,24 +319,45 @@ const Candidates = () => {
                                             </div>
                                         </td>
                                         <td className="px-8 py-6">
-                                            <div className="flex items-center gap-4">
-                                                <div className="text-lg font-semibold text-indigo-600 min-w-[5.5rem] whitespace-nowrap">{Math.round(c.candidate_intelligence?.candidate_intelligence_score ?? c.score)} / 100</div>
-                                                <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden max-w-[120px]">
-                                                    <motion.div 
-                                                        initial={{ width: 0 }}
-                                                        animate={{ width: `${c.candidate_intelligence?.candidate_intelligence_score ?? c.score}%` }}
-                                                        transition={{ duration: 1, delay: i * 0.1 }}
-                                                        className={`h-full rounded-full ${(c.candidate_intelligence?.candidate_intelligence_score ?? c.score) > 80 ? 'bg-emerald-500' : (c.candidate_intelligence?.candidate_intelligence_score ?? c.score) > 50 ? 'bg-indigo-600' : 'bg-rose-500'}`} 
-                                                    />
+                                            {['pending', 'processing'].includes(c.status) ? (
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center">
+                                                        <Brain size={14} className="text-indigo-600 animate-pulse" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-xs font-bold text-indigo-600 uppercase tracking-widest flex items-center gap-2">
+                                                            <Loader2 size={12} className="animate-spin" /> AI Evaluating
+                                                        </div>
+                                                        <div className="w-24 h-1.5 bg-slate-100 rounded-full mt-1.5 overflow-hidden">
+                                                            <motion.div
+                                                                className="h-full bg-indigo-500 rounded-full"
+                                                                animate={{ width: ["0%", "100%", "0%"], x: ["0%", "0%", "100%"] }}
+                                                                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                                                            />
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            ) : (
+                                                <div className="flex items-center gap-4">
+                                                    <div className="text-lg font-semibold text-indigo-600 min-w-[5.5rem] whitespace-nowrap">{Math.round(c.candidate_intelligence?.candidate_intelligence_score ?? c.score)} / 100</div>
+                                                    <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden max-w-[120px]">
+                                                        <motion.div 
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: `${c.candidate_intelligence?.candidate_intelligence_score ?? c.score}%` }}
+                                                            transition={{ duration: 1, delay: i * 0.1 }}
+                                                            className={`h-full rounded-full ${(c.candidate_intelligence?.candidate_intelligence_score ?? c.score) > 80 ? 'bg-emerald-500' : (c.candidate_intelligence?.candidate_intelligence_score ?? c.score) > 50 ? 'bg-indigo-600' : 'bg-rose-500'}`} 
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="px-8 py-6">
                                             <div className="flex items-center gap-2">
-                                                <span className={`px-3 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-widest ${
+                                                <span className={`px-3 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-widest flex items-center gap-1.5 ${
                                                     c.status === 'completed' ? 'bg-emerald-50 text-emerald-600' : 
                                                     c.status === 'failed' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'
                                                 }`}>
+                                                    {['pending', 'processing'].includes(c.status) && <Loader2 size={10} className="animate-spin" />}
                                                     {c.status}
                                                 </span>
                                             </div>
@@ -334,16 +374,12 @@ const Candidates = () => {
                                 ))}
                                 {filteredCandidates.length === 0 && (
                                     <tr>
-                                        <td colSpan="5" className="px-8 py-24 text-center">
-                                            <div className="max-w-xs mx-auto">
-                                                <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6 text-slate-200">
-                                                    <Users size={32} />
-                                                </div>
-                                                <h4 className="text-lg font-semibold text-slate-900 mb-2">Pool is empty</h4>
-                                                <p className="text-sm font-medium text-slate-400">
-                                                    {jobId ? 'Upload some resumes to start the AI evaluation process.' : 'Select a job posting to view its candidates.'}
-                                                </p>
-                                            </div>
+                                        <td colSpan="5" className="px-0 py-8">
+                                            <EmptyState 
+                                                title="Pool is empty" 
+                                                description={jobId ? 'Upload some resumes to start the AI evaluation process.' : 'Select a job posting to view its candidates.'} 
+                                                icon={Users} 
+                                            />
                                         </td>
                                     </tr>
                                 )}
@@ -351,6 +387,8 @@ const Candidates = () => {
                         </table>
                         </div>
                     </div>
+                    </>
+                    )}
                 </motion.div>
             </main>
 
@@ -439,14 +477,23 @@ const Candidates = () => {
                                             <div className="relative z-10 flex items-center justify-between">
                                                 <div>
                                                     <div className="flex items-center gap-2 text-indigo-100 font-semibold text-xs uppercase tracking-[0.2em] mb-4">
-                                                        <Brain size={16} /> Candidate Intelligence Score
+                                                        <Brain size={16} /> {['pending', 'processing'].includes(selectedCandidate.status) ? 'AI Evaluation in Progress' : 'Candidate Intelligence Score'}
                                                     </div>
-                                                    <div className="text-6xl font-semibold">{Math.round(selectedIntel.candidate_intelligence_score ?? selectedCandidate.score)}</div>
-                                                    <div className="mt-1 text-sm font-bold text-indigo-100">/ 100</div>
+                                                    {['pending', 'processing'].includes(selectedCandidate.status) ? (
+                                                        <div className="text-4xl font-semibold flex items-center gap-4">
+                                                            <Loader2 className="animate-spin" size={32} />
+                                                            Processing...
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-end gap-2">
+                                                            <div className="text-6xl font-semibold">{Math.round(selectedIntel.candidate_intelligence_score ?? selectedCandidate.score)}</div>
+                                                            <div className="mb-2 text-sm font-bold text-indigo-100">/ 100</div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <div className="w-24 h-24 rounded-full border-8 border-white/10 flex items-center justify-center relative">
                                                     <div className="text-xs font-semibold uppercase text-white/50 tracking-widest">Intel</div>
-                                                    <div className="absolute inset-0 rounded-full border-8 border-white border-t-transparent animate-spin-slow" />
+                                                    <div className={`absolute inset-0 rounded-full border-8 border-white border-t-transparent ${['pending', 'processing'].includes(selectedCandidate.status) ? 'animate-spin' : 'animate-spin-slow'}`} />
                                                 </div>
                                             </div>
                                             <div className="mt-8 pt-8 border-t border-white/10">
@@ -458,8 +505,8 @@ const Candidates = () => {
                                                             const lower = s.toLowerCase();
                                                             return lower.includes('unavailable') || lower.includes('deterministic') || lower.includes('fallback');
                                                         };
-                                                        if (selectedCandidate.status !== 'completed') {
-                                                            return 'Processing AI-driven insights...';
+                                                        if (['pending', 'processing'].includes(selectedCandidate.status)) {
+                                                            return 'AI is currently analyzing the resume, extracting skills, and comparing against job requirements...';
                                                         }
                                                         if (exp && !isFallback(exp)) {
                                                             return `"${exp}"`;
@@ -642,10 +689,7 @@ const Candidates = () => {
                                 ) : (
                                     <div className="space-y-8">
                                         {loadingInterviews ? (
-                                            <div className="flex flex-col items-center justify-center py-20 gap-4 text-slate-400">
-                                                <Loader2 className="animate-spin text-indigo-600" size={32} />
-                                                <span className="text-sm font-medium">Fetching interview details...</span>
-                                            </div>
+                                            <div className="py-8"><SkeletonDrawer /></div>
                                         ) : candidateInterviews.length > 0 ? (
                                             candidateInterviews.map((session) => (
                                                 <div key={session.id} className="space-y-8">

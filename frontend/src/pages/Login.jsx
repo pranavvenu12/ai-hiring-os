@@ -33,7 +33,11 @@ const Login = () => {
             navigate(`/dashboard/${user.role.toLowerCase()}`);
             toast.success('Welcome back!');
         } catch (err) {
-            toast.error(err.detail || 'Login failed');
+            let errorMsg = err.detail || 'Login failed';
+            if (errorMsg) {
+                errorMsg = errorMsg.replace(/supabase/gi, 'Server');
+            }
+            toast.error(errorMsg);
         } finally {
             setIsLoading(false);
         }

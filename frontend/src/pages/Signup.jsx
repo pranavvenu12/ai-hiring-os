@@ -52,11 +52,16 @@ const Signup = () => {
             toast.success('Account created successfully!');
         } catch (err) {
             const detail = err?.detail;
-            const msg = typeof detail === 'string'
+            let msg = typeof detail === 'string'
                 ? detail
                 : Array.isArray(detail)
                     ? detail.map(d => d.msg || d).join('; ')
                     : err?.message || 'Signup failed';
+            
+            // Clean up any references to Supabase/database
+            if (msg) {
+                msg = msg.replace(/supabase/gi, 'Server');
+            }
             toast.error(msg);
         } finally {
             setIsLoading(false);

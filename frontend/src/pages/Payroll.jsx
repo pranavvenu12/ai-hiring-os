@@ -26,7 +26,7 @@ const Payroll = () => {
     const { toast } = useToast();
     const isEmployee = user?.role === 'employee';
     const canManage = ['admin', 'hr'].includes(user?.role);
-    const canReadCompany = ['admin', 'hr', 'manager'].includes(user?.role);
+    const canReadCompany = ['admin', 'hr'].includes(user?.role);
 
     const [records, setRecords] = useState([]);
     const [allRecords, setAllRecords] = useState([]);

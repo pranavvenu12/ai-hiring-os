@@ -6,8 +6,11 @@ import Topbar from '../components/Topbar';
 import RecruiterCopilot from '../components/RecruiterCopilot';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Users, Briefcase, Star, ClipboardList, ArrowRight, Building2, MapPin, Globe, Mail, Layers3, UserCheck, Clock, TrendingUp, Mic, Wallet, Receipt, BadgeDollarSign } from 'lucide-react';
+import { ArrowRight, Building2, MapPin, Globe, Mail, Layers3, UserCheck, Clock, TrendingUp, Mic, Wallet, Receipt, BadgeDollarSign, Users, Star, ClipboardList, Briefcase } from 'lucide-react';
 import { formatRelativeTime, formatShortDate } from '../utils/date';
+import { SkeletonDashboard } from '../components/ui/SkeletonStates';
+import { ErrorState } from '../components/ui/ErrorState';
+import { EmptyState } from '../components/ui/EmptyState';
 
 const DashboardHR = () => {
     const { user } = useAuth();
@@ -38,6 +41,8 @@ const DashboardHR = () => {
     });
     const [hrmsStats, setHrmsStats] = useState({ totalEmployees: 0, attendanceToday: 0, avgPerformance: 0, interviewCompletion: 0 });
     const [payrollStats, setPayrollStats] = useState({ totalPayrollCost: 0, pendingPayroll: 0, employeesPaid: 0 });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         if (user?.company_id) {
@@ -114,6 +119,9 @@ const DashboardHR = () => {
             } catch (e) { console.error('HRMS stats fetch failed:', e); }
         } catch (error) {
             console.error(error);
+            setError('Failed to load dashboard data. Please try again.');
+        } finally {
+            setLoading(false);
         }
     }, []);
 
@@ -137,6 +145,11 @@ const DashboardHR = () => {
                 <Topbar title="System Overview" />
                 <RecruiterCopilot />
                 
+                {loading && <div className="mt-8"><SkeletonDashboard /></div>}
+                {error && !loading && <div className="mt-8"><ErrorState message={error} onRetry={() => { setLoading(true); setError(null); fetchData(); }} /></div>}
+                
+                {!loading && !error && (
+                <>
                 {/* Stats Grid */}
                 <motion.div 
                     variants={containerVariants}
@@ -218,10 +231,7 @@ const DashboardHR = () => {
                                 </Link>
                             ))}
                             {jobs.length === 0 && (
-                                <div className="text-center py-16 bg-white/30 rounded-3xl border-2 border-dashed border-slate-200">
-                                    <Layers3 className="mx-auto text-slate-300 mb-4" size={40} />
-                                    <p className="text-slate-400 font-bold">No active jobs found.</p>
-                                </div>
+                                <EmptyState title="No active jobs" description="You have not created any job postings yet." />
                             )}
                         </div>
                     </motion.div>
@@ -285,12 +295,14 @@ const DashboardHR = () => {
                                     </Link>
                                 ))}
                                 {recentCandidates.length === 0 && (
-                                    <div className="text-sm font-medium text-slate-400">No candidates have been uploaded yet.</div>
+                                    <EmptyState title="No recent candidates" description="No candidates have been uploaded recently." />
                                 )}
                             </div>
                         </div>
                     </motion.div>
                 </div>
+                </>
+                )}
             </main>
         </div>
     );

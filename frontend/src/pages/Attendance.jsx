@@ -7,6 +7,9 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { formatAttendanceDuration } from '../utils/date';
 import { Clock, LogIn, LogOut, CheckCircle2, XCircle, MinusCircle, Users, BarChart3, Calendar } from 'lucide-react';
+import { SkeletonDashboard } from '../components/ui/SkeletonStates';
+import { ErrorState } from '../components/ui/ErrorState';
+import { EmptyState } from '../components/ui/EmptyState';
 
 const Attendance = () => {
     const { user } = useAuth();
@@ -17,6 +20,8 @@ const Attendance = () => {
     const [clockingIn, setClockingIn] = useState(false);
     const [clockingOut, setClockingOut] = useState(false);
     const [now, setNow] = useState(Date.now());
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     const isHROrAdmin = user && ['admin', 'hr'].includes(user.role.toLowerCase());
     const isManager = user && user.role.toLowerCase() === 'manager';
@@ -35,7 +40,12 @@ const Attendance = () => {
                 const compData = await api.get('/attendance/company');
                 setCompanyAttendance(compData);
             }
-        } catch (err) { console.error(err); }
+        } catch (err) { 
+            console.error(err); 
+            setError("Failed to load attendance data.");
+        } finally {
+            setLoading(false);
+        }
     }, [isHROrAdmin, isManager]);
 
     useEffect(() => {
@@ -77,6 +87,11 @@ const Attendance = () => {
                 <Topbar title="Attendance Management" />
 
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-10">
+                    {loading && <div className="mt-8"><SkeletonDashboard /></div>}
+                    {error && !loading && <div className="mt-8"><ErrorState message={error} onRetry={() => { setLoading(true); setError(null); fetchData(); }} /></div>}
+
+                    {!loading && !error && (
+                        <>
                     {/* Clock In / Out Section */}
                     <div className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm">
                         <h3 className="text-xl font-semibold text-slate-900 mb-6 flex items-center gap-3">
@@ -230,10 +245,16 @@ const Attendance = () => {
                                 </div>
                             ))}
                             {myAttendance.records.length === 0 && (
-                                <div className="text-center py-12 text-slate-400 font-medium text-sm">No attendance records yet. Clock in to start tracking.</div>
+                                <EmptyState 
+                                    title="No attendance records" 
+                                    description="Clock in to start tracking your attendance." 
+                                    icon={Calendar} 
+                                />
                             )}
                         </div>
                     </div>
+                    </>
+                    )}
                 </motion.div>
             </main>
         </div>

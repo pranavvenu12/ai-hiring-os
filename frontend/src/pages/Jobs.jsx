@@ -7,6 +7,9 @@ import { useToast } from '../context/ToastContext';
 import { Plus, Briefcase, ExternalLink, Loader2, Search, Filter, X, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatShortDate } from '../utils/date';
+import { SkeletonTable } from '../components/ui/SkeletonStates';
+import { ErrorState } from '../components/ui/ErrorState';
+import { EmptyState } from '../components/ui/EmptyState';
 
 const Jobs = () => {
     const [jobs, setJobs] = useState([]);
@@ -21,6 +24,8 @@ const Jobs = () => {
         description: '',
     });
     const [isLoading, setIsLoading] = useState(false);
+    const [isPageLoading, setIsPageLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const { toast } = useToast();
 
@@ -33,7 +38,12 @@ const Jobs = () => {
         try {
             const data = await api.get('/jobs');
             setJobs(data);
-        } catch (err) { console.error(err); }
+        } catch (err) { 
+            console.error(err); 
+            setError("Failed to load jobs.");
+        } finally {
+            setIsPageLoading(false);
+        }
     };
 
     const handleCreateJob = async (e) => {
@@ -112,7 +122,12 @@ const Jobs = () => {
                             Create Job Posting
                         </button>
                     </div>
+                    
+                    {isPageLoading && <div className="mt-8"><SkeletonTable /></div>}
+                    {error && !isPageLoading && <div className="mt-8"><ErrorState message={error} onRetry={() => { setIsPageLoading(true); setError(null); fetchJobs(); }} /></div>}
 
+                    {!isPageLoading && !error && (
+                        <>
                     {/* Mobile Cards */}
                     <div className="md:hidden space-y-3">
                         {filteredJobs.map((job, i) => (
@@ -174,15 +189,7 @@ const Jobs = () => {
                             </motion.div>
                         ))}
                         {filteredJobs.length === 0 && (
-                            <div className="rounded-[1.25rem] border border-slate-200 bg-white p-8 text-center shadow-sm">
-                                <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                    <FileText size={28} className="text-slate-300" />
-                                </div>
-                                <h4 className="text-base font-semibold text-slate-900 mb-2">No jobs found</h4>
-                                <p className="text-sm font-medium text-slate-400 leading-relaxed">
-                                    Try adjusting your search or create a new job posting.
-                                </p>
-                            </div>
+                            <EmptyState title="No jobs found" description="Try adjusting your search or create a new job posting." icon={FileText} />
                         )}
                     </div>
 
@@ -263,18 +270,10 @@ const Jobs = () => {
                                         </td>
                                     </motion.tr>
                                 ))}
-                                {filteredJobs.length === 0 && (
+                        {filteredJobs.length === 0 && (
                                     <tr>
-                                        <td colSpan="4" className="px-8 py-24 text-center">
-                                            <div className="max-w-xs mx-auto">
-                                                <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                                                    <FileText size={32} className="text-slate-200" />
-                                                </div>
-                                                <h4 className="text-lg font-semibold text-slate-900 mb-2">No jobs found</h4>
-                                                <p className="text-sm font-medium text-slate-400 leading-relaxed">
-                                                    Try adjusting your search or create a new job posting to start hiring.
-                                                </p>
-                                            </div>
+                                        <td colSpan="4" className="px-0 py-8">
+                                            <EmptyState title="No jobs found" description="Try adjusting your search or create a new job posting to start hiring." icon={FileText} />
                                         </td>
                                     </tr>
                                 )}
@@ -282,6 +281,8 @@ const Jobs = () => {
                         </table>
                         </div>
                     </div>
+                    </>
+                    )}
                 </motion.div>
 
                 {/* Create Job Modal */}

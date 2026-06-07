@@ -94,7 +94,7 @@ async def generate_all_payroll(
 @router.get(
     "",
     response_model=PayrollListOut,
-    dependencies=[Depends(require_roles(Role.ADMIN, Role.HR, Role.MANAGER))],
+    dependencies=[Depends(require_roles(Role.ADMIN, Role.HR))],
 )
 async def list_payroll(
     current_user: CurrentUser,
@@ -149,8 +149,9 @@ async def get_payroll(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Payroll record not found.")
 
     user_role = Role(current_user.role)
-    if user_role == Role.EMPLOYEE and employee.user_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this payslip.")
+    if user_role not in [Role.ADMIN, Role.HR]:
+        if employee.user_id != current_user.id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this payslip.")
 
     return payroll_service._serialize(record, employee, company)
 

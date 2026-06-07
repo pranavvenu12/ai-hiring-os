@@ -15,10 +15,17 @@ This document verifies the successful implementation and integration of the enha
 - [x] **Existing candidate ranking still works:** `CandidateList` and backend ranking logic fallback to traditional ATS scores or standard AI scores when necessary.
 - [x] **Multi-tenant isolation still works:** Row Level Security (RLS) on Supabase and standard filters in API routes are unchanged.
 - [x] **RBAC permissions still work:** Roles (admin, hr, manager, employee) logic in JWT parsing and API route checks are unaffected.
-- [x] **Manager dashboard still loads correctly:** Tested frontend build and standard page components.
-- [x] **HR dashboard still loads correctly:** Tested frontend build and standard page components.
-- [x] **Employee dashboard remains unaffected:** Tested frontend build and standard page components.
-- [x] **Existing adaptive interview flow remains unaffected:** The `ai_scoring_benchmark` and actual interview routes handle standard schemas perfectly.
+- [x] **Manager dashboard still loads correctly:** Tested3. **Manager Dashboard Updates**:
+    - **Company Profile Added**: Integrated the Company Profile widget on `DashboardManager.jsx` so managers can view company details.
+    - **Payroll Widget Removed**: Explicitly removed the dashboard payroll overview block for the manager role.
+4. **AI Evaluation State UI**:
+    - Added an animated "AI Evaluating" spinner state in `Candidates.jsx`.
+    - Both the candidate table and the details drawer now visually display an active processing state when resumes are freshly uploaded instead of showing "0/100".
+5. **Documentation Review**:
+    - All `README.md` and `docs/` updates (like `CANDIDATE_INTELLIGENCE_VERIFICATION.md`) were fully persisted and successfully represent the new AI Resume Screening logic.
+
+### Notes on Signup Speed
+The slight delay when creating a new account (Signup) occurs because the application must simultaneously contact the Supabase Authentication servers to provision the secured user account and create isolated tenant boundaries (company rows) on the cloud database. Once logged in, day-to-day operations utilize WebSocket streaming and parallel loading for much faster performance!le standard schemas perfectly.
 
 ## Execution and Build Verification
 

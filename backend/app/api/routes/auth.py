@@ -76,14 +76,48 @@ def _get_supabase_user_by_email(client, email: str):
 
 def _company_not_registered_detail(company_name: str) -> str:
     if company_name:
+        return f"Company '{company_name}' is not registered. HR must sign up first."
+    return "Company not registered. HR must sign up first."
+
+
+def _clean_signup_error(exc: Exception) -> str:
+    err_str = str(exc).lower()
+    
+    # 1. Rate Limit
+    if "rate limit" in err_str or "too many requests" in err_str:
+        return "Too many signup attempts. Please try again later."
+    
+    # 2. Already registered / exists
+    if "already" in err_str or "exists" in err_str or "registered" in err_str:
+        return "An account with this email already exists."
+        
+    # 3. Invalid email / format
+    if "invalid" in err_str and "email" in err_str:
+        return "Please enter a valid email address."
+        
+    # 4. Weak password
+    if "password" in err_str and ("weak" in err_str or "short" in err_str or "characters" in err_str):
+        return "Password must be at least 6 characters."
+        
+    # 5. Service role key / config issues
+    if "service_role" in err_str or "not allowed" in err_str or "unauthorized" in err_str:
         return (
-            f"Company '{company_name}' is not registered. Please contact your "
-            "HR/Admin to register the company or confirm the company name."
+            "Signup is blocked because the server is not configured correctly. "
+            "Please contact the administrator."
         )
-    return (
-        "Company is not registered. Please contact your HR/Admin to register "
-        "the company or confirm the company name."
-    )
+
+    # Default clean message - strip "Supabase" prefix or mention if any
+    clean_msg = str(exc)
+    if clean_msg.lower().startswith("supabase"):
+        parts = clean_msg.split(":", 1)
+        if len(parts) > 1:
+            clean_msg = parts[1].strip()
+        else:
+            clean_msg = clean_msg.replace("Supabase", "Server").replace("supabase", "server")
+    else:
+        clean_msg = clean_msg.replace("Supabase", "Server").replace("supabase", "server")
+            
+    return f"Registration failed: {clean_msg}"
 
 
 @router.post("/login", response_model=AuthResponse)
@@ -107,9 +141,10 @@ async def login(
                 await user_service.sync_supabase_uid(db, user, str(supabase_user.id))
 
     except Exception as exc:
+        err_msg = str(exc).replace("Supabase", "Server").replace("supabase", "server")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Authentication failed: {exc}",
+            detail=f"Authentication failed: {err_msg}",
         )
 
     return AuthResponse(
@@ -160,28 +195,36 @@ async def signup(
             client = get_supabase_client()
             matching_user = _get_supabase_user_by_email(client, payload.email)
             if matching_user:
-                supabase_uid = str(matching_user.id)
-                client.auth.admin.update_user_by_id(
-                    supabase_uid,
-                    attributes={
-                        "password": payload.password,
-                        "email_confirm": True,
-                    },
-                )
+                try:
+                    supabase_uid = str(matching_user.id)
+                    client.auth.admin.update_user_by_id(
+                        supabase_uid,
+                        attributes={
+                            "password": payload.password,
+                            "email_confirm": True,
+                        },
+                    )
+                except Exception as update_exc:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=_clean_signup_error(update_exc),
+                    )
             else:
-                raise HTTPException(status_code=400, detail=f"Supabase error: {exc}")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=_clean_signup_error(exc),
+                )
         else:
             err_str = str(exc).lower()
             if "service_role" in err_str or "not allowed" in err_str or "unauthorized" in err_str:
                 detail = (
-                    "Signup is blocked because the backend Supabase service-role key "
-                    "is missing or incorrect. Deploy the backend with the real "
-                    "SUPABASE_SERVICE_ROLE_KEY value."
+                    "Signup is blocked because the backend service is not configured correctly. "
+                    "Please contact the administrator."
                 )
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=detail)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Supabase registration failed: {exc}",
+                detail=_clean_signup_error(exc),
             )
 
     # 2. Create or reuse company

@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
@@ -7,6 +7,8 @@ import { Mail, Building, Shield, Calendar, MapPin, Layers3, Clock, Star, FileTex
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { formatAttendanceDuration } from '../utils/date';
+import { SkeletonDashboard } from '../components/ui/SkeletonStates';
+import { ErrorState } from '../components/ui/ErrorState';
 
 const DashboardEmployee = () => {
     const { user } = useAuth();
@@ -34,6 +36,8 @@ const DashboardEmployee = () => {
     const [performanceData, setPerformanceData] = useState({ reviews: [], avg_rating: 0 });
     const [payrollData, setPayrollData] = useState({ records: [] });
     const [now, setNow] = useState(Date.now());
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         if (user?.company_id) {
@@ -88,6 +92,9 @@ const DashboardEmployee = () => {
 
         } catch (error) {
             console.error("Error loading dashboard data:", error);
+            setError("Failed to load dashboard data. Please try again.");
+        } finally {
+            setLoading(false);
         }
     }, [user]);
 
@@ -119,6 +126,10 @@ const DashboardEmployee = () => {
             <main className="flex-1 ml-0 lg:ml-[280px] px-4 py-6 md:p-10">
                 <Topbar title="Employee Portal" />
                 
+                {loading && <div className="mt-8"><SkeletonDashboard /></div>}
+                {error && !loading && <div className="mt-8"><ErrorState message={error} onRetry={() => { setLoading(true); setError(null); fetchData(); }} /></div>}
+
+                {!loading && !error && (
                 <motion.div 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -342,6 +353,7 @@ const DashboardEmployee = () => {
                         </div>
                     </div>
                 </motion.div>
+                )}
             </main>
         </div>
     );
