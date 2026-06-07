@@ -8,21 +8,25 @@ import { useToast } from '../context/ToastContext';
 import { Search, Plus, User, Mail, Phone, Building, Calendar, ArrowLeft, X, Briefcase, Filter } from 'lucide-react';
 import { formatShortDate } from '../utils/date';
 import { SkeletonDashboard } from '../components/ui/SkeletonStates';
-import { ErrorState } from '../components/ui/ErrorState';
 import { EmptyState } from '../components/ui/EmptyState';
+import { getCached, setCached } from '../services/dataCache';
+
+const employeesCacheKey = (page, searchQuery, departmentFilter) =>
+    `employees_${page}_${searchQuery}_${departmentFilter}`;
 
 const EmployeeDirectory = () => {
     const { user } = useAuth();
-    const [employees, setEmployees] = useState([]);
-    const [total, setTotal] = useState(0);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [departmentFilter, setDepartmentFilter] = useState('');
-    const [departments, setDepartments] = useState([]);
+    const [page, setPage] = useState(0);
+    const cacheKey = employeesCacheKey(page, searchQuery, departmentFilter);
+    const cachedData = getCached(cacheKey);
+    const [employees, setEmployees] = useState(cachedData?.employees ?? []);
+    const [total, setTotal] = useState(cachedData?.total ?? 0);
+    const [loading, setLoading] = useState(!cachedData);
+    const [departments, setDepartments] = useState(getCached('employee_departments') ?? []);
     const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [showAddModal, setShowAddModal] = useState(false);
-    const [page, setPage] = useState(0);
     const { toast } = useToast();
     const limit = 20;
 
@@ -32,8 +36,11 @@ const EmployeeDirectory = () => {
     });
 
     const fetchEmployees = useCallback(async () => {
-        try {
+        const key = employeesCacheKey(page, searchQuery, departmentFilter);
+        if (!getCached(key)) {
             setLoading(true);
+        }
+        try {
             const params = new URLSearchParams();
             params.set('skip', page * limit);
             params.set('limit', limit);
@@ -41,13 +48,18 @@ const EmployeeDirectory = () => {
             if (departmentFilter) params.set('department', departmentFilter);
 
             const data = await api.get(`/employees?${params.toString()}`);
-            setEmployees(data.employees || []);
-            setTotal(data.total || 0);
-            setError(null);
+            const nextEmployees = data.employees || [];
+            const nextTotal = data.total || 0;
+            setEmployees(nextEmployees);
+            setTotal(nextTotal);
+            setCached(key, { employees: nextEmployees, total: nextTotal });
             setLoading(false);
         } catch (err) { 
-            console.error("Failed to load employee directory:", err); 
-            setError(err.detail || err.message || 'Failed to load employee directory.');
+            console.error('Failed to load employee directory:', err);
+            if (!getCached(key)) {
+                setEmployees([]);
+                setTotal(0);
+            }
             setLoading(false);
         }
     }, [departmentFilter, page, searchQuery]);
@@ -55,7 +67,9 @@ const EmployeeDirectory = () => {
     const fetchDepartments = useCallback(async () => {
         try {
             const data = await api.get('/employees/departments');
-            setDepartments(data.departments || []);
+            const depts = data.departments || [];
+            setDepartments(depts);
+            setCached('employee_departments', depts);
         } catch (err) { console.error(err); }
     }, []);
 
@@ -129,10 +143,9 @@ const EmployeeDirectory = () => {
                         </div>
                     </div>
 
-                    {loading && <div className="mt-8"><SkeletonDashboard /></div>}
-                    {error && !loading && <div className="mt-8"><ErrorState message={error} onRetry={() => { setLoading(true); setError(null); fetchEmployees(); }} /></div>}
+                    {loading && employees.length === 0 && <div className="mt-8"><SkeletonDashboard /></div>}
 
-                    {!loading && !error && (
+                    {(!loading || employees.length > 0) && (
                         <>
                     {/* Employee Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">

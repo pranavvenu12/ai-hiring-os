@@ -9,19 +9,25 @@ import { useAuth } from '../context/AuthContext';
 import { ArrowRight, Building2, MapPin, Globe, Mail, Layers3, UserCheck, Clock, TrendingUp, Mic, Wallet, Receipt, BadgeDollarSign, Users, Star, ClipboardList, Briefcase } from 'lucide-react';
 import { formatRelativeTime, formatShortDate } from '../utils/date';
 import { SkeletonDashboard } from '../components/ui/SkeletonStates';
-import { ErrorState } from '../components/ui/ErrorState';
 import { EmptyState } from '../components/ui/EmptyState';
+import { getCached, setCached } from '../services/dataCache';
+
+const DASHBOARD_HR_CACHE_KEY = 'dashboard_hr';
+
+const defaultDashboard = {
+    stats: { totalCandidates: 0, shortlisted: 0, avgScore: 0, activeJobs: 0 },
+    jobs: [],
+    recentCandidates: [],
+    hrmsStats: { totalEmployees: 0, attendanceToday: 0, avgPerformance: 0, interviewCompletion: 0 },
+    payrollStats: { totalPayrollCost: 0, pendingPayroll: 0, employeesPaid: 0 },
+};
 
 const DashboardHR = () => {
     const { user } = useAuth();
-    const [stats, setStats] = useState({
-        totalCandidates: 0,
-        shortlisted: 0,
-        avgScore: 0,
-        activeJobs: 0
-    });
-    const [jobs, setJobs] = useState([]);
-    const [recentCandidates, setRecentCandidates] = useState([]);
+    const cachedDashboard = getCached(DASHBOARD_HR_CACHE_KEY);
+    const [stats, setStats] = useState(cachedDashboard?.stats ?? defaultDashboard.stats);
+    const [jobs, setJobs] = useState(cachedDashboard?.jobs ?? []);
+    const [recentCandidates, setRecentCandidates] = useState(cachedDashboard?.recentCandidates ?? []);
     const [company, setCompany] = useState(() => {
         try {
             const savedUser = localStorage.getItem('user');
@@ -39,10 +45,9 @@ const DashboardHR = () => {
         }
         return null;
     });
-    const [hrmsStats, setHrmsStats] = useState({ totalEmployees: 0, attendanceToday: 0, avgPerformance: 0, interviewCompletion: 0 });
-    const [payrollStats, setPayrollStats] = useState({ totalPayrollCost: 0, pendingPayroll: 0, employeesPaid: 0 });
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [hrmsStats, setHrmsStats] = useState(cachedDashboard?.hrmsStats ?? defaultDashboard.hrmsStats);
+    const [payrollStats, setPayrollStats] = useState(cachedDashboard?.payrollStats ?? defaultDashboard.payrollStats);
+    const [loading, setLoading] = useState(!cachedDashboard);
 
     useEffect(() => {
         if (user?.company_id) {
@@ -54,17 +59,23 @@ const DashboardHR = () => {
     }, [user]);
 
     const fetchData = useCallback(async () => {
+        if (!getCached(DASHBOARD_HR_CACHE_KEY)) {
+            setLoading(true);
+        }
         try {
             const currentUser = await api.get('/me');
             const [jobsData, companyData] = await Promise.all([
-                api.get('/jobs'),
-                api.get(`/companies/${currentUser.company_id}`),
+                api.get('/jobs').catch(() => getCached('jobs') ?? []),
+                api.get(`/companies/${currentUser.company_id}`).catch(() => company),
             ]);
 
-            setJobs(jobsData.slice(0, 5));
-            setCompany(companyData);
-            if (currentUser?.company_id) {
-                localStorage.setItem(`company_${currentUser.company_id}`, JSON.stringify(companyData));
+            const recentJobs = (jobsData || []).slice(0, 5);
+            setJobs(recentJobs);
+            if (companyData) {
+                setCompany(companyData);
+                if (currentUser?.company_id) {
+                    localStorage.setItem(`company_${currentUser.company_id}`, JSON.stringify(companyData));
+                }
             }
             
             let totalCands = 0;
@@ -74,7 +85,7 @@ const DashboardHR = () => {
             const aggregatedCandidates = [];
 
             const candidateLists = await Promise.all(
-                jobsData.map(job => 
+                (jobsData || []).map(job => 
                     api.get(`/jobs/${job.id}/candidates`)
                        .then(cands => ({ job, cands }))
                        .catch(err => {
@@ -97,16 +108,19 @@ const DashboardHR = () => {
             }
 
             aggregatedCandidates.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-            setRecentCandidates(aggregatedCandidates.slice(0, 4));
+            const recent = aggregatedCandidates.slice(0, 4);
+            setRecentCandidates(recent);
 
-            setStats({
+            const nextStats = {
                 totalCandidates: totalCands,
                 shortlisted: highScorers,
                 avgScore: scoredCount > 0 ? Math.round(totalScore / scoredCount) : 0,
-                activeJobs: jobsData.length
-            });
+                activeJobs: (jobsData || []).length
+            };
+            setStats(nextStats);
 
-            // Fetch Phase 5 HRMS stats
+            let nextHrmsStats = cachedDashboard?.hrmsStats ?? defaultDashboard.hrmsStats;
+            let nextPayrollStats = cachedDashboard?.payrollStats ?? defaultDashboard.payrollStats;
             try {
                 const [empData, attData, perfData, intData] = await Promise.all([
                     api.get('/employees?limit=1').catch(() => ({ total: 0 })),
@@ -114,24 +128,32 @@ const DashboardHR = () => {
                     api.get('/performance/company').catch(() => ({ avg_rating: 0 })),
                     api.get('/interviews/company/analytics').catch(() => ({ completion_rate: 0 })),
                 ]);
-                setHrmsStats({
+                nextHrmsStats = {
                     totalEmployees: empData.total || 0,
                     attendanceToday: attData.present_count || 0,
                     avgPerformance: perfData.avg_rating || 0,
                     interviewCompletion: intData.completion_rate || 0,
-                });
+                };
+                setHrmsStats(nextHrmsStats);
                 const payrollData = await api.get('/payroll?limit=500').catch(() => ({ summary: {} }));
-                setPayrollStats({
+                nextPayrollStats = {
                     totalPayrollCost: payrollData.summary?.total_payroll_cost || 0,
                     pendingPayroll: payrollData.summary?.pending_payroll || 0,
                     employeesPaid: payrollData.summary?.employees_paid || 0,
-                });
+                };
+                setPayrollStats(nextPayrollStats);
             } catch (e) { console.error('HRMS stats fetch failed:', e); }
-            setError(null);
+
+            setCached(DASHBOARD_HR_CACHE_KEY, {
+                stats: nextStats,
+                jobs: recentJobs,
+                recentCandidates: recent,
+                hrmsStats: nextHrmsStats,
+                payrollStats: nextPayrollStats,
+            });
             setLoading(false);
         } catch (error) {
-            console.error("Failed to load dashboard data:", error);
-            setError(error.detail || error.message || 'Failed to load dashboard data.');
+            console.error('Failed to load dashboard data:', error);
             setLoading(false);
         }
     }, []);
@@ -156,10 +178,9 @@ const DashboardHR = () => {
                 <Topbar title="System Overview" />
                 <RecruiterCopilot />
                 
-                {loading && <div className="mt-8"><SkeletonDashboard /></div>}
-                {error && !loading && <div className="mt-8"><ErrorState message={error} onRetry={() => { setLoading(true); setError(null); fetchData(); }} /></div>}
+                {loading && jobs.length === 0 && !company && <div className="mt-8"><SkeletonDashboard /></div>}
                 
-                {!loading && !error && (
+                {(!loading || jobs.length > 0 || company) && (
                 <>
                 {/* Stats Grid */}
                 <motion.div 
@@ -306,7 +327,7 @@ const DashboardHR = () => {
                                     </Link>
                                 ))}
                                 {recentCandidates.length === 0 && (
-                                    <EmptyState title="No candidates" description="No candidates have been uploaded recently." />
+                                    <EmptyState title="No candidates applied yet" description="No candidates have applied to your open positions recently." />
                                 )}
                             </div>
                         </div>

@@ -8,17 +8,19 @@ import { useAuth } from '../context/AuthContext';
 import { Eye, Star, Brain, Clock, Users, TrendingUp, Building2, Layers3, Globe, MapPin, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SkeletonDashboard } from '../components/ui/SkeletonStates';
-import { ErrorState } from '../components/ui/ErrorState';
 import { EmptyState } from '../components/ui/EmptyState';
+import { getCached, setCached } from '../services/dataCache';
+
+const DASHBOARD_MANAGER_CACHE_KEY = 'dashboard_manager';
 
 const DashboardManager = () => {
     const { user } = useAuth();
-    const [company, setCompany] = useState(null);
-    const [candidates, setCandidates] = useState([]);
-    const [teamAttendance, setTeamAttendance] = useState([]);
-    const [teamAvgRating, setTeamAvgRating] = useState(0);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const cachedDashboard = getCached(DASHBOARD_MANAGER_CACHE_KEY);
+    const [company, setCompany] = useState(cachedDashboard?.company ?? null);
+    const [candidates, setCandidates] = useState(cachedDashboard?.candidates ?? []);
+    const [teamAttendance, setTeamAttendance] = useState(cachedDashboard?.teamAttendance ?? []);
+    const [teamAvgRating, setTeamAvgRating] = useState(cachedDashboard?.teamAvgRating ?? 0);
+    const [loading, setLoading] = useState(!cachedDashboard);
 
     useEffect(() => {
         document.title = 'AI Hiring OS - Manager Dashboard';
@@ -26,13 +28,20 @@ const DashboardManager = () => {
     }, []);
 
     const fetchData = async () => {
+        if (!getCached(DASHBOARD_MANAGER_CACHE_KEY)) {
+            setLoading(true);
+        }
         try {
+            let nextCompany = company;
             if (user?.company_id) {
-                const co = await api.get(`/companies/${user.company_id}`);
-                setCompany(co);
+                const co = await api.get(`/companies/${user.company_id}`).catch(() => company);
+                if (co) {
+                    nextCompany = co;
+                    setCompany(co);
+                }
             }
 
-            const jobs = await api.get('/jobs');
+            const jobs = await api.get('/jobs').catch(() => []);
             const candidateLists = await Promise.all(
                 jobs.map(job => 
                     api.get(`/jobs/${job.id}/candidates`)
@@ -54,23 +63,31 @@ const DashboardManager = () => {
             }
             setCandidates(allCands);
 
-            // Fetch team HRMS data
+            let nextAttendance = teamAttendance;
+            let nextRating = teamAvgRating;
             try {
                 const attData = await api.get('/attendance/team');
-                setTeamAttendance(attData.records || []);
+                nextAttendance = attData.records || [];
+                setTeamAttendance(nextAttendance);
             } catch (e) { console.error(e); }
             try {
                 const perfData = await api.get('/performance/team');
                 const reviews = perfData.reviews || [];
                 if (reviews.length > 0) {
-                    setTeamAvgRating(+(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1));
+                    nextRating = +(reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1);
+                    setTeamAvgRating(nextRating);
                 }
             } catch (e) { console.error(e); }
-            setError(null);
+
+            setCached(DASHBOARD_MANAGER_CACHE_KEY, {
+                company: nextCompany,
+                candidates: allCands,
+                teamAttendance: nextAttendance,
+                teamAvgRating: nextRating,
+            });
             setLoading(false);
         } catch (error) { 
-            console.error("Failed to load dashboard data:", error);
-            setError(error.detail || error.message || 'Failed to load dashboard data.');
+            console.error('Failed to load dashboard data:', error);
             setLoading(false);
         }
     };
@@ -90,10 +107,9 @@ const DashboardManager = () => {
                 <Topbar title="Hiring Manager Portal" />
                 <RecruiterCopilot />
                 
-                {loading && <div className="mt-8"><SkeletonDashboard /></div>}
-                {error && !loading && <div className="mt-8"><ErrorState message={error} onRetry={() => { setLoading(true); setError(null); fetchData(); }} /></div>}
+                {loading && candidates.length === 0 && !company && <div className="mt-8"><SkeletonDashboard /></div>}
                 
-                {!loading && !error && (
+                {(!loading || candidates.length > 0 || company) && (
                 <motion.div 
                     variants={containerVariants}
                     initial="initial"

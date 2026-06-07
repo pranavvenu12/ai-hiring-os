@@ -9,19 +9,22 @@ import { Upload, ChevronRight, Brain, Loader2, CheckCircle2, FileText, Search, U
 import { formatRelativeTime } from '../utils/date';
 import { useRealtime } from '../hooks/useRealtime';
 import { SkeletonTable, SkeletonDrawer } from '../components/ui/SkeletonStates';
-import { ErrorState } from '../components/ui/ErrorState';
 import { EmptyState } from '../components/ui/EmptyState';
+import { getCached, setCached } from '../services/dataCache';
+
+const candidatesCacheKey = (jobId) => (jobId ? `candidates_job_${jobId}` : 'candidates_all');
 
 const Candidates = () => {
     const [searchParams] = useSearchParams();
     const jobId = searchParams.get('job_id');
+    const cacheKey = candidatesCacheKey(jobId);
+    const cachedCandidates = getCached(cacheKey);
     
-    const [candidates, setCandidates] = useState([]);
+    const [candidates, setCandidates] = useState(cachedCandidates ?? []);
     const [selectedCandidate, setSelectedCandidate] = useState(null);
     const [jobTitle, setJobTitle] = useState('Talent Pool');
     const [isUploading, setIsUploading] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(!cachedCandidates);
     const [searchQuery, setSearchQuery] = useState('');
     const fileInputRef = useRef(null);
     const fetchCandidatesRef = useRef(null);
@@ -42,6 +45,9 @@ const Candidates = () => {
     }, [jobId]);
 
     const fetchCandidates = useCallback(async () => {
+        if (!getCached(cacheKey)) {
+            setLoading(true);
+        }
         try {
             let data = [];
             if (jobId) {
@@ -49,12 +55,10 @@ const Candidates = () => {
                     data = await api.get(`/jobs/${jobId}/candidates`);
                 } catch (err) {
                     console.error(`Error fetching candidates for job ${jobId}:`, err);
-                    setError(err.detail || err.message || 'Failed to load candidates.');
-                    setLoading(false);
-                    return;
+                    data = getCached(cacheKey) ?? [];
                 }
             } else {
-                const jobs = await api.get('/jobs');
+                const jobs = await api.get('/jobs').catch(() => []);
                 const candidateLists = await Promise.all(
                     jobs.map(j => 
                         api.get(`/jobs/${j.id}/candidates`)
@@ -70,18 +74,20 @@ const Candidates = () => {
                 }
             }
             setCandidates(data);
-            setError(null);
+            setCached(cacheKey, data);
             setLoading(false);
             
             if (data.some(c => ['pending', 'processing'].includes(c.status))) {
                 setTimeout(() => fetchCandidatesRef.current?.(), 3000);
             }
         } catch (err) { 
-            console.error("Failed to load candidates:", err); 
-            setError(err.detail || err.message || 'Failed to load candidates.');
+            console.error('Failed to load candidates:', err);
+            if (!getCached(cacheKey)) {
+                setCandidates([]);
+            }
             setLoading(false);
         }
-    }, [jobId]);
+    }, [jobId, cacheKey]);
 
     const fetchCandidateInterviews = useCallback(async (candId) => {
         setLoadingInterviews(true);
@@ -150,6 +156,7 @@ const Candidates = () => {
             await api.post(`/jobs/${jobId}/upload-resumes`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
+            api.invalidateGet(`/jobs/${jobId}/candidates`);
             fetchCandidates();
             toast.success('Resume(s) uploaded successfully! Parsing and scoring candidates...');
         } catch (err) { toast.error(err.detail || 'Upload failed'); }
@@ -225,10 +232,9 @@ const Candidates = () => {
                         </div>
                     </div>
 
-                    {loading && <div className="mt-8"><SkeletonTable /></div>}
-                    {error && !loading && <div className="mt-8"><ErrorState message={error} onRetry={() => { setLoading(true); setError(null); fetchCandidates(); }} /></div>}
+                    {loading && candidates.length === 0 && <div className="mt-8"><SkeletonTable /></div>}
 
-                    {!loading && !error && (
+                    {(!loading || candidates.length > 0) && (
                         <>
                     {/* Mobile Cards */}
                     <div className="md:hidden space-y-3">
@@ -294,8 +300,8 @@ const Candidates = () => {
                         ))}
                         {filteredCandidates.length === 0 && (
                             <EmptyState 
-                                title="No candidates" 
-                                description={jobId ? 'Upload resumes to start AI evaluation.' : 'Select a job posting to view candidates.'} 
+                                title="No candidates applied yet" 
+                                description={jobId ? 'Upload resumes to start AI evaluation for this position.' : 'No candidates have applied to your open positions yet.'} 
                                 icon={Users} 
                             />
                         )}
@@ -393,8 +399,8 @@ const Candidates = () => {
                                     <tr>
                                         <td colSpan="5" className="px-0 py-8">
                                             <EmptyState 
-                                                title="No candidates" 
-                                                description={jobId ? 'Upload some resumes to start the AI evaluation process.' : 'Select a job posting to view its candidates.'} 
+                                                title="No candidates applied yet" 
+                                                description={jobId ? 'Upload resumes to start AI evaluation for this position.' : 'No candidates have applied to your open positions yet.'} 
                                                 icon={Users} 
                                             />
                                         </td>

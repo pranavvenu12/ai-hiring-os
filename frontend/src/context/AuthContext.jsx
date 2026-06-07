@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useCallback, useState, useContext, useEffect } from 'react';
-import api from '../services/api';
+import api, { clearApiMemoryCache } from '../services/api';
+import { clearAllCache } from '../services/dataCache';
 
 const AuthContext = createContext(null);
 
@@ -12,6 +13,8 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     const logout = useCallback(() => {
+        clearAllCache();
+        clearApiMemoryCache();
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setUser(null);

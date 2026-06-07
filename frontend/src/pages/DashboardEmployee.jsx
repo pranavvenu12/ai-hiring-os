@@ -8,7 +8,9 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { formatAttendanceDuration } from '../utils/date';
 import { SkeletonDashboard } from '../components/ui/SkeletonStates';
-import { ErrorState } from '../components/ui/ErrorState';
+import { getCached, setCached } from '../services/dataCache';
+
+const DASHBOARD_EMPLOYEE_CACHE_KEY = 'dashboard_employee';
 
 const DashboardEmployee = () => {
     const { user } = useAuth();
@@ -31,13 +33,13 @@ const DashboardEmployee = () => {
         }
         return null;
     });
-    const [employeeProfile, setEmployeeProfile] = useState(null);
-    const [attendanceData, setAttendanceData] = useState({ today: {}, records: [] });
-    const [performanceData, setPerformanceData] = useState({ reviews: [], avg_rating: 0 });
-    const [payrollData, setPayrollData] = useState({ records: [] });
+    const cachedDashboard = getCached(DASHBOARD_EMPLOYEE_CACHE_KEY);
+    const [employeeProfile, setEmployeeProfile] = useState(cachedDashboard?.employeeProfile ?? null);
+    const [attendanceData, setAttendanceData] = useState(cachedDashboard?.attendanceData ?? { today: {}, records: [] });
+    const [performanceData, setPerformanceData] = useState(cachedDashboard?.performanceData ?? { reviews: [], avg_rating: 0 });
+    const [payrollData, setPayrollData] = useState(cachedDashboard?.payrollData ?? { records: [] });
     const [now, setNow] = useState(Date.now());
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(!cachedDashboard);
 
     useEffect(() => {
         if (user?.company_id) {
@@ -55,46 +57,59 @@ const DashboardEmployee = () => {
 
     const fetchData = useCallback(async () => {
         if (!user) return;
+        if (!getCached(DASHBOARD_EMPLOYEE_CACHE_KEY)) {
+            setLoading(true);
+        }
         try {
-            // Fetch company details
-            const co = await api.get(`/companies/${user.company_id}`);
-            setCompany(co);
-            localStorage.setItem(`company_${user.company_id}`, JSON.stringify(co));
-
-            // Fetch employee profile details
-            const empList = await api.get('/employees');
-            if (empList && empList.employees && empList.employees.length > 0) {
-                setEmployeeProfile(empList.employees[0]);
+            const co = await api.get(`/companies/${user.company_id}`).catch(() => company);
+            if (co) {
+                setCompany(co);
+                localStorage.setItem(`company_${user.company_id}`, JSON.stringify(co));
             }
 
-            // Fetch my attendance records
+            let nextProfile = employeeProfile;
+            const empList = await api.get('/employees').catch(() => null);
+            if (empList?.employees?.length > 0) {
+                nextProfile = empList.employees[0];
+                setEmployeeProfile(nextProfile);
+            }
+
+            let nextAttendance = attendanceData;
             try {
                 const att = await api.get('/attendance/me');
+                nextAttendance = att;
                 setAttendanceData(att);
             } catch (err) {
-                console.error("Error fetching attendance details:", err);
+                console.error('Error fetching attendance details:', err);
             }
 
-            // Fetch my performance reviews
+            let nextPerformance = performanceData;
             try {
                 const perf = await api.get('/performance/me');
+                nextPerformance = perf;
                 setPerformanceData(perf);
             } catch (err) {
-                console.error("Error fetching performance details:", err);
+                console.error('Error fetching performance details:', err);
             }
 
+            let nextPayroll = payrollData;
             try {
                 const payroll = await api.get('/payroll/me');
+                nextPayroll = payroll;
                 setPayrollData(payroll);
             } catch (err) {
-                console.error("Error fetching payroll details:", err);
+                console.error('Error fetching payroll details:', err);
             }
 
-            setError(null);
+            setCached(DASHBOARD_EMPLOYEE_CACHE_KEY, {
+                employeeProfile: nextProfile,
+                attendanceData: nextAttendance,
+                performanceData: nextPerformance,
+                payrollData: nextPayroll,
+            });
             setLoading(false);
         } catch (error) {
-            console.error("Error loading dashboard data:", error);
-            setError(error.detail || error.message || 'Failed to load dashboard data.');
+            console.error('Error loading dashboard data:', error);
             setLoading(false);
         }
     }, [user]);
@@ -127,10 +142,9 @@ const DashboardEmployee = () => {
             <main className="flex-1 ml-0 lg:ml-[280px] px-4 py-6 md:p-10">
                 <Topbar title="Employee Portal" />
                 
-                {loading && <div className="mt-8"><SkeletonDashboard /></div>}
-                {error && !loading && <div className="mt-8"><ErrorState message={error} onRetry={() => { setLoading(true); setError(null); fetchData(); }} /></div>}
+                {loading && !employeeProfile && !company && <div className="mt-8"><SkeletonDashboard /></div>}
 
-                {!loading && !error && (
+                {(!loading || employeeProfile || company) && (
                 <motion.div 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}

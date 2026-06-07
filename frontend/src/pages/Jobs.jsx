@@ -2,17 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
-import api from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { Plus, Briefcase, ExternalLink, Loader2, Search, Filter, X, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatShortDate } from '../utils/date';
 import { SkeletonTable } from '../components/ui/SkeletonStates';
-import { ErrorState } from '../components/ui/ErrorState';
 import { EmptyState } from '../components/ui/EmptyState';
+import { getCached, setCached } from '../services/dataCache';
+import api from '../services/api';
+
+const JOBS_CACHE_KEY = 'jobs';
 
 const Jobs = () => {
-    const [jobs, setJobs] = useState([]);
+    const cachedJobs = getCached(JOBS_CACHE_KEY);
+    const [jobs, setJobs] = useState(cachedJobs ?? []);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newJob, setNewJob] = useState({
         title: '',
@@ -24,8 +27,7 @@ const Jobs = () => {
         description: '',
     });
     const [isLoading, setIsLoading] = useState(false);
-    const [isPageLoading, setIsPageLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [isPageLoading, setIsPageLoading] = useState(!cachedJobs);
     const [searchQuery, setSearchQuery] = useState('');
     const { toast } = useToast();
 
@@ -35,14 +37,19 @@ const Jobs = () => {
     }, []);
 
     const fetchJobs = async () => {
+        if (!getCached(JOBS_CACHE_KEY)) {
+            setIsPageLoading(true);
+        }
         try {
             const data = await api.get('/jobs');
             setJobs(data);
-            setError(null);
-            setIsPageLoading(false);
-        } catch (err) { 
-            console.error("Failed to load jobs:", err); 
-            setError(err.detail || err.message || 'Failed to load jobs.');
+            setCached(JOBS_CACHE_KEY, data);
+        } catch (err) {
+            console.error('Failed to load jobs:', err);
+            if (!getCached(JOBS_CACHE_KEY)) {
+                setJobs([]);
+            }
+        } finally {
             setIsPageLoading(false);
         }
     };
@@ -65,6 +72,7 @@ const Jobs = () => {
                 open_until: '',
                 description: '',
             });
+            api.invalidateGet('/jobs');
             fetchJobs();
             toast.success('Job posting published successfully!');
         } catch (err) { toast.error(err.detail || 'Failed to create job'); }
@@ -76,6 +84,7 @@ const Jobs = () => {
         try {
             await api.patch(`/jobs/${jobId}/status?status_value=${nextStatus}`);
             toast.success(`Job position ${nextStatus === 'open' ? 'reopened' : 'closed'} successfully!`);
+            api.invalidateGet('/jobs');
             fetchJobs();
         } catch (err) {
             toast.error(err.detail || 'Failed to update job status.');
@@ -124,10 +133,9 @@ const Jobs = () => {
                         </button>
                     </div>
                     
-                    {isPageLoading && <div className="mt-8"><SkeletonTable /></div>}
-                    {error && !isPageLoading && <div className="mt-8"><ErrorState message={error} onRetry={() => { setIsPageLoading(true); setError(null); fetchJobs(); }} /></div>}
+                    {isPageLoading && jobs.length === 0 && <div className="mt-8"><SkeletonTable /></div>}
 
-                    {!isPageLoading && !error && (
+                    {(!isPageLoading || jobs.length > 0) && (
                         <>
                     {/* Mobile Cards */}
                     <div className="md:hidden space-y-3">
@@ -190,7 +198,7 @@ const Jobs = () => {
                             </motion.div>
                         ))}
                         {filteredJobs.length === 0 && (
-                            <EmptyState title="No jobs found" description="Try adjusting your search or create a new job posting." icon={FileText} />
+                            <EmptyState title="No job postings yet" description="Create your first job posting to start hiring." icon={FileText} />
                         )}
                     </div>
 
@@ -274,7 +282,7 @@ const Jobs = () => {
                         {filteredJobs.length === 0 && (
                                     <tr>
                                         <td colSpan="4" className="px-0 py-8">
-                                            <EmptyState title="No jobs found" description="Try adjusting your search or create a new job posting to start hiring." icon={FileText} />
+                                            <EmptyState title="No job postings yet" description="Create your first job posting to start hiring." icon={FileText} />
                                         </td>
                                     </tr>
                                 )}

@@ -8,42 +8,54 @@ import { useToast } from '../context/ToastContext';
 import { formatAttendanceDuration } from '../utils/date';
 import { Clock, LogIn, LogOut, CheckCircle2, XCircle, MinusCircle, Users, BarChart3, Calendar } from 'lucide-react';
 import { SkeletonDashboard } from '../components/ui/SkeletonStates';
-import { ErrorState } from '../components/ui/ErrorState';
 import { EmptyState } from '../components/ui/EmptyState';
+import { getCached, setCached } from '../services/dataCache';
+
+const ATTENDANCE_CACHE_KEY = 'attendance';
 
 const Attendance = () => {
     const { user } = useAuth();
     const { toast } = useToast();
-    const [myAttendance, setMyAttendance] = useState({ today: {}, records: [] });
-    const [teamAttendance, setTeamAttendance] = useState({ records: [] });
-    const [companyAttendance, setCompanyAttendance] = useState(null);
+    const cachedAttendance = getCached(ATTENDANCE_CACHE_KEY);
+    const [myAttendance, setMyAttendance] = useState(cachedAttendance?.myAttendance ?? { today: {}, records: [] });
+    const [teamAttendance, setTeamAttendance] = useState(cachedAttendance?.teamAttendance ?? { records: [] });
+    const [companyAttendance, setCompanyAttendance] = useState(cachedAttendance?.companyAttendance ?? null);
     const [clockingIn, setClockingIn] = useState(false);
     const [clockingOut, setClockingOut] = useState(false);
     const [now, setNow] = useState(Date.now());
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(!cachedAttendance);
 
     const isHROrAdmin = user && ['admin', 'hr'].includes(user.role.toLowerCase());
     const isManager = user && user.role.toLowerCase() === 'manager';
 
     const fetchData = useCallback(async () => {
+        if (!getCached(ATTENDANCE_CACHE_KEY)) {
+            setLoading(true);
+        }
         try {
-            const meData = await api.get('/attendance/me');
+            const meData = await api.get('/attendance/me').catch(() => myAttendance);
             setMyAttendance(meData);
-            
+
+            let nextTeam = teamAttendance;
+            let nextCompany = companyAttendance;
             if (isManager) {
-                const teamData = await api.get('/attendance/team');
+                const teamData = await api.get('/attendance/team').catch(() => teamAttendance);
+                nextTeam = teamData;
                 setTeamAttendance(teamData);
             }
             if (isHROrAdmin) {
-                const compData = await api.get('/attendance/company');
+                const compData = await api.get('/attendance/company').catch(() => companyAttendance);
+                nextCompany = compData;
                 setCompanyAttendance(compData);
             }
-            setError(null);
+            setCached(ATTENDANCE_CACHE_KEY, {
+                myAttendance: meData,
+                teamAttendance: nextTeam,
+                companyAttendance: nextCompany,
+            });
             setLoading(false);
         } catch (err) { 
-            console.error("Failed to load attendance data:", err); 
-            setError(err.detail || err.message || 'Failed to load attendance data.');
+            console.error('Failed to load attendance data:', err);
             setLoading(false);
         }
     }, [isHROrAdmin, isManager]);
@@ -87,10 +99,9 @@ const Attendance = () => {
                 <Topbar title="Attendance Management" />
 
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-10">
-                    {loading && <div className="mt-8"><SkeletonDashboard /></div>}
-                    {error && !loading && <div className="mt-8"><ErrorState message={error} onRetry={() => { setLoading(true); setError(null); fetchData(); }} /></div>}
+                    {loading && myAttendance.records?.length === 0 && <div className="mt-8"><SkeletonDashboard /></div>}
 
-                    {!loading && !error && (
+                    {(!loading || (myAttendance.records?.length ?? 0) > 0) && (
                         <>
                     {/* Clock In / Out Section */}
                     <div className="bg-white rounded-[1.5rem] p-6 border border-slate-200 shadow-sm">
