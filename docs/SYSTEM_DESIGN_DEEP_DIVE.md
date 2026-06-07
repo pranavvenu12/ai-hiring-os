@@ -23,6 +23,7 @@ graph TB
     end
     subgraph AI
         Gemini[Gemini]
+        Groq[Groq]
         HF[HuggingFace]
         Template[Template Fallback]
     end
@@ -33,6 +34,7 @@ graph TB
     Services --> Postgres
     Services --> Storage
     Services --> Gemini
+    Services --> Groq
     Services --> HF
     Services --> Template
 ```
@@ -109,8 +111,9 @@ Tenant isolation is implemented by:
 AI workflows use a fallback chain:
 
 1. Try Gemini when configured.
-2. Try HuggingFace Router when configured.
-3. Use deterministic template fallback.
+2. Try Groq when configured.
+3. Try HuggingFace Router when configured.
+4. Use deterministic template fallback.
 
 This pattern exists for resume insights, interviews, and payroll summaries.
 
@@ -201,7 +204,7 @@ graph LR
     User --> Vercel[Vercel Frontend]
     Vercel --> EC2[AWS EC2 Docker Backend]
     EC2 --> Supabase[(Supabase DB/Auth/Storage)]
-    EC2 --> AI[Gemini/HF]
+    EC2 --> AI[Gemini/Groq/HF]
 ```
 # Enterprise Readiness Addendum
 

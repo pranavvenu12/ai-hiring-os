@@ -14,6 +14,7 @@ graph TB
     API --> DB[(Supabase PostgreSQL)]
     API --> Storage[Supabase Storage]
     API --> Gemini[Gemini]
+    API --> Groq[Groq]
     API --> HF[HuggingFace Router]
     API --> Fallback[Template Fallbacks]
 ```
@@ -83,9 +84,13 @@ erDiagram
 flowchart TD
     Request[AI request] --> GeminiAvailable{Gemini key?}
     GeminiAvailable -->|Yes| GeminiCall[Call Gemini]
-    GeminiAvailable -->|No| HFAvailable{HF key?}
+    GeminiAvailable -->|No| GroqAvailable{Groq key?}
     GeminiCall -->|Success| Result[Structured result]
-    GeminiCall -->|Failure| HFAvailable
+    GeminiCall -->|Failure| GroqAvailable
+    GroqAvailable -->|Yes| GroqCall[Call Groq]
+    GroqAvailable -->|No| HFAvailable{HF key?}
+    GroqCall -->|Success| Result
+    GroqCall -->|Failure| HFAvailable
     HFAvailable -->|Yes| HFCall[Call HuggingFace Router]
     HFAvailable -->|No| Template[Template fallback]
     HFCall -->|Success| Result

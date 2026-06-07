@@ -9,7 +9,7 @@
 | `users` | Local app user linked to Supabase Auth | Belongs to company, optional employee profile |
 | `jobs` | Job postings | Belongs to company and creator user |
 | `resumes` | Uploaded candidate resumes | Belongs to job |
-| `ai_scores` | Candidate AI evaluation | One-to-one with resume |
+| `ai_scores` | AI evaluation and Candidate Intelligence | One-to-one with resume |
 | `employees` | Employee directory records | Belongs to company, optional user, optional manager |
 | `attendance_records` | Daily clock records | Belongs to company and employee |
 | `performance_reviews` | Manager performance reviews | Belongs to company, employee, reviewer |
@@ -59,6 +59,21 @@ erDiagram
 | `department`, `designation` | Org metadata. In the UI, `designation` is shown as the employee role; HR/admin and manager signup do not require it. |
 | `manager_id` | Self-reference for team hierarchy |
 | `status` | `active`, `inactive`, `terminated` |
+
+### `candidate_intelligence` (Dynamic Schema)
+
+This is generated dynamically by combining `ai_scores`, `resumes`, and `jobs` to form a comprehensive Candidate Intelligence object used across recruiter screens and Copilot tools.
+
+| Key | Notes |
+|---|---|
+| `candidate_intelligence_score` | Derived score representing overall intelligence/fit |
+| `ats_score` | ATS analysis keyword match score |
+| `explicit_skills` | Technical skills directly extracted from text |
+| `inferred_skills` | Skills contextually inferred from projects |
+| `github_analysis` | Parsed GitHub quality, URL, and score. Safely returns None if not found |
+| `portfolio_analysis` | Parsed portfolio URL and score. Safely returns None if not found |
+| `strengths` / `weaknesses` | Generated list of strong points and missing areas |
+| `hiring_recommendation` | AI-generated recommendation for the hiring manager |
 
 ### `attendance_records`
 
