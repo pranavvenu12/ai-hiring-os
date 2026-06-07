@@ -21,6 +21,7 @@ from app.models.job import Job
 from app.models.payroll import PayrollRecord
 from app.models.performance import PerformanceReview
 from app.models.resume import Resume
+from app.services.candidate_intelligence_service import build_candidate_intelligence
 
 
 def _as_id(value: str | uuid.UUID | None) -> uuid.UUID | None:
@@ -48,7 +49,8 @@ def _job_dict(job: Job, candidate_count: int | None = None) -> dict[str, Any]:
     return data
 
 
-def _candidate_dict(resume: Resume, score: AIScore | None, interview: InterviewSession | None = None) -> dict[str, Any]:
+def _candidate_dict(resume: Resume, score: AIScore | None, interview: InterviewSession | None = None, job: Job | None = None) -> dict[str, Any]:
+    intelligence = build_candidate_intelligence(resume, score, job)
     return {
         "resume_id": str(resume.id),
         "candidate_name": resume.candidate_name,
@@ -65,6 +67,18 @@ def _candidate_dict(resume: Resume, score: AIScore | None, interview: InterviewS
         "interview_status": interview.status if interview else None,
         "interview_score": interview.overall_score if interview else None,
         "interview_recommendation": interview.recommendation if interview else None,
+        "candidate_intelligence_score": intelligence["candidate_intelligence_score"],
+        "ats_score": intelligence["ats_analysis"]["ats_score"],
+        "explicit_skills": intelligence["explicit_skills"],
+        "inferred_skills": intelligence["inferred_skills"],
+        "project_analysis": intelligence["project_intelligence"],
+        "github_analysis": intelligence["github_intelligence"],
+        "portfolio_analysis": intelligence["portfolio_intelligence"],
+        "hiring_recommendation": intelligence["hiring_recommendation"],
+        "candidate_strengths": intelligence["candidate_strengths"],
+        "candidate_weaknesses": intelligence["candidate_weaknesses"],
+        "interview_focus_areas": intelligence["interview_focus_areas"],
+        "candidate_intelligence": intelligence,
         "created_at": resume.created_at.isoformat() if resume.created_at else None,
     }
 
@@ -108,7 +122,7 @@ async def list_candidates(db: AsyncSession, company_id: uuid.UUID, job_id: str |
         parsed_job_id = job_result.scalar_one_or_none()
 
     query = (
-        select(Resume, AIScore, InterviewSession)
+        select(Resume, AIScore, InterviewSession, Job)
         .join(Job, Resume.job_id == Job.id)
         .outerjoin(AIScore, AIScore.resume_id == Resume.id)
         .outerjoin(InterviewSession, InterviewSession.candidate_id == Resume.id)
@@ -118,7 +132,7 @@ async def list_candidates(db: AsyncSession, company_id: uuid.UUID, job_id: str |
         query = query.where(Resume.job_id == parsed_job_id)
 
     result = await db.execute(query.order_by(AIScore.score.desc().nullslast(), Resume.created_at.desc()))
-    return [_candidate_dict(resume, score, interview) for resume, score, interview in result.all()]
+    return [_candidate_dict(resume, score, interview, job) for resume, score, interview, job in result.all()]
 
 
 async def get_candidate_profile(db: AsyncSession, company_id: uuid.UUID, candidate_id: str | uuid.UUID | None = None, candidate_name: str | None = None, **_: Any) -> dict[str, Any]:
@@ -142,7 +156,7 @@ async def get_candidate_profile(db: AsyncSession, company_id: uuid.UUID, candida
     if not row:
         return {}
     resume, score, job, interview = row
-    profile = _candidate_dict(resume, score, interview)
+    profile = _candidate_dict(resume, score, interview, job)
     profile.update({
         "job_id": str(job.id),
         "job_title": job.title,
@@ -182,6 +196,13 @@ async def recommend_shortlist(db: AsyncSession, company_id: uuid.UUID, job_id: s
             "candidate_name": candidate["candidate_name"],
             "resume_id": candidate["resume_id"],
             "score": score,
+            "ats_score": candidate.get("ats_score"),
+            "candidate_intelligence_score": candidate.get("candidate_intelligence_score"),
+            "recommendation": candidate.get("hiring_recommendation"),
+            "project_analysis": candidate.get("project_analysis"),
+            "github_analysis": candidate.get("github_analysis"),
+            "portfolio_analysis": candidate.get("portfolio_analysis"),
+            "interview_focus_areas": candidate.get("interview_focus_areas"),
             "reason": candidate.get("summary") or candidate.get("explanation") or "Strongest available score for this role.",
             "next_action": "Schedule adaptive interview" if not candidate.get("interview_score") else "Review final scorecard",
         }

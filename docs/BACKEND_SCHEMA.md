@@ -56,7 +56,7 @@ erDiagram
 | `company_id` | Tenant key |
 | `user_id` | Optional link to local user |
 | `employee_code` | Generated employee identifier |
-| `department`, `designation` | Org metadata |
+| `department`, `designation` | Org metadata. In the UI, `designation` is shown as the employee role; HR/admin and manager signup do not require it. |
 | `manager_id` | Self-reference for team hierarchy |
 | `status` | `active`, `inactive`, `terminated` |
 

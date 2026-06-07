@@ -17,7 +17,7 @@ It is built as a full-stack SaaS-style application with a React/Vite frontend, F
 [ DEMO VIDEO ]
 ```
 
-YouTube: https://YOUR-DEMO-LINK  
+YouTube: https://youtu.be/DThmSvaaQw0?si=w9Qmg0CPiibJFPGm  
 
 ## Project Overview
 
@@ -42,7 +42,7 @@ The product is designed for HR teams, hiring managers, demo evaluators, and tech
 
 | FWC Requirement | Implementation | Status |
 |---|---|---|
-| AI Resume Screening | Resume upload, PDF extraction, deterministic scoring, Gemini/Groq/HF AI insights, matched and missing skills | Implemented |
+| AI Resume Screening | Resume upload, PDF extraction, semantic hybrid scoring, Candidate Intelligence, ATS analysis, Gemini/Groq/HF AI insights, matched and missing skills | Implemented |
 | AI Voice Interaction | AssemblyAI audio transcription, browser speech fallback, voice metrics persisted in interviews | Implemented |
 | Multi Role Login | Supabase Auth plus local `users` roles: admin, HR, manager, employee | Implemented |
 | Admin Dashboard | Admin uses HR dashboard route with high-privilege access | Implemented |
@@ -66,8 +66,13 @@ The product is designed for HR teams, hiring managers, demo evaluators, and tech
 - Public candidate application flow
 - PDF resume upload to Supabase Storage
 - Resume text extraction with PyMuPDF
-- AI and deterministic resume scoring
+- AI and semantic hybrid resume scoring
 - Skill gap analysis
+- Candidate Intelligence Score
+- ATS analysis with keyword match and missing keywords
+- Explicit and inferred skills
+- Project, GitHub, and portfolio intelligence
+- Hiring recommendation, strengths, weaknesses, and interview focus areas
 - Candidate ranking by score
 - Candidate shortlisting
 - Public interview link generation
@@ -125,6 +130,7 @@ The product is designed for HR teams, hiring managers, demo evaluators, and tech
 |---|---|---|
 | Resume Screening | Scores a candidate resume against a job description | `evaluation_service.py`, `ai_service.py`, `scoring_service.py`, `ai_score_service.py` |
 | Skill Gap Analysis | Finds matched and missing skills from resume/JD comparison | Stored in `ai_scores.matched_skills` and `ai_scores.missing_skills` |
+| Candidate Intelligence | Adds recruiter-facing ATS score, explicit/inferred skills, project intelligence, GitHub/portfolio signals, recommendation, strengths, weaknesses, and interview focus areas | `candidate_intelligence_service.py`, `schemas/candidate.py`, candidate views, manager review, recruiter copilot tools |
 | Recruiter Copilot Agent | Answers recruiter questions using read-only HR/hiring tools | `/agent/ask`, `agent_service.py`, `agent_tools.py` |
 | Adaptive Interview Agent | Chooses the next interview question from resume, job, answers, skill gaps, and voice metrics | `interview_service.generate_next_question`, `interview_ai_service.py` |
 | Voice Interview Evaluation | Transcribes voice answers and calculates communication/confidence/fluency metrics | `assemblyai_service.py`, interview voice routes |
@@ -186,7 +192,7 @@ Score buckets used in the benchmark:
 
 Why the score is believable:
 
-- It is explainable: the UI shows overall score, skill match score, semantic score, matched skills, missing skills, summary, and explanation.
+- It is explainable: recruiter views show Candidate Intelligence Score, ATS score, keyword match, explicit skills, inferred skills, project intelligence, GitHub/portfolio signals when available, matched skills, missing skills, strengths, weaknesses, and interview focus areas.
 - It is not only a black-box LLM output: deterministic hybrid scoring always runs as a baseline.
 - It has fallback safety: if Gemini, Groq, or Hugging Face fails, deterministic scoring still produces a result.
 - It is advisory: final shortlist and hiring decisions remain human-reviewed.

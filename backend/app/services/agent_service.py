@@ -174,13 +174,28 @@ def _compose_answer(message: str, outputs: dict[str, Any]) -> tuple[str, list[di
     if "get_candidate_profile" in outputs and outputs["get_candidate_profile"]:
         profile = outputs["get_candidate_profile"]
         lines = [
-            f"{profile['candidate_name']} is being ranked using resume score, skill coverage, and interview evidence.",
-            f"Resume score: {profile.get('score', 0)}%, skill match: {profile.get('skill_match_score', 0)}%, semantic fit: {profile.get('semantic_score', 0)}%.",
+            f"{profile['candidate_name']} is being ranked using candidate intelligence, ATS analysis, project evidence, and interview evidence.",
+            f"Candidate intelligence score: {profile.get('candidate_intelligence_score', profile.get('score', 0))}/100, ATS score: {profile.get('ats_score', 0)}/100, skill match: {profile.get('skill_match_score', 0)}%, semantic fit: {profile.get('semantic_score', 0)}%.",
         ]
-        if profile.get("matched_skills"):
-            lines.append(f"Matched skills: {', '.join(map(str, profile['matched_skills'][:6]))}.")
+        if profile.get("explicit_skills"):
+            lines.append(f"Explicit skills: {', '.join(map(str, profile['explicit_skills'][:6]))}.")
+        if profile.get("inferred_skills"):
+            lines.append(f"Inferred skills: {', '.join(map(str, profile['inferred_skills'][:5]))}.")
         if profile.get("missing_skills"):
             lines.append(f"Skill gaps: {', '.join(map(str, profile['missing_skills'][:6]))}.")
+        if profile.get("project_analysis"):
+            project = profile["project_analysis"][0]
+            lines.append(f"Project signal: {project.get('name')} is marked {project.get('complexity')} complexity with {', '.join(project.get('technologies') or [])}.")
+        if profile.get("github_analysis"):
+            lines.append(f"GitHub signal: score {profile['github_analysis'].get('github_score')}/100, quality {profile['github_analysis'].get('project_quality')}.")
+        if profile.get("portfolio_analysis"):
+            lines.append(f"Portfolio signal: score {profile['portfolio_analysis'].get('portfolio_score')}/100.")
+        if profile.get("candidate_strengths"):
+            lines.append(f"Strengths: {' '.join(map(str, profile['candidate_strengths'][:2]))}")
+        if profile.get("candidate_weaknesses"):
+            lines.append(f"Weaknesses: {' '.join(map(str, profile['candidate_weaknesses'][:2]))}")
+        if profile.get("interview_focus_areas"):
+            lines.append(f"Interview focus: {', '.join(map(str, profile['interview_focus_areas'][:5]))}.")
         if profile.get("interview_score") is not None:
             lines.append(f"Interview score: {profile.get('interview_score')} with recommendation {profile.get('interview_recommendation')}.")
         suggested_actions.append({"type": "review_candidate", "label": "Open candidate profile", "candidate_id": profile["resume_id"]})
@@ -192,7 +207,10 @@ def _compose_answer(message: str, outputs: dict[str, Any]) -> tuple[str, list[di
         manual = data.get("manual_review", [])
         lines = ["Here is the advisory hiring plan:"]
         if shortlist:
-            ranked = "; ".join(f"{idx + 1}. {item['candidate_name']} ({item['score']}%)" for idx, item in enumerate(shortlist))
+            ranked = "; ".join(
+                f"{idx + 1}. {item['candidate_name']} ({item['score']}%, {item.get('recommendation', 'review')})"
+                for idx, item in enumerate(shortlist)
+            )
             lines.append(f"Recommended shortlist: {ranked}.")
             suggested_actions.extend([
                 {"type": "schedule_interview", "label": f"Schedule adaptive interview for {item['candidate_name']}", "candidate_id": item["resume_id"]}
@@ -210,7 +228,7 @@ def _compose_answer(message: str, outputs: dict[str, Any]) -> tuple[str, list[di
         if ranked:
             lines = ["Candidate comparison:"]
             lines.extend(
-                f"{idx + 1}. {candidate['candidate_name']} - resume {candidate.get('score', 0)}%, interview {candidate.get('interview_score') or 'not completed'}."
+                f"{idx + 1}. {candidate['candidate_name']} - intelligence {candidate.get('candidate_intelligence_score', candidate.get('score', 0))}/100, ATS {candidate.get('ats_score', 0)}/100, recommendation {candidate.get('hiring_recommendation')}, interview {candidate.get('interview_score') or 'not completed'}."
                 for idx, candidate in enumerate(ranked[:5])
             )
             return " ".join(lines) + f" {SAFE_POLICY}", suggested_actions

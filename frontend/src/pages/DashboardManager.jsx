@@ -24,7 +24,11 @@ const DashboardManager = () => {
             let allCands = [];
             for (const job of jobs) {
                 const cands = await api.get(`/jobs/${job.id}/candidates`);
-                allCands = allCands.concat(cands.filter(c => c.score > 70).map(c => ({...c, jobTitle: job.title})));
+                allCands = allCands.concat(
+                    cands
+                        .filter(c => (c.candidate_intelligence?.candidate_intelligence_score ?? c.score) > 60)
+                        .map(c => ({...c, jobTitle: job.title, jobId: job.id}))
+                );
             }
             setCandidates(allCands);
 
@@ -71,7 +75,7 @@ const DashboardManager = () => {
                     {/* Stats */}
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
                         <StatCard icon={Star} label="High Potential" value={candidates.length} color="indigo" />
-                        <StatCard icon={Brain} label="AI Recommended" value={candidates.filter(c => c.score >= 85).length} color="violet" />
+                        <StatCard icon={Brain} label="AI Recommended" value={candidates.filter(c => (c.candidate_intelligence?.candidate_intelligence_score ?? c.score) >= 85).length} color="violet" />
                         <StatCard icon={Clock} label="Candidates Reviewed" value={candidates.length} color="emerald" />
                         <StatCard icon={Users} label="Team Present" value={teamAttendance.filter(r => r.status === 'present').length} color="indigo" />
                         <StatCard icon={TrendingUp} label="Team Avg Rating" value={`${teamAvgRating}/5`} color="violet" />
@@ -140,7 +144,7 @@ const DashboardManager = () => {
                             <div className="space-y-4">
                                 {candidates.map((c, i) => (
                                     <motion.div 
-                                        key={c.id} 
+                                        key={c.resume_id} 
                                         initial={{ opacity: 0, x: -10 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: i * 0.1 }}
@@ -155,13 +159,28 @@ const DashboardManager = () => {
                                                 <div className="flex items-center gap-3 mt-1">
                                                     <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{c.jobTitle}</span>
                                                     <span className="w-1.5 h-1.5 rounded-full bg-slate-200" />
-                                                    <span className="text-sm font-semibold text-indigo-600 italic">Score: {c.score}%</span>
+                                                    <span className="text-sm font-semibold text-indigo-600 italic">
+                                                        Intelligence: {Math.round(c.candidate_intelligence?.candidate_intelligence_score ?? c.score)} / 100
+                                                    </span>
+                                                </div>
+                                                <div className="mt-3 flex flex-wrap gap-2">
+                                                    <span className="rounded-lg bg-slate-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                                        ATS {Math.round(c.candidate_intelligence?.ats_analysis?.ats_score ?? c.score)} / 100
+                                                    </span>
+                                                    <span className="rounded-lg bg-indigo-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-indigo-600">
+                                                        {c.candidate_intelligence?.hiring_recommendation || 'Needs Review'}
+                                                    </span>
+                                                    {(c.candidate_intelligence?.interview_focus_areas || []).slice(0, 2).map(area => (
+                                                        <span key={`${c.resume_id}-${area}`} className="rounded-lg bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                                                            {area}
+                                                        </span>
+                                                    ))}
                                                 </div>
                                             </div>
                                         </div>
                                         
                                         <Link
-                                            to="/candidates"
+                                            to={`/candidates?job_id=${c.jobId}`}
                                             className="w-full md:w-auto btn btn-primary px-5 py-2.5 text-sm font-semibold rounded-xl shadow-sm justify-center"
                                         >
                                             <Eye size={18} />

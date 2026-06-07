@@ -11,8 +11,8 @@ The project is implemented as a working full-stack SaaS prototype with recruitme
 | Project setup | Complete | React frontend, FastAPI backend, Supabase integration |
 | Authentication | Complete | Supabase login/signup, JWT verification, local user sync |
 | Job management | Complete | Job create/list APIs and Jobs page |
-| Resume screening | Complete | Bulk PDF upload, extraction, AI score storage |
-| Candidate management | Complete | Candidate list by job, interview history |
+| Resume screening | Complete | Bulk PDF upload, extraction, semantic hybrid AI score storage |
+| Candidate management | Complete | Candidate list by job, Candidate Intelligence, interview history |
 | AI interviews | Complete | Question generation, voice capture, transcript, evaluation |
 | Employee directory | Complete | Employee CRUD/list/filters with RBAC |
 | Attendance | Complete | Clock in/out and own/team/company analytics |

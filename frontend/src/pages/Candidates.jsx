@@ -5,7 +5,7 @@ import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 import api from '../services/api';
 import { useToast } from '../context/ToastContext';
-import { Upload, ChevronRight, Brain, Loader2, CheckCircle2, FileText, Search, User, Users, SlidersHorizontal, ArrowLeft, Mic } from 'lucide-react';
+import { Upload, ChevronRight, Brain, Loader2, CheckCircle2, FileText, Search, User, Users, SlidersHorizontal, ArrowLeft, Mic, Target, Github, Globe, BriefcaseBusiness, AlertTriangle, Code2 } from 'lucide-react';
 import { formatRelativeTime } from '../utils/date';
 import { useRealtime } from '../hooks/useRealtime';
 
@@ -157,6 +157,7 @@ const Candidates = () => {
     const filteredCandidates = candidates.filter(c => 
         c.candidate_name.toLowerCase().includes(searchQuery.toLowerCase())
     );
+    const selectedIntel = selectedCandidate?.candidate_intelligence || {};
 
     return (
         <div className="flex bg-[#f8fafc] min-h-screen font-inter overflow-x-hidden">
@@ -226,8 +227,8 @@ const Candidates = () => {
 
                                 <div className="mt-4 grid grid-cols-2 gap-3">
                                     <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
-                                        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">AI Score</p>
-                                        <p className="text-lg font-semibold text-indigo-600 mt-1">{c.score}%</p>
+                                        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Intelligence</p>
+                                        <p className="text-lg font-semibold text-indigo-600 mt-1">{Math.round(c.candidate_intelligence?.candidate_intelligence_score ?? c.score)} / 100</p>
                                     </div>
                                     <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
                                         <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Status</p>
@@ -243,6 +244,11 @@ const Candidates = () => {
                                 <div className="mt-3 rounded-xl bg-white border border-slate-100 px-3 py-2">
                                     <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Position</p>
                                     <p className="text-sm font-medium text-slate-600 mt-1 break-words">{c.jobTitle || 'Unassigned'}</p>
+                                </div>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {(c.candidate_intelligence?.explicit_skills || c.matched_skills || []).slice(0, 4).map(skill => (
+                                        <span key={skill} className="rounded-lg bg-indigo-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-indigo-600">{skill}</span>
+                                    ))}
                                 </div>
                             </motion.button>
                         ))}
@@ -266,7 +272,7 @@ const Candidates = () => {
                             <thead>
                                 <tr className="bg-slate-50/50">
                                     <th className="px-8 py-5 text-xs font-semibold text-slate-400 uppercase tracking-[0.2em]">Candidate</th>
-                                    <th className="px-8 py-5 text-xs font-semibold text-slate-400 uppercase tracking-[0.2em]">AI Match Score</th>
+                                    <th className="px-8 py-5 text-xs font-semibold text-slate-400 uppercase tracking-[0.2em]">Candidate Intelligence</th>
                                     <th className="px-8 py-5 text-xs font-semibold text-slate-400 uppercase tracking-[0.2em]">Status</th>
                                     <th className="px-8 py-5 text-xs font-semibold text-slate-400 uppercase tracking-[0.2em]">Position</th>
                                     <th className="px-8 py-5 text-xs font-semibold text-slate-400 uppercase tracking-[0.2em] text-right">Action</th>
@@ -295,13 +301,13 @@ const Candidates = () => {
                                         </td>
                                         <td className="px-8 py-6">
                                             <div className="flex items-center gap-4">
-                                                <div className="text-lg font-semibold text-indigo-600 min-w-[4.5rem] whitespace-nowrap">{c.score}%</div>
+                                                <div className="text-lg font-semibold text-indigo-600 min-w-[5.5rem] whitespace-nowrap">{Math.round(c.candidate_intelligence?.candidate_intelligence_score ?? c.score)} / 100</div>
                                                 <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden max-w-[120px]">
                                                     <motion.div 
                                                         initial={{ width: 0 }}
-                                                        animate={{ width: `${c.score}%` }}
+                                                        animate={{ width: `${c.candidate_intelligence?.candidate_intelligence_score ?? c.score}%` }}
                                                         transition={{ duration: 1, delay: i * 0.1 }}
-                                                        className={`h-full rounded-full ${c.score > 80 ? 'bg-emerald-500' : c.score > 50 ? 'bg-indigo-600' : 'bg-rose-500'}`} 
+                                                        className={`h-full rounded-full ${(c.candidate_intelligence?.candidate_intelligence_score ?? c.score) > 80 ? 'bg-emerald-500' : (c.candidate_intelligence?.candidate_intelligence_score ?? c.score) > 50 ? 'bg-indigo-600' : 'bg-rose-500'}`} 
                                                     />
                                                 </div>
                                             </div>
@@ -433,12 +439,13 @@ const Candidates = () => {
                                             <div className="relative z-10 flex items-center justify-between">
                                                 <div>
                                                     <div className="flex items-center gap-2 text-indigo-100 font-semibold text-xs uppercase tracking-[0.2em] mb-4">
-                                                        <Brain size={16} /> AI Match Score
+                                                        <Brain size={16} /> Candidate Intelligence Score
                                                     </div>
-                                                    <div className="text-6xl font-semibold">{selectedCandidate.score}%</div>
+                                                    <div className="text-6xl font-semibold">{Math.round(selectedIntel.candidate_intelligence_score ?? selectedCandidate.score)}</div>
+                                                    <div className="mt-1 text-sm font-bold text-indigo-100">/ 100</div>
                                                 </div>
                                                 <div className="w-24 h-24 rounded-full border-8 border-white/10 flex items-center justify-center relative">
-                                                    <div className="text-xs font-semibold uppercase text-white/50 tracking-widest">Match</div>
+                                                    <div className="text-xs font-semibold uppercase text-white/50 tracking-widest">Intel</div>
                                                     <div className="absolute inset-0 rounded-full border-8 border-white border-t-transparent animate-spin-slow" />
                                                 </div>
                                             </div>
@@ -478,8 +485,8 @@ const Candidates = () => {
                                             </div>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <InsightTile
-                                                    label="Why Ranked"
-                                                    value={selectedCandidate.score >= 75 ? 'Strong score and role alignment.' : 'Needs recruiter validation before shortlist.'}
+                                                    label="Hiring Recommendation"
+                                                    value={selectedIntel.hiring_recommendation || (selectedCandidate.score >= 75 ? 'Strong Fit' : 'Needs Review')}
                                                 />
                                                 <InsightTile
                                                     label="Interview Readiness"
@@ -496,6 +503,25 @@ const Candidates = () => {
                                             </div>
                                         </div>
 
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <MetricTile label="ATS Score" value={`${Math.round(selectedIntel.ats_analysis?.ats_score ?? selectedCandidate.score)} / 100`} />
+                                            <MetricTile label="Keyword Match" value={`${Math.round(selectedIntel.ats_analysis?.keyword_match ?? selectedCandidate.skill_match_score ?? 0)}%`} />
+                                            <MetricTile label="Recommendation" value={selectedIntel.hiring_recommendation || 'Needs Review'} />
+                                        </div>
+
+                                        <IntelligenceSection icon={Target} title="ATS Analysis">
+                                            <div className="space-y-4">
+                                                <ScoreProgress label="ATS Score" score={selectedIntel.ats_analysis?.ats_score || selectedCandidate.score || 0} color="indigo" />
+                                                <ScoreProgress label="Keyword Match" score={selectedIntel.ats_analysis?.keyword_match || selectedCandidate.skill_match_score || 0} color="violet" />
+                                                <SkillGroup
+                                                    label="Missing Keywords"
+                                                    skills={selectedIntel.ats_analysis?.missing_keywords || selectedCandidate.missing_skills || []}
+                                                    emptyLabel="No major missing keywords detected."
+                                                    variant="missing"
+                                                />
+                                            </div>
+                                        </IntelligenceSection>
+
                                         {/* Skills Section */}
                                         <div className="space-y-6">
                                             <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-2">
@@ -508,20 +534,81 @@ const Candidates = () => {
                                             </div>
 
                                             <div className="pt-6">
-                                                <div className="flex flex-wrap gap-2">
-                                                    {selectedCandidate.matched_skills?.map(skill => (
-                                                        <div key={skill} className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-semibold flex items-center gap-2 border border-emerald-100">
-                                                            <CheckCircle2 size={14} /> {skill}
-                                                        </div>
-                                                    ))}
-                                                    {selectedCandidate.missing_skills?.map(skill => (
-                                                        <div key={skill} className="px-4 py-2 rounded-xl bg-slate-50 text-slate-400 text-xs font-semibold border border-slate-100">
-                                                            {skill}
-                                                        </div>
-                                                    ))}
+                                                <SkillGroup
+                                                    label="Explicit Skills"
+                                                    skills={selectedIntel.explicit_skills || selectedCandidate.matched_skills || []}
+                                                    emptyLabel="No explicit matched skills yet."
+                                                    variant="matched"
+                                                />
+                                                <div className="mt-6">
+                                                    <SkillGroup
+                                                        label="Inferred Skills"
+                                                        skills={selectedIntel.inferred_skills || []}
+                                                        emptyLabel="No inferred skills detected yet."
+                                                        variant="inferred"
+                                                    />
+                                                    <p className="mt-3 text-xs font-semibold text-slate-400 leading-relaxed">
+                                                        {selectedIntel.inferred_skills_explanation || 'These skills were inferred from project descriptions and work experience.'}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <IntelligenceSection icon={BriefcaseBusiness} title="Project Intelligence">
+                                            <div className="space-y-3">
+                                                {(selectedIntel.project_intelligence || []).length > 0 ? (
+                                                    selectedIntel.project_intelligence.map((project, index) => (
+                                                        <ProjectIntelCard key={`${project.name}-${index}`} project={project} />
+                                                    ))
+                                                ) : (
+                                                    <EmptyIntel text="No structured project intelligence found in the resume text." />
+                                                )}
+                                            </div>
+                                        </IntelligenceSection>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <ExternalIntelCard
+                                                icon={Github}
+                                                title="GitHub Intelligence"
+                                                data={selectedIntel.github_intelligence}
+                                                empty="No GitHub URL detected."
+                                                fields={[
+                                                    ['GitHub Score', selectedIntel.github_intelligence?.github_score ? `${selectedIntel.github_intelligence.github_score} / 100` : null],
+                                                    ['Languages', selectedIntel.github_intelligence?.languages?.join(', ')],
+                                                    ['Repositories', selectedIntel.github_intelligence?.repositories],
+                                                    ['Project Quality', selectedIntel.github_intelligence?.project_quality],
+                                                    ['Activity Summary', selectedIntel.github_intelligence?.activity_summary],
+                                                ]}
+                                            />
+                                            <ExternalIntelCard
+                                                icon={Globe}
+                                                title="Portfolio Intelligence"
+                                                data={selectedIntel.portfolio_intelligence}
+                                                empty="No portfolio URL detected."
+                                                fields={[
+                                                    ['Portfolio Score', selectedIntel.portfolio_intelligence?.portfolio_score ? `${selectedIntel.portfolio_intelligence.portfolio_score} / 100` : null],
+                                                    ['Portfolio Summary', selectedIntel.portfolio_intelligence?.portfolio_summary],
+                                                ]}
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <BulletIntelCard title="Candidate Strengths" items={selectedIntel.candidate_strengths || []} />
+                                            <BulletIntelCard title="Candidate Weaknesses" items={selectedIntel.candidate_weaknesses || []} tone="warning" />
+                                        </div>
+
+                                        <IntelligenceSection icon={AlertTriangle} title="Interview Focus Areas">
+                                            <div className="flex flex-wrap gap-2">
+                                                {(selectedIntel.interview_focus_areas || []).map(area => (
+                                                    <span key={area} className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-700">
+                                                        {area}
+                                                    </span>
+                                                ))}
+                                                {(!selectedIntel.interview_focus_areas || selectedIntel.interview_focus_areas.length === 0) && (
+                                                    <EmptyIntel text="No special focus areas generated yet." />
+                                                )}
+                                            </div>
+                                        </IntelligenceSection>
 
                                         <div className="space-y-6 pt-6 border-t border-slate-100">
                                             <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-widest">Experience Summary</h4>
@@ -773,6 +860,109 @@ const InsightTile = ({ label, value }) => (
     <div className="rounded-2xl border border-white bg-white/80 p-4">
         <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</div>
         <div className="mt-2 text-sm font-semibold leading-relaxed text-slate-800">{value}</div>
+    </div>
+);
+
+const IntelligenceSection = ({ icon: Icon, title, children }) => (
+    <div className="space-y-4 pt-6 border-t border-slate-100">
+        <h4 className="text-sm font-semibold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <Icon size={14} /> {title}
+        </h4>
+        {children}
+    </div>
+);
+
+const SkillGroup = ({ label, skills, emptyLabel, variant = 'matched' }) => {
+    const styles = {
+        matched: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+        missing: 'bg-slate-50 text-slate-500 border-slate-100',
+        inferred: 'bg-indigo-50 text-indigo-700 border-indigo-100',
+    };
+
+    return (
+        <div>
+            <div className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</div>
+            <div className="flex flex-wrap gap-2">
+                {skills?.length > 0 ? skills.map(skill => (
+                    <span key={`${label}-${skill}`} className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-semibold ${styles[variant] || styles.matched}`}>
+                        {variant === 'matched' ? <CheckCircle2 size={14} /> : variant === 'inferred' ? <Code2 size={14} /> : null}
+                        {skill}
+                    </span>
+                )) : (
+                    <span className="text-xs font-semibold text-slate-400">{emptyLabel}</span>
+                )}
+            </div>
+        </div>
+    );
+};
+
+const ProjectIntelCard = ({ project }) => (
+    <div className="rounded-2xl border border-slate-100 bg-white p-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div>
+                <div className="text-sm font-bold text-slate-900">{project.name || 'Resume Project'}</div>
+                <div className="mt-1 text-xs font-semibold text-slate-400">Complexity: {project.complexity || 'Needs Review'}</div>
+            </div>
+            <span className="w-fit rounded-lg bg-indigo-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-indigo-600">
+                Project
+            </span>
+        </div>
+        <div className="mt-4">
+            <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Tech Stack</div>
+            <div className="mt-2 flex flex-wrap gap-2">
+                {(project.technologies || []).length > 0 ? project.technologies.map(tech => (
+                    <span key={`${project.name}-${tech}`} className="rounded-lg bg-slate-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        {tech}
+                    </span>
+                )) : <span className="text-xs font-semibold text-slate-400">Not clearly detected</span>}
+            </div>
+        </div>
+        <div className="mt-4 text-sm font-medium leading-relaxed text-slate-600">{project.impact || 'Impact not clearly quantified.'}</div>
+    </div>
+);
+
+const ExternalIntelCard = ({ icon: Icon, title, data, empty, fields }) => (
+    <div className="rounded-[1.25rem] border border-slate-100 bg-white p-5">
+        <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-100 bg-slate-50 text-slate-500">
+                <Icon size={18} />
+            </div>
+            <div className="text-sm font-bold text-slate-900">{title}</div>
+        </div>
+        {data ? (
+            <div className="space-y-3">
+                {fields.filter(([, value]) => value !== null && value !== undefined && value !== '').map(([label, value]) => (
+                    <div key={`${title}-${label}`}>
+                        <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</div>
+                        <div className="mt-1 text-sm font-semibold leading-relaxed text-slate-700">{value}</div>
+                    </div>
+                ))}
+            </div>
+        ) : (
+            <div className="text-sm font-semibold text-slate-400">{empty}</div>
+        )}
+    </div>
+);
+
+const BulletIntelCard = ({ title, items, tone = 'default' }) => (
+    <div className="rounded-[1.25rem] border border-slate-100 bg-white p-5">
+        <div className="mb-4 text-sm font-bold text-slate-900">{title}</div>
+        <div className="space-y-3">
+            {items?.length > 0 ? items.map((item, index) => (
+                <div key={`${title}-${index}`} className="flex gap-3 text-sm font-medium leading-relaxed text-slate-600">
+                    <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${tone === 'warning' ? 'bg-amber-400' : 'bg-emerald-400'}`} />
+                    <span>{item}</span>
+                </div>
+            )) : (
+                <div className="text-sm font-semibold text-slate-400">No signal generated yet.</div>
+            )}
+        </div>
+    </div>
+);
+
+const EmptyIntel = ({ text }) => (
+    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-400">
+        {text}
     </div>
 );
 

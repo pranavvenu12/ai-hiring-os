@@ -31,9 +31,22 @@ const Signup = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!role) { toast.warning('Please select a role'); return; }
+        if (password.length < 6) { toast.warning('Password must be at least 6 characters'); return; }
+        const normalizedEmail = email.trim();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+            toast.warning('Enter a valid email address');
+            return;
+        }
         setIsLoading(true);
         try {
-            await signup({ name, email, password, role, company_name: companyName, designation });
+            await signup({
+                name,
+                email: normalizedEmail,
+                password,
+                role,
+                company_name: companyName,
+                designation: role === 'employee' ? designation : undefined,
+            });
             const user = JSON.parse(localStorage.getItem('user'));
             navigate(`/dashboard/${user.role.toLowerCase()}`);
             toast.success('Account created successfully!');
@@ -93,7 +106,10 @@ const Signup = () => {
                             ].map((item) => (
                                 <div 
                                     key={item.id}
-                                    onClick={() => setRole(item.id)}
+                                    onClick={() => {
+                                        setRole(item.id);
+                                        if (item.id !== 'employee') setDesignation('');
+                                    }}
                                     className={`p-4 rounded-xl border cursor-pointer transition-all duration-300 text-center flex flex-col items-center gap-2 group ${
                                         role === item.id 
                                         ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm' 
@@ -117,15 +133,17 @@ const Signup = () => {
                                 <input type="text" className="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-12 pr-4 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 transition-all font-medium" placeholder="John Doe" value={name} onChange={e => setName(e.target.value)} required />
                             </div>
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Designation <span className="text-rose-500">*</span></label>
-                            <div className="relative group">
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
-                                    <Briefcase size={18} />
+                        {role === 'employee' && (
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Employee Role <span className="text-rose-500">*</span></label>
+                                <div className="relative group">
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors">
+                                        <Briefcase size={18} />
+                                    </div>
+                                    <input type="text" className="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-12 pr-4 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 transition-all font-medium" placeholder="Full Stack Developer" value={designation} onChange={e => setDesignation(e.target.value)} required={role === 'employee'} />
                                 </div>
-                                <input type="text" className="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-12 pr-4 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 transition-all font-medium" placeholder="Product Manager" value={designation} onChange={e => setDesignation(e.target.value)} required />
                             </div>
-                        </div>
+                        )}
                         <div className="space-y-2">
                             <label className="text-xs font-semibold uppercase tracking-widest text-slate-400 ml-1">Company <span className="text-rose-500">*</span></label>
                             <div className="relative group">
@@ -144,7 +162,8 @@ const Signup = () => {
                                 <Mail size={18} />
                             </div>
                             <input 
-                                type="email" 
+                                type="text" 
+                                inputMode="email"
                                 className="w-full bg-white border border-slate-200 rounded-xl py-3.5 pl-12 pr-4 outline-none focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 transition-all font-medium" 
                                 placeholder="john@acme.com" 
                                 value={email} 
@@ -166,6 +185,7 @@ const Signup = () => {
                                 placeholder="••••••••" 
                                 value={password} 
                                 onChange={e => setPassword(e.target.value)} 
+                                minLength={6}
                                 required 
                             />
                             <button 

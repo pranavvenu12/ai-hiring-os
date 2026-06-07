@@ -45,13 +45,15 @@ Response:
 | --- | --- |
 | `list_jobs` | Lists tenant jobs and candidate counts |
 | `get_job_details` | Gets one job description and metadata |
-| `list_candidates` | Lists candidates with scores, skill gaps, and interview status |
-| `get_candidate_profile` | Gets resume, scores, gaps, and interview summary for one candidate |
-| `compare_candidates` | Ranks candidates using resume and interview evidence |
+| `list_candidates` | Lists candidates with scores, Candidate Intelligence, ATS signals, skill gaps, and interview status |
+| `get_candidate_profile` | Gets resume, scores, Candidate Intelligence, ATS/project/GitHub/portfolio signals, gaps, and interview summary for one candidate |
+| `compare_candidates` | Ranks candidates using resume, Candidate Intelligence, and interview evidence |
 | `recommend_shortlist` | Produces advisory shortlist and manual-review buckets |
 | `get_interview_results` | Summarizes interview scorecards and voice metrics |
 | `get_employee_stats` | Summarizes employee, attendance, and performance stats |
 | `get_payroll_summary` | Summarizes payroll without changing payroll state |
+
+When recruiter-facing candidate context is available, the copilot receives Candidate Intelligence Score, ATS score, project analysis, GitHub analysis, portfolio analysis, hiring recommendation, strengths, weaknesses, and interview focus areas. It uses those signals for ranking, shortlist advice, manual-review suggestions, and interview planning.
 
 ## Data Flow
 

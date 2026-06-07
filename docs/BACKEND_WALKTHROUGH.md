@@ -658,7 +658,7 @@ Important schema files:
 - `agent.py`: `AgentAskRequest`, `AgentAskResponse`, `AgentToolTrace`.
 - `attendance.py`: attendance output and summary response contracts.
 - `auth.py`: `TokenPayload`, `LoginRequest`, `AuthResponse`.
-- `candidate.py`: candidate response enriched with AI scores.
+- `candidate.py`: candidate response enriched with AI scores and Candidate Intelligence.
 - `company.py`: company create/update/output contracts.
 - `employee.py`: employee create/update/list/output contracts.
 - `interview.py`: interview start, answer, browser voice fallback, session output, analytics.
@@ -696,10 +696,11 @@ Interview answer:
 `POST /auth/signup`
 
 - File: `backend/app/api/routes/auth.py`
-- Body: name, email, password, role, company name, designation.
+- Body: name, email, password, app role, company name, and optional employee role.
 - Validates tenant rules.
 - Employees/managers can only join existing companies.
 - HR/admin can create company when needed.
+- HR/admin and manager signup do not require an employee role/designation.
 - Creates or relinks Supabase Auth user.
 - Creates or updates local user.
 - Creates or links employee profile for manager/employee roles.
@@ -1090,6 +1091,26 @@ Deterministic scoring:
 - Uses phrase evidence as a small exact wording signal.
 - Gates semantic signals by skill coverage so generic text similarity cannot over-score irrelevant resumes.
 - Final fallback score is a learning-to-rank weighted blend: 30 percent skills, 25 percent embeddings, 20 percent RAG evidence, 10 percent role context, 10 percent resume evidence, and 5 percent phrase evidence.
+
+### Candidate Intelligence
+
+File:
+
+- `services/candidate_intelligence_service.py`
+
+This is a read-only layer over existing resume, job, and AI score data. It does not create a new dashboard or a separate candidate page. Candidate API responses include a `candidate_intelligence` object used by the Candidates page, candidate drawer/detail views, Manager Candidate Review, and Recruiter Copilot context.
+
+It computes:
+
+- Candidate Intelligence Score from the persisted AI score.
+- ATS analysis: ATS score, keyword match, and missing keywords.
+- Explicit skills from matched JD/resume skills.
+- Inferred skills from project and experience text, with an explanation that inferred skills come from project descriptions and work experience.
+- Project intelligence: project name, technologies, complexity, and impact.
+- GitHub intelligence when GitHub evidence exists.
+- Portfolio intelligence when portfolio evidence exists.
+- Hiring recommendation: Strong Fit, Moderate Fit, Needs Review, or Not Recommended.
+- Candidate strengths, candidate weaknesses, and interview focus areas.
 
 ### Interview AI
 

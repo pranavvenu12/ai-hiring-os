@@ -6,9 +6,9 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class CandidateOut(BaseModel):
@@ -33,6 +33,7 @@ class CandidateOut(BaseModel):
     hiring_status: str = "applied"
     email: Optional[str] = None
     phone: Optional[str] = None
+    candidate_intelligence: dict[str, Any] = Field(default_factory=dict)
 
     class Config:
         from_attributes = True

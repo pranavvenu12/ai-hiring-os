@@ -98,6 +98,7 @@ Implemented AI paths:
 | Feature | Service |
 |---|---|
 | Resume scoring | `ai_service.py`, `scoring_service.py`, `evaluation_service.py` |
+| Candidate intelligence | `candidate_intelligence_service.py`, candidate schemas, recruiter copilot tools |
 | Interview questions/evaluation | `interview_ai_service.py`, `interview_service.py` |
 | Payroll summary | `payroll_service.py` |
 

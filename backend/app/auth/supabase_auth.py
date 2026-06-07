@@ -78,39 +78,63 @@ def verify_jwt(token: str) -> TokenPayload:
 
 
 def sign_up_with_email(email: str, password: str) -> dict:
-    """Register a new user via the standard Supabase Auth sign-up flow.
+    """Register or update a Supabase Auth user with backend admin credentials.
 
-    Uses the anon-key client so the request goes through the normal Auth API
-    (works on all Supabase plans). The service-role admin.create_user() path
-    requires special plan permissions and returns "User not allowed" on free
-    plans, which is why we avoid it here.
-
-    After sign-up, the service-role client is used to auto-confirm the email
-    so users can log in immediately without clicking a confirmation link.
+    The public Supabase sign-up endpoint can be email-rate-limited during demos.
+    The backend service-role client is preferred so registration does not rely on
+    confirmation emails. If admin creation is unavailable, this falls back to the
+    normal anon signup path.
     """
-    anon = get_anon_client()
     admin = get_supabase_client()
+
     try:
-        response = anon.auth.sign_up({
+        response = admin.auth.admin.create_user({
             "email": email,
             "password": password,
+            "email_confirm": True,
         })
         if not response.user:
-            raise RuntimeError("Supabase sign-up returned no user.")
-
-        # Auto-confirm the email so the user can log in immediately
-        try:
-            admin.auth.admin.update_user_by_id(
-                str(response.user.id),
-                {"email_confirm": True},
-            )
-        except Exception:
-            # Non-fatal: user can still confirm via email link if this fails
-            pass
-
+            raise RuntimeError("Supabase admin create_user returned no user.")
         return {"user": response.user, "session": response.session}
     except Exception as exc:
-        raise
+        err = str(exc).lower()
+        if "already" in err or "registered" in err or "exists" in err:
+            matching_user = _get_admin_user_by_email(admin, email)
+            if matching_user:
+                updated = admin.auth.admin.update_user_by_id(
+                    str(matching_user.id),
+                    {
+                        "password": password,
+                        "email_confirm": True,
+                    },
+                )
+                return {"user": updated.user or matching_user, "session": None}
+
+        if "not allowed" not in err and "unauthorized" not in err and "service_role" not in err:
+            raise
+
+    anon = get_anon_client()
+    response = anon.auth.sign_up({
+        "email": email,
+        "password": password,
+    })
+    if not response.user:
+        raise RuntimeError("Supabase sign-up returned no user.")
+
+    try:
+        admin.auth.admin.update_user_by_id(
+            str(response.user.id),
+            {"email_confirm": True},
+        )
+    except Exception:
+        pass
+
+    return {"user": response.user, "session": response.session}
+
+
+def _get_admin_user_by_email(client: Client, email: str):
+    users = client.auth.admin.list_users()
+    return next((user for user in users if (user.email or "").lower() == email.lower()), None)
 
 
 def sign_in_with_email(email: str, password: str) -> dict:

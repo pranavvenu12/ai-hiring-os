@@ -34,8 +34,9 @@ The implemented product targets four roles: Admin, HR, Manager, and Employee. Th
 | Job posting | HR/Admin create jobs; Admin/HR/Manager list jobs |
 | Bulk resume screening | HR/Admin upload multiple PDF resumes to a job |
 | Resume extraction | PyMuPDF extracts text in a FastAPI background task |
-| Resume evaluation | AI scoring runs after extraction and stores score/explanation/skills |
-| Candidate pool | Candidates are listed per job with score data |
+| Resume evaluation | Semantic hybrid scoring runs after extraction and stores score/explanation/skills |
+| Candidate intelligence | Recruiter views show Candidate Intelligence Score, ATS analysis, explicit/inferred skills, project intelligence, GitHub/portfolio signals, recommendation, strengths, weaknesses, and interview focus areas |
+| Candidate pool | Candidates are listed per job with score data and intelligence signals |
 
 ### 3.3 AI Features
 
@@ -44,6 +45,7 @@ The implemented product targets four roles: Admin, HR, Manager, and Employee. Th
 | Resume scoring | Skill, semantic, and overall score persisted in `ai_scores` |
 | Resume summaries | AI explanation and summary-style candidate details |
 | Skill gap analysis | Matched and missing skills stored in `ai_scores` |
+| Candidate intelligence | Read-only intelligence computed from `resumes`, `jobs`, and `ai_scores` for candidate views and recruiter copilot context |
 | AI interview questions | Gemini/HF/template generated interview questions |
 | AI interview evaluation | Scores transcript for technical, communication, confidence, and recommendation |
 | Payroll insight | Payroll record stores an AI/template summary |

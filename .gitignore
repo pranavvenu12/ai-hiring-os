@@ -33,3 +33,6 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local scratch projects
+resume screener and evalautor/

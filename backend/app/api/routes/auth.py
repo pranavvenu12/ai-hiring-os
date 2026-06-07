@@ -16,7 +16,7 @@ from app.auth.supabase_auth import (
     sign_up_with_email,
     verify_jwt,
 )
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, field_validator
 from app.core.security import Role
 from app.db.session import get_db
 from app.schemas.auth import AuthResponse
@@ -29,25 +29,49 @@ security = HTTPBearer(auto_error=False)
 class LoginRequest(BaseModel):
     """Email + password login payload."""
 
-    email: EmailStr
+    email: str
     password: str
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return _validate_basic_email(value)
 
 
 class SignupRequest(BaseModel):
     """Payload for public onboarding."""
 
     name: str
-    email: EmailStr
+    email: str
     password: str
     role: Role
     company_name: str | None = None
     designation: str | None = None
 
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return _validate_basic_email(value)
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, value: str) -> str:
+        if len(value or "") < 6:
+            raise ValueError("Password must be at least 6 characters.")
+        return value
+
+
+def _validate_basic_email(value: str) -> str:
+    email = (value or "").strip().lower()
+    if "@" not in email or "." not in email.rsplit("@", 1)[-1]:
+        raise ValueError("Enter a valid email address.")
+    return email
+
 
 def _get_supabase_user_by_email(client, email: str):
     """Return the Supabase auth user for an email if it exists."""
     sb_users = client.auth.admin.list_users()
-    return next((u for u in sb_users if u.email == email), None)
+    return next((u for u in sb_users if (u.email or "").lower() == email.lower()), None)
 
 
 def _company_not_registered_detail(company_name: str) -> str:
@@ -109,7 +133,7 @@ async def signup(
     # 0. Check if user already exists in local DB
     existing_user = await user_service.get_user_by_email(db, payload.email)
     company_name = (payload.company_name or "").strip()
-    designation = (payload.designation or "").strip()
+    employee_role = (payload.designation or "").strip() if payload.role.value == "employee" else ""
 
     # Employees and managers can only join companies that HR/Admin has already
     # registered. Validate this before calling Supabase so the UI gets a clear
@@ -227,8 +251,8 @@ async def signup(
         if employee:
             # Link pre-created employee record to this new user account
             employee.user_id = user.id
-            if designation:
-                employee.designation = designation
+            if payload.role.value == "employee" and employee_role:
+                employee.designation = employee_role
         else:
             # Auto-create employee record so the user profile exists immediately
             from app.services.employee_service import _generate_employee_code
@@ -240,7 +264,7 @@ async def signup(
                 full_name=payload.name,
                 email=payload.email,
                 department="Management" if payload.role.value == "manager" else "General",
-                designation=designation or ("Manager" if payload.role.value == "manager" else "Employee"),
+                designation="Manager" if payload.role.value == "manager" else (employee_role or "Employee"),
                 joining_date=date.today(),
                 employment_type="full_time"
             )

@@ -126,9 +126,11 @@ flowchart TD
     Score --> Save[Save AI score]
 ```
 
-## 10. Candidate Scoring Pipeline
+## 10. Candidate Scoring and Intelligence Pipeline
 
 The scoring pipeline compares resume text to job description/requirements and persists `skill_match_score`, `semantic_score`, `overall_score`, `explanation`, `matched_skills`, and `missing_skills`.
+
+The recruiter-facing intelligence layer then computes read-only signals from `resumes`, `jobs`, and `ai_scores`: Candidate Intelligence Score, ATS score, keyword match, missing keywords, explicit skills, inferred skills, project intelligence, GitHub/portfolio signals, hiring recommendation, strengths, weaknesses, and interview focus areas. These signals are returned in candidate API responses and reused by existing candidate screens, manager review, and Recruiter Copilot context.
 
 ## 11. AI Interview Pipeline
 

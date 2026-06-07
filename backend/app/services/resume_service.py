@@ -10,6 +10,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.resume import Resume
+from app.models.job import Job
+from app.services.candidate_intelligence_service import build_candidate_intelligence
 
 
 async def create_resume(
@@ -70,7 +72,8 @@ async def list_candidates_with_scores(
     from app.models.ai_score import AIScore
     
     query = (
-        select(Resume, AIScore)
+        select(Resume, AIScore, Job)
+        .join(Job, Resume.job_id == Job.id)
         .outerjoin(AIScore, Resume.id == AIScore.resume_id)
         .where(Resume.job_id == job_id)
         .order_by(Resume.created_at.desc())
@@ -78,7 +81,7 @@ async def list_candidates_with_scores(
     result = await db.execute(query)
     
     candidates = []
-    for resume, ai_score in result.all():
+    for resume, ai_score, job in result.all():
         candidates.append({
             "resume_id": resume.id,
             "candidate_name": resume.candidate_name,
@@ -95,5 +98,6 @@ async def list_candidates_with_scores(
             "hiring_status": resume.hiring_status,
             "email": resume.email,
             "phone": resume.phone,
+            "candidate_intelligence": build_candidate_intelligence(resume, ai_score, job),
         })
     return candidates

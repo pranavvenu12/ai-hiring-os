@@ -210,13 +210,13 @@ const EmployeeDirectory = () => {
                                         {selectedEmployee.full_name.charAt(0)}
                                     </div>
                                     <h4 className="text-2xl font-semibold text-slate-900">{selectedEmployee.full_name}</h4>
-                                    <div className="text-sm font-bold text-indigo-600 mt-1">{selectedEmployee.designation || 'No designation'}</div>
+                                    <div className="text-sm font-bold text-indigo-600 mt-1">{selectedEmployee.designation || 'No role'}</div>
                                     <div className="inline-block px-3 py-1 bg-slate-50 text-slate-500 rounded-full text-[10px] font-semibold uppercase tracking-widest mt-2">{selectedEmployee.employee_code}</div>
                                 </div>
                                 <div className="space-y-4">
                                     <ProfileField icon={Mail} label="Email" value={selectedEmployee.email} />
                                     <ProfileField icon={Phone} label="Phone" value={selectedEmployee.phone || 'Not provided'} />
-                                    <ProfileField icon={Briefcase} label="Designation" value={selectedEmployee.designation || 'Not assigned'} />
+                                    <ProfileField icon={Briefcase} label="Role" value={selectedEmployee.designation || 'Not assigned'} />
                                     <ProfileField icon={Building} label="Department" value={selectedEmployee.department || 'Not assigned'} />
                                     <ProfileField icon={User} label="Reporting Manager" value={getManagerName(selectedEmployee.manager_id)} />
                                     <ProfileField icon={Briefcase} label="Employment Type" value={selectedEmployee.employment_type?.replace('_', ' ')} />
@@ -244,7 +244,7 @@ const EmployeeDirectory = () => {
                                     <FormField label="Full Name" placeholder="Aarav Sharma" value={newEmployee.full_name} onChange={v => setNewEmployee({...newEmployee, full_name: v})} required />
                                     <FormField label="Email" type="email" placeholder="aarav.sharma@journeysync.com" value={newEmployee.email} onChange={v => setNewEmployee({...newEmployee, email: v})} required />
                                     <FormField label="Phone" placeholder="+91 98765 43210" value={newEmployee.phone} onChange={v => setNewEmployee({...newEmployee, phone: v})} />
-                                    <FormField label="Designation" placeholder="AI/ML Engineer" value={newEmployee.designation} onChange={v => setNewEmployee({...newEmployee, designation: v})} required />
+                                    <FormField label="Role" placeholder="AI/ML Engineer" value={newEmployee.designation} onChange={v => setNewEmployee({...newEmployee, designation: v})} required />
                                     <FormField label="Department" placeholder="Engineering" value={newEmployee.department} onChange={v => setNewEmployee({...newEmployee, department: v})} required />
                                     <div>
                                         <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-1.5 block">Reporting Manager</label>

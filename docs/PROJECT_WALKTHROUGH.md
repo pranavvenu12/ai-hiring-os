@@ -82,8 +82,8 @@
 |---|---|
 | Purpose | View screened candidates and upload resumes |
 | User | Admin, HR, Manager |
-| Data Source | Jobs, resumes, AI scores, interview sessions |
-| Actions | Upload resumes, select job, view interview history |
+| Data Source | Jobs, resumes, AI scores, Candidate Intelligence, interview sessions |
+| Actions | Upload resumes, select job, review ATS analysis, inspect explicit/inferred skills, review project/GitHub/portfolio signals, view interview history |
 | APIs | `/jobs`, `/jobs/{id}/upload-resumes`, `/jobs/{id}/candidates`, `/interviews/candidate/{id}` |
 | Security | Upload restricted to HR/Admin |
 
