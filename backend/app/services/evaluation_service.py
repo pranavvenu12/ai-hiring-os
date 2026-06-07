@@ -58,12 +58,14 @@ async def run_full_evaluation(resume_id: uuid.UUID):
             # 3. Deterministic Scoring (always runs as baseline / fallback)
             det = scoring_service.calculate_deterministic_scores(resume_text, jd_text)
 
-            # 4. AI Scoring via Gemini (primary)
+            # 4. Optional LLM scoring. Production defaults to the fast path so
+            # resume evaluation finishes quickly on small EC2 instances.
             ai_result = None
-            try:
-                ai_result = await ai_service.generate_ai_insights(resume_text, jd_text)
-            except Exception as e:
-                logger.error(f"AI insights generation error for resume {resume_id}: {e}")
+            if settings.RESUME_SCORING_MODE.lower() in {"ai", "balanced"}:
+                try:
+                    ai_result = await ai_service.generate_ai_insights(resume_text, jd_text)
+                except Exception as e:
+                    logger.error(f"AI insights generation error for resume {resume_id}: {e}")
 
             # 5. Merge: prefer AI scores when available
             if ai_result and ai_result.get("score") is not None:

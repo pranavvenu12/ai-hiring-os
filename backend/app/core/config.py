@@ -54,6 +54,8 @@ class Settings(BaseSettings):
     AI_HF_KEY: str | None = None
     AI_HF_BASE_URL: str = "https://router.huggingface.co/v1"
     AI_HF_MODEL: str = "meta-llama/Llama-3.1-8B-Instruct"
+    RESUME_SCORING_MODE: str = "fast"
+    ENABLE_LOCAL_EMBEDDINGS: bool = False
     ASSEMBLYAI_API_KEY: str | None = None
     SMTP_HOST: str | None = None
     SMTP_PORT: int = 587

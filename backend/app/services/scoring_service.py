@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import os
 import re
 from functools import lru_cache
 from typing import Any
@@ -367,6 +368,9 @@ def _embed_sentences(sentences: list[str]) -> list[list[float]]:
 
 @lru_cache(maxsize=1)
 def _load_embedding_model():
+    if os.getenv("ENABLE_LOCAL_EMBEDDINGS", "false").strip().lower() not in {"1", "true", "yes", "on"}:
+        return None
+
     try:
         from sentence_transformers import SentenceTransformer
 
