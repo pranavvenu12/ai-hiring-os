@@ -12,6 +12,7 @@ from __future__ import annotations
 import uuid
 import logging
 from sqlalchemy import select
+from app.core.config import get_settings
 from app.db.session import AsyncSessionLocal
 from app.models.resume import Resume
 from app.models.job import Job
@@ -24,6 +25,7 @@ from app.services import (
 )
 
 logger = logging.getLogger(__name__)
+settings = get_settings()
 
 
 async def run_full_evaluation(resume_id: uuid.UUID):
