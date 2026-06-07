@@ -28,8 +28,8 @@ class CandidateOut(BaseModel):
     # AI Insights
     summary: Optional[str] = None
     explanation: Optional[str] = None
-    matched_skills: List[str] = []
-    missing_skills: List[str] = []
+    matched_skills: Optional[List[str]] = []
+    missing_skills: Optional[List[str]] = []
     hiring_status: str = "applied"
     email: Optional[str] = None
     phone: Optional[str] = None

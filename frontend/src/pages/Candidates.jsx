@@ -45,7 +45,14 @@ const Candidates = () => {
         try {
             let data = [];
             if (jobId) {
-                data = await api.get(`/jobs/${jobId}/candidates`);
+                try {
+                    data = await api.get(`/jobs/${jobId}/candidates`);
+                } catch (err) {
+                    console.error(`Error fetching candidates for job ${jobId}:`, err);
+                    setError(err.detail || err.message || 'Failed to load candidates.');
+                    setLoading(false);
+                    return;
+                }
             } else {
                 const jobs = await api.get('/jobs');
                 const candidateLists = await Promise.all(
@@ -70,8 +77,9 @@ const Candidates = () => {
                 setTimeout(() => fetchCandidatesRef.current?.(), 3000);
             }
         } catch (err) { 
-            console.error("Failed to load candidates, retrying in 3s...", err); 
-            setTimeout(fetchCandidates, 3000);
+            console.error("Failed to load candidates:", err); 
+            setError(err.detail || err.message || 'Failed to load candidates.');
+            setLoading(false);
         }
     }, [jobId]);
 
