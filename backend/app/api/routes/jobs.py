@@ -317,6 +317,35 @@ async def _process_resume_extraction(
         print(f"Failed to extract text for resume {resume_id}: {exc}")
 
 
+@router.post("/recover-stuck-evaluations")
+async def recover_stuck_evaluations(
+    background_tasks: BackgroundTasks,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """
+    Utility endpoint to trigger background evaluation recovery for all stuck candidates.
+    """
+    from app.models.resume import Resume
+    from app.models.ai_score import AIScore, AIScoreStatus
+    from app.services.evaluation_service import evaluate_stuck_candidate_background
+
+    # Fetch all resumes and their status
+    query = (
+        select(Resume, AIScore)
+        .outerjoin(AIScore, Resume.id == AIScore.resume_id)
+    )
+    result = await db.execute(query)
+    rows = result.all()
+    
+    triggered_count = 0
+    for resume, ai_score in rows:
+        if not ai_score or ai_score.status in (AIScoreStatus.PENDING, AIScoreStatus.PROCESSING):
+            background_tasks.add_task(evaluate_stuck_candidate_background, resume.id)
+            triggered_count += 1
+            
+    return {"message": f"Triggered recovery for {triggered_count} candidates."}
+
+
 @router.get("/{job_id}/candidates", response_model=List[CandidateOut])
 async def list_job_candidates(
     job_id: uuid.UUID,
