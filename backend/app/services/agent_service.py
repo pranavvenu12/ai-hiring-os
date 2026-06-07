@@ -38,7 +38,7 @@ async def ask_agent(db: AsyncSession, current_user: User, message: str) -> dict[
         "message": message,
     })
 
-    plan = _plan_tools(message)
+    plan = _plan_tools(message, current_user.role)
     tool_outputs: dict[str, Any] = {}
     tools_used: list[str] = []
 
@@ -67,7 +67,38 @@ async def ask_agent(db: AsyncSession, current_user: User, message: str) -> dict[
         ))
         await db.flush()
 
-    answer, suggested_actions = _compose_answer(message, tool_outputs)
+    from app.services.ai_service import query_dashboard_ai
+    suggested_actions = []
+    try:
+        # Include suggested action if candidate profile is retrieved
+        if "get_candidate_profile" in tool_outputs and tool_outputs["get_candidate_profile"]:
+            profile = tool_outputs["get_candidate_profile"]
+            suggested_actions.append({"type": "review_candidate", "label": "Open candidate profile", "candidate_id": profile["resume_id"]})
+
+        # Include suggested action if shortlist is recommended
+        if "recommend_shortlist" in tool_outputs:
+            data = tool_outputs["recommend_shortlist"]
+            shortlist = data.get("recommended_shortlist", [])
+            suggested_actions.extend([
+                {"type": "schedule_interview", "label": f"Schedule adaptive interview for {item['candidate_name']}", "candidate_id": item["resume_id"]}
+                for item in shortlist
+            ])
+
+        llm_response = await query_dashboard_ai(message, current_user.role, tool_outputs)
+        if llm_response and "lines" in llm_response:
+            answer = " ".join(llm_response["lines"])
+            if not answer.endswith(SAFE_POLICY):
+                answer += f" {SAFE_POLICY}"
+        else:
+            answer, fallback_actions = _compose_answer(message, tool_outputs)
+            if not suggested_actions:
+                suggested_actions = fallback_actions
+    except Exception as e:
+        print(f"LLM agent query composition failed: {e}")
+        answer, fallback_actions = _compose_answer(message, tool_outputs)
+        if not suggested_actions:
+            suggested_actions = fallback_actions
+
     session.answer = answer
     session.tools_used = tools_used
     session.suggested_actions = suggested_actions
@@ -87,17 +118,21 @@ async def ask_agent(db: AsyncSession, current_user: User, message: str) -> dict[
     }
 
 
-def _plan_tools(message: str) -> list[dict[str, Any]]:
+def _plan_tools(message: str, role: str) -> list[dict[str, Any]]:
     text = message.lower()
     title = _extract_role_hint(message)
     candidate_name = _extract_candidate_name(message)
     steps: list[dict[str, Any]] = []
 
     if any(term in text for term in ["payroll", "salary", "paid", "approval"]):
-        steps.append({"tool_name": "get_payroll_summary", "input": {}, "reasoning": "Payroll question needs read-only payroll statistics."})
+        if role in ["admin", "hr"]:
+            steps.append({"tool_name": "get_payroll_summary", "input": {}, "reasoning": "Payroll question needs read-only payroll statistics."})
 
     if any(term in text for term in ["employee", "attendance", "performance", "team"]):
         steps.append({"tool_name": "get_employee_stats", "input": {}, "reasoning": "HR operations question needs employee statistics."})
+
+    if steps:
+        return steps
 
     if "why" in text and candidate_name:
         steps.append({
@@ -112,7 +147,7 @@ def _plan_tools(message: str) -> list[dict[str, Any]]:
         })
         return steps
 
-    if any(term in text for term in ["top", "rank", "best", "compare", "shortlist", "manual review", "interview plan", "candidates"]):
+    if any(term in text for term in ["top", "rank", "best", "compare", "shortlist", "manual review", "interview plan", "candidates", "candidate"]):
         steps.append({"tool_name": "list_jobs", "input": {}, "reasoning": "Find tenant jobs and infer the target hiring role."})
         steps.append({
             "tool_name": "list_candidates",
@@ -245,6 +280,13 @@ def _compose_answer(message: str, outputs: dict[str, Any]) -> tuple[str, list[di
         return (
             f"Employee snapshot: {stats['active_employees']} active employees out of {stats['total_employees']}, "
             f"{stats['attendance_records']} attendance records, average performance rating {stats['average_performance_rating']}/5. {SAFE_POLICY}"
+        ), suggested_actions
+
+    if "list_candidates" in outputs:
+        candidates = outputs["list_candidates"]
+        return (
+            f"Talent pool has {len(candidates)} candidates. "
+            f"Average match score is {round(sum(c['score'] for c in candidates)/len(candidates), 1) if candidates else 0.0}%. {SAFE_POLICY}"
         ), suggested_actions
 
     jobs = outputs.get("list_jobs", [])

@@ -464,12 +464,11 @@ const Topbar = ({ title }) => {
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter') {
                                     e.preventDefault();
-                                    handleAskAI();
                                 }
                             }}
                             onFocus={() => setIsSearchFocused(true)}
                             onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                            placeholder="Ask AI or search..."
+                            placeholder="Search..."
                             className="bg-transparent outline-none w-full text-sm font-medium"
                         />
                         {searchQuery && (
@@ -481,33 +480,6 @@ const Topbar = ({ title }) => {
 
                     {isSearchFocused && searchQuery.trim() && (
                         <div className="absolute left-0 right-0 mt-2 rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/70 overflow-hidden py-2 z-50">
-                            <div className="px-4 py-2 border-b border-slate-100 mb-1">
-                                <button
-                                    type="button"
-                                    onMouseDown={(e) => e.preventDefault()}
-                                    onClick={handleAskAI}
-                                    disabled={isAiLoading}
-                                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-70"
-                                >
-                                    {isAiLoading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                                    Ask AI about this dashboard
-                                </button>
-                            </div>
-
-                            {aiAnswer && (
-                                <div className="dashboard-ai-answer mx-2 mb-2 rounded-xl border border-indigo-100 bg-indigo-50/70 p-3">
-                                    <div className="flex items-center gap-2 text-xs font-semibold text-indigo-800">
-                                        <Sparkles size={14} />
-                                        {aiAnswer.title}
-                                    </div>
-                                    <div className="mt-2 space-y-1">
-                                        {aiAnswer.lines.map((line, index) => (
-                                            <p key={index} className="text-xs leading-5 text-slate-600">{line}</p>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
                             <div className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 border-b border-slate-50 mb-1">
                                 Quick Navigation
                             </div>
