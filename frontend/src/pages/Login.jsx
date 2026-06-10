@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Rocket, Loader2, Mail, Lock, ArrowRight, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { Rocket, Loader2, Mail, Lock, ArrowRight, ArrowLeft, Eye, EyeOff, ShieldCheck, Briefcase, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
@@ -133,6 +133,49 @@ const Login = () => {
                             </>
                         )}
                     </button>
+
+                    <div className="space-y-3 pt-2">
+                        <div className="flex items-center">
+                            <div className="flex-grow border-t border-slate-200"></div>
+                            <span className="flex-shrink mx-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Quick Demo Login</span>
+                            <div className="flex-grow border-t border-slate-200"></div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setEmail('hr@gmail.com');
+                                    setPassword('123456');
+                                }}
+                                className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-indigo-50/50 hover:border-indigo-500/30 transition-all cursor-pointer group"
+                            >
+                                <ShieldCheck size={16} className="text-slate-400 group-hover:text-indigo-600 transition-colors mb-1" />
+                                <span className="text-[11px] font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">HR / Admin</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setEmail('manager@gmail.com');
+                                    setPassword('123456');
+                                }}
+                                className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-indigo-50/50 hover:border-indigo-500/30 transition-all cursor-pointer group"
+                            >
+                                <Briefcase size={16} className="text-slate-400 group-hover:text-indigo-600 transition-colors mb-1" />
+                                <span className="text-[11px] font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">Manager</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setEmail('employee@gmail.com');
+                                    setPassword('123456');
+                                }}
+                                className="flex flex-col items-center justify-center p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-indigo-50/50 hover:border-indigo-500/30 transition-all cursor-pointer group"
+                            >
+                                <User size={16} className="text-slate-400 group-hover:text-indigo-600 transition-colors mb-1" />
+                                <span className="text-[11px] font-semibold text-slate-600 group-hover:text-slate-900 transition-colors">Employee</span>
+                            </button>
+                        </div>
+                    </div>
                 </form>
 
                 <div className="mt-8 pt-6 border-t border-slate-200/50">
